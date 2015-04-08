@@ -102,7 +102,7 @@ let padding m =
     if (size mod 64) * 8 >= 448 then 128 - size mod 64
     else 64 - size mod 64 
   in
-  let m = Bytes.extend m 0 extsize in (*((512 - (size mod 64) * 8) / 8) in*)
+  let m = Bytes.extend m 0 extsize in
   m.[size] <- '\x80';
   for i = size + 1 to Bytes.length m - 9 do
     m.[i] <- '\x00'
