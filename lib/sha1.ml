@@ -143,7 +143,7 @@ let encrypt m =
 
 module Utils = struct
   let sha1_to_hexstring ?(case=`Lower) s =
-    if String.length s <> 40 then invalid_arg "Sha-1 digest expected."
+    if String.length s <> 20 then invalid_arg "Sha-1 digest expected."
     else
     let sprint = match case with
       | `Lower -> Printf.sprintf "%08lx%08lx%08lx%08lx%08lx"
