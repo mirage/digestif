@@ -1,0 +1,22 @@
+OASISFormat: 0.4
+Name:        oshaone
+Version:     1.0
+Synopsis:    Provides a simple SHA-1 encryption algorithm in pure OCaml.
+Authors:     Eyyüb (Eyyub) Sari
+License:     MIT
+
+Library oshaone
+  Path:       lib/
+  BuildTools: ocamlbuild
+  Modules:    Sha1
+  
+Executable oshaone_test
+  Path:	      lib_test/
+  BuildTools: ocamlbuild
+  BuildDepends: oshaone, oUnit
+  CompiledObject: best
+  MainIs:     test.ml
+
+Test oshaone_test
+  Command: ./oshaone_test
+  
