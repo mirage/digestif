@@ -32,17 +32,17 @@ let hash512 array h0 h1 h2 h3 h4 msg =
   let c = ref !h2 in
   let d = ref !h3 in
   let e = ref !h4 in
-  let k = ref Int32.zero in
-  let r = ref Int32.zero in
+  let k = ref 0l in
+  let r = ref 0l in
   let setk t =
     if t >= 0 && t <= 19 then
-      k := Int32.of_int 0x5A827999
+      k := 0x5A827999l
     else if t >= 20 && t <= 39 then
-      k := Int32.of_int 0x6ED9EBA1
+      k := 0x6ED9EBA1l
     else if t >= 40 && t <= 59 then
-      k := Int32.of_int 0x8F1BBCDC
+      k := 0x8F1BBCDCl
     else if t >= 60 && t <= 79 then
-      k := Int32.of_int 0xCA62C1D6
+      k := 0xCA62C1D6l
   in
   let parity x y z = x lxor y lxor z in
   let ch x y z = (x land y) lor ((lnot x) land z)
@@ -124,11 +124,11 @@ let encrypt m =
   in
   let m = padding (Bytes.of_string m) in
   let array = Array.make 80 Int32.zero in
-  let h0 = ref (Int32.of_int 0x67452301) in
-  let h1 = ref (Int32.of_int 0xEFCDAB89) in
-  let h2 = ref (Int32.of_int 0x98BADCFE) in
-  let h3 = ref (Int32.of_int 0x10325476) in
-  let h4 = ref (Int32.of_int 0xC3D2E1F0) in
+  let h0 = ref 0x67452301l in
+  let h1 = ref 0xEFCDAB89l in
+  let h2 = ref 0x98BADCFEl in
+  let h3 = ref 0x10325476l in
+  let h4 = ref 0xC3D2E1F0l in
   for i = 0 to Bytes.length m / 64 - 1 do
     hash512 array h0 h1 h2 h3 h4 (Bytes.sub m (i * 64) 64);
     Array.fill array 0 80 0l
