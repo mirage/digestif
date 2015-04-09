@@ -112,7 +112,6 @@ let padding m =
   m
 
 let encrypt m =
-  let open Printf in
   let bitstringify b i n =
     let extract_byte k =
       char_of_int (Int32.to_int ((n lsr (k * 8)) land 0xFFl))
