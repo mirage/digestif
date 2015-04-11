@@ -20,6 +20,6 @@ Executable digestif_test
   CompiledObject: best
   MainIs:     test.ml
 
-Test oshaone_test
+Test digestif_test
   Command: ./digestif_test
   
