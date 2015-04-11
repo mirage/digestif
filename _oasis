@@ -1,7 +1,7 @@
 OASISFormat: 0.4
 Name:        digestif
 Version:     0.1
-Synopsis:    Provides simples encryption algorithms in pure OCaml.
+Synopsis:    Provides simple encryption algorithms in pure OCaml.
 Authors:     Eyyüb (Eyyub) Sari
 License:     MIT
 Plugins:     META (0.3), DevFiles (0.3)
