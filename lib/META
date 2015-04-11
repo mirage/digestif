@@ -1,11 +1,11 @@
 # OASIS_START
-# DO NOT EDIT (digest: 5f8688134789c971a004c486434068f7)
-version = "1.0"
-description = "Provides a simple SHA-1 encryption algorithm in pure OCaml."
-archive(byte) = "oshaone.cma"
-archive(byte, plugin) = "oshaone.cma"
-archive(native) = "oshaone.cmxa"
-archive(native, plugin) = "oshaone.cmxs"
-exists_if = "oshaone.cma"
+# DO NOT EDIT (digest: 05f08cbd3c378e5fcf634b1e938705a4)
+version = "0.1"
+description = "Provides simples encryption algorithms in pure OCaml."
+archive(byte) = "digestif.cma"
+archive(byte, plugin) = "digestif.cma"
+archive(native) = "digestif.cmxa"
+archive(native, plugin) = "digestif.cmxs"
+exists_if = "digestif.cma"
 # OASIS_STOP
 

@@ -1,25 +1,25 @@
 OASISFormat: 0.4
-Name:        oshaone
-Version:     1.0
-Synopsis:    Provides a simple SHA-1 encryption algorithm in pure OCaml.
+Name:        digestif
+Version:     0.1
+Synopsis:    Provides simples encryption algorithms in pure OCaml.
 Authors:     Eyyüb (Eyyub) Sari
 License:     MIT
 Plugins:     META (0.3), DevFiles (0.3)
 
-Library oshaone
+Library digestif
   Path:       lib/
   BuildTools: ocamlbuild
   Modules:    Sha1
 
 
-Executable oshaone_test
+Executable digestif_test
   Install: false
   Path:	      lib_test/
   BuildTools: ocamlbuild
-  BuildDepends: oshaone, oUnit
+  BuildDepends: digestif, oUnit
   CompiledObject: best
   MainIs:     test.ml
 
 Test oshaone_test
-  Command: ./oshaone_test
+  Command: ./digestif_test
   
