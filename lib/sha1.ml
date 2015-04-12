@@ -32,8 +32,8 @@ let hash512 array h0 h1 h2 h3 h4 msg =
   let c = ref !h2 in
   let d = ref !h3 in
   let e = ref !h4 in
-  let k = ref 0l in
-  let r = ref 0l in
+  let k = ref 0l  in
+  let r = ref 0l  in
   let setk t =
     if t >= 0 && t <= 19 then
       k := 0x5A827999l
@@ -122,7 +122,7 @@ let encrypt m =
     b.[i + 3] <- extract_byte 0
   in
   let m = padding (Bytes.of_string m) in
-  let array = Array.make 80 Int32.zero in
+  let array = Array.make 80 0l in
   let h0 = ref 0x67452301l in
   let h1 = ref 0xEFCDAB89l in
   let h2 = ref 0x98BADCFEl in

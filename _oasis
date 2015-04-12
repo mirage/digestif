@@ -9,7 +9,7 @@ Plugins:     META (0.3), DevFiles (0.3)
 Library digestif
   Path:       lib/
   BuildTools: ocamlbuild
-  Modules:    Sha1
+  Modules:    Sha1, Sha256
 
 
 Executable digestif_test
