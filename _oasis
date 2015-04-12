@@ -10,7 +10,7 @@ Library digestif
   Path:       lib/
   BuildTools: ocamlbuild
   Modules:    Sha1, Sha256
-
+  InternalModules: Common
 
 Executable digestif_test
   Install: false

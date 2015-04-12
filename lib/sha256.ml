@@ -1,14 +1,4 @@
-let pow2_32 = 4294967296 (* 2 ** 32 *)
-
-let ( +| ) = Int32.add
-let ( land ) = Int32.logand
-let ( lor ) = Int32.logor
-let ( lnot ) = Int32.lognot (* lnot is not an ocaml operator *)
-let ( lxor ) = Int32.logxor
-let ( lsr ) = Int32.shift_right_logical
-let ( lsl ) = Int32.shift_left
-let ( <<< ) a b = (a lsl b) lor (a lsr (32 - b)) (* rotate left *)
-let ( >>> ) a b = (a lsr b) lor (a lsl (32 - b)) (* rotate right *)
+open Common
 
 let k64 =
   [|
@@ -22,8 +12,6 @@ let k64 =
     0x748f82eel; 0x78a5636fl; 0x84c87814l; 0x8cc70208l; 0x90befffal; 0xa4506cebl; 0xbef9a3f7l; 0xc67178f2l
   |]
 
-
-
 let ch x y z = (x land y) lor ((lnot x) land z)
 
 let maj x y z = (x land y) lxor (x land z) lxor (y land z)
@@ -33,48 +21,7 @@ let sigma_maj1 x = (x >>> 6) lxor (x >>> 11) lxor (x >>> 25)
 let sigma_min0 x = (x >>> 7) lxor (x >>> 18) lxor (x lsr 3)
 let sigma_min1 x = (x >>> 17) lxor (x >>> 19) lxor (x lsr 10)
 
-let bitstring_of_int64 n =
-  let buff = Bytes.create 8 in
-  let ( lsr ) = Int64.shift_right_logical in
-  let ( land ) = Int64.logand in
-  let extract i =
-    buff.[i] <- char_of_int (Int64.to_int ((n lsr ((7 - i) * 8)) land 0xFFL))
-  in
-  extract 7;
-  extract 6;
-  extract 5;
-  extract 4;
-  extract 3;
-  extract 2;
-  extract 1;
-  extract 0;
-  buff
-
-let padding m =
-  let size = Bytes.length m in
-  let extsize =
-    if (size mod 64) * 8 >= 448 then 128 - size mod 64
-    else 64 - size mod 64
-  in
-  let m = Bytes.extend m 0 extsize in
-  m.[size] <- '\x80';
-  for i = size + 1 to Bytes.length m - 9 do
-    m.[i] <- '\x00'
-  done;
-  Bytes.blit
-    (bitstring_of_int64 (Int64.of_int (size * 8))) 0 m (Bytes.length m - 8) 8;
-  m
-
 let hash512 array h0 h1 h2 h3 h4 h5 h6 h7 msg =
-  let init16 () =
-    for i = 0 to 15 do
-      (Int32.of_int (Char.code msg.[i * 4 + 3])) lor
-      ((Int32.of_int (Char.code msg.[i * 4 + 2])) lsl 8) lor
-      ((Int32.of_int (Char.code msg.[i * 4 + 1])) lsl 16) lor
-      ((Int32.of_int (Char.code msg.[i * 4])) lsl 24)
-      |> Array.set array i
-    done
-  in
   let genwords () =
     for t = 16 to 63 do
       array.(t) <-
@@ -108,7 +55,7 @@ let hash512 array h0 h1 h2 h3 h4 h5 h6 h7 msg =
       a := !r1 +| !r2;
     done
   in
-  init16 ();
+  init16 array msg;
   genwords ();
   loop ();
   h0 := !a +| !h0;
@@ -121,15 +68,6 @@ let hash512 array h0 h1 h2 h3 h4 h5 h6 h7 msg =
   h7 := !h +| !h7
 
 let encrypt s =
-  let bitstringify b i n =
-    let extract_byte k =
-      char_of_int (Int32.to_int ((n lsr (k * 8)) land 0xFFl))
-    in
-    b.[i]     <- extract_byte 3;
-    b.[i + 1] <- extract_byte 2;
-    b.[i + 2] <- extract_byte 1;
-    b.[i + 3] <- extract_byte 0
-  in
   let m = padding (Bytes.of_string s) in
   let w = Array.make 128 0l in
   let h0 = ref 0x6A09E667l in
