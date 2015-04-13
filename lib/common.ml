@@ -57,3 +57,28 @@ let bitstringify b i n =
   b.[i + 1] <- extract_byte 2;
   b.[i + 2] <- extract_byte 1;
   b.[i + 3] <- extract_byte 0
+
+let digest_to_hexstring  len name ?(case=`Lower) s =
+  let buff = Buffer.create (len / 4) in
+  if String.length s <> len then invalid_arg (name ^ " digest expected.")
+  else
+    let bprint = match case with
+      | `Lower -> Printf.bprintf buff "%08lx"
+      | `Upper -> Printf.bprintf buff "%08lX"
+    in
+    let extract_int32 i =
+      let b1 = int_of_char s.[i] in
+      let b2 = int_of_char s.[i + 1] in
+      let b3 = int_of_char s.[i + 2] in
+      let b4 = int_of_char s.[i + 3] in
+      Int32.of_int
+        Pervasives.(((b1 land 0xFF) lsl 24) lor (((b2 land 0xFF) lsl 16))
+                    lor (((b3 land 0xFF) lsl 8)) lor (b4 land 0xFF))
+    in
+    let rec extract_hexstring i =
+      if i * 4 = len then
+	Buffer.contents buff
+      else
+        (bprint (extract_int32 (i * 4));
+         extract_hexstring (succ i))
+    in extract_hexstring 0

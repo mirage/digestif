@@ -79,27 +79,5 @@ let encrypt m =
   bitstringify h 16 !h4;
   Bytes.to_string h
 
-module Utils = struct
-  let sha1_to_hexstring ?(case=`Lower) s =
-    if String.length s <> 20 then invalid_arg "Sha-1 digest expected."
-    else
-    let sprint = match case with
-      | `Lower -> Printf.sprintf "%08lx%08lx%08lx%08lx%08lx"
-      | `Upper -> Printf.sprintf "%08lX%08lX%08lX%08lX%08lX"
-    in
-    let extract_int32 i =
-      let b1 = int_of_char s.[i] in
-      let b2 = int_of_char s.[i + 1] in
-      let b3 = int_of_char s.[i + 2] in
-      let b4 = int_of_char s.[i + 3] in
-      Int32.of_int 
-	Pervasives.(((b1 land 0xFF) lsl 24) lor (((b2 land 0xFF) lsl 16))
-		    lor (((b3 land 0xFF) lsl 8)) lor (b4 land 0xFF))
-    in
-    let n1 = extract_int32 0 in
-    let n2 = extract_int32 4 in
-    let n3 = extract_int32 8 in
-    let n4 = extract_int32 12 in
-    let n5 = extract_int32 16 in
-    sprint n1 n2 n3 n4 n5
-end
+let sha1_to_hexstring = digest_to_hexstring 20 "SHA-1"
+
