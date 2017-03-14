@@ -1,3 +1,4 @@
-PKG oUnit
-
 S lib
+B _build/lib
+
+PKG ocamlbuild

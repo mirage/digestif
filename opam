@@ -1,0 +1,25 @@
+opam-version: "1.2"
+name:         "digestif"
+version:      "dev"
+maintainer:   [ "Eyyüb Sari <eyyub.sari@epitech.eu>"
+                "Romain Calascibetta <romain.calascibetta@gmail.com>" ]
+authors:      [ "Eyyüb Sari <eyyub.sari@epitech.eu>"
+                "Romain Calascibetta <romain.calascibetta@gmail.com>" ]
+homepage:     "https://github.com/oklm-wsh/Decompress"
+bug-reports:  "https://github.com/oklm-wsh/Decompress/issues"
+dev-repo:     "https://github.com/oklm-wsh/Decompress.git"
+license:      "MIT"
+
+build: [ "ocaml" "pkg/pkg.ml" "build" "--pinned" pinned ]
+
+build-test: [ [ "ocaml" "pkg/pkg.ml" "build" "--pinned" pinned "--tests" "true" ]
+              [ "ocaml" "pkg/pkg.ml" "test" ] ]
+
+depends: [
+  "ocamlbuild"     {build}
+  "ocamlfind"      {build}
+  "topkg"          {build}
+  "base-bytes"
+]
+
+available: [ocaml-version >= "4.03.0"]

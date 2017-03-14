@@ -1,0 +1,7 @@
+description = "Pure implementation of zlib"
+version = "%%VERSION%%"
+requires = "bigarray"
+archive(byte) = "digestif.cma"
+archive(native) = "digestif.cmxa"
+plugin(byte) = "digestif.cma"
+plugin(native) = "digestif.cmxs"

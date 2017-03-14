@@ -1,24 +1,5 @@
-# OASIS_START
-# DO NOT EDIT (digest: 63ac9ba376a874cf5fb9f2135fb695ee)
-# Ignore VCS directories, you can use the same kind of rule outside
-# OASIS_START/STOP if you want to exclude directories that contains
-# useless stuff for the build process
-true: annot, bin_annot
-<**/.svn>: -traverse
-<**/.svn>: not_hygienic
-".bzr": -traverse
-".bzr": not_hygienic
-".hg": -traverse
-".hg": not_hygienic
-".git": -traverse
-".git": not_hygienic
-"_darcs": -traverse
-"_darcs": not_hygienic
-# Library digestif
-"lib/digestif.cmxs": use_digestif
-# Executable digestif_test
-<lib_test/test.{native,byte}>: pkg_oUnit
-<lib_test/test.{native,byte}>: use_digestif
-<lib_test/*.ml{,i,y}>: pkg_oUnit
-<lib_test/*.ml{,i,y}>: use_digestif
-# OASIS_STOP
+true: safe_string, bin_annot, debug
+# <*/*>: warn_error(+1..49), warn(A-4-41-44)
+
+<lib>: include
+<*/*.{native,byte,ml,mli}>: use_bigarray, use_librakia_stubs
