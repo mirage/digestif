@@ -1,5 +1,6 @@
-module B = Digestif_b
-module Native = Digestif_native
+module Bi         = Digestif_bigstring
+module By         = Digestif_bytes
+module Native     = Rakia_native
 
 module type S =
 sig
@@ -69,20 +70,20 @@ struct
   and digest_size = D.digest_size
   and ctx_size    = F.ctx_size ()
 
-  module Bigstring =
+  module Bytes =
   struct
-    type buffer = Native.ba
+    type buffer = Native.st
 
     let init () =
-      let t = B.Bigstring.create ctx_size in
-      ( F.Bigstring.init t; t )
+      let t = Bi.create ctx_size in
+      ( F.Bytes.init t; t )
 
     let feed t buf =
-      F.Bigstring.update t buf 0 (B.Bigstring.length buf)
+      F.Bytes.update t buf 0 (By.length buf)
 
     let get t =
-      let res = B.Bigstring.create digest_size in
-      F.Bigstring.finalize t res 0;
+      let res = By.create digest_size in
+      F.Bytes.finalize t res 0;
       res
 
     let digest buf =
@@ -92,20 +93,20 @@ struct
       let t = init () in ( List.iter (feed t) bufs; get t )
   end
 
-  module Bytes =
+  module Bigstring =
   struct
-    type buffer = Native.st
+    type buffer = Native.ba
 
     let init () =
-      let t = B.Bigstring.create ctx_size in
-      ( F.Bytes.init t; t )
+      let t = Bi.create ctx_size in
+      ( F.Bigstring.init t; t )
 
     let feed t buf =
-      F.Bytes.update t buf 0 (Bytes.length buf)
+      F.Bigstring.update t buf 0 (Bi.length buf)
 
     let get t =
-      let res = Bytes.create digest_size in
-      F.Bytes.finalize t res 0;
+      let res = Bi.create digest_size in
+      F.Bigstring.finalize t res 0;
       res
 
     let digest buf =
@@ -122,43 +123,21 @@ struct
 
   module C = Core (F) (D)
 
-  let block_size = C.block_size
+  let block_size  = C.block_size
   and digest_size = C.digest_size
-  and ctx_size = C.ctx_size
-
-  module Bigstring =
-  struct
-    include C.Bigstring
-
-    let opad = B.Bigstring.init C.block_size (fun _ -> '\x5c')
-    let ipad = B.Bigstring.init C.block_size (fun _ -> '\x36')
-
-    let rec norm key =
-      match compare (B.Bigstring.length key) C.block_size with
-      | 1  -> norm (C.Bigstring.digest key)
-      | -1 -> B.Bigstring.rpad key C.block_size '\000'
-      | _  -> key
-
-    let hmacv ~key msg =
-      let key = norm key in
-      let outer = Native.XOR.Bigstring.xor key opad in
-      let inner = Native.XOR.Bigstring.xor key ipad in
-      C.Bigstring.digestv [ outer; C.Bigstring.digestv (inner :: msg) ]
-
-    let hmac ~key msg = hmacv ~key [ msg ]
-  end
+  and ctx_size    = C.ctx_size
 
   module Bytes =
   struct
     include C.Bytes
 
-    let opad = Bytes.init C.block_size (fun _ -> '\x5c')
-    let ipad = Bytes.init C.block_size (fun _ -> '\x35')
+    let opad = By.init C.block_size (fun _ -> '\x5c')
+    let ipad = By.init C.block_size (fun _ -> '\x35')
 
     let rec norm key =
-      match compare (Bytes.length key) C.block_size with
+      match compare (By.length key) C.block_size with
       | 1  -> norm (C.Bytes.digest key)
-      | -1 -> B.Bytes.rpad key C.block_size '\000'
+      | -1 -> By.rpad key C.block_size '\000'
       | _  -> key
 
     let hmacv ~key msg =
@@ -166,6 +145,28 @@ struct
       let outer = Native.XOR.Bytes.xor key opad in
       let inner = Native.XOR.Bytes.xor key ipad in
       C.Bytes.digestv [ outer; C.Bytes.digestv (inner :: msg) ]
+
+    let hmac ~key msg = hmacv ~key [ msg ]
+  end
+
+  module Bigstring =
+  struct
+    include C.Bigstring
+
+    let opad = Bi.init C.block_size (fun _ -> '\x5c')
+    let ipad = Bi.init C.block_size (fun _ -> '\x36')
+
+    let rec norm key =
+      match compare (Bi.length key) C.block_size with
+      | 1  -> norm (C.Bigstring.digest key)
+      | -1 -> Bi.rpad key C.block_size '\000'
+      | _  -> key
+
+    let hmacv ~key msg =
+      let key = norm key in
+      let outer = Native.XOR.Bigstring.xor key opad in
+      let inner = Native.XOR.Bigstring.xor key ipad in
+      C.Bigstring.digestv [ outer; C.Bigstring.digestv (inner :: msg) ]
 
     let hmac ~key msg = hmacv ~key [ msg ]
   end
@@ -187,49 +188,12 @@ struct
   and ctx_size    = F.ctx_size ()
   and key_size    = Native.BLAKE2B.key_size ()
 
-  module Bigstring =
-  struct
-    type buffer = Native.ba
-
-    let init () =
-      let t = B.Bigstring.create ctx_size in
-      ( Native.BLAKE2B.Bigstring.init' t digest_size B.Bigstring.empty 0 0; t )
-
-    let feed t buf =
-      F.Bigstring.update t buf 0 (B.Bigstring.length buf)
-
-    let get t =
-      let res = B.Bigstring.create digest_size in
-      F.Bigstring.finalize t res 0;
-      res
-
-    let digest buf =
-      let t = init () in ( feed t buf; get t )
-
-    let digestv bufs =
-      let t = init () in ( List.iter (feed t) bufs; get t )
-
-    let hmacv ~key msg =
-      if B.Bigstring.length key > key_size
-      then raise (Invalid_argument "BLAKE2B.hmac{v}: invalid key");
-
-      let ctx = B.Bigstring.create ctx_size in
-      let res = B.Bigstring.create digest_size in
-      Native.BLAKE2B.Bigstring.init' ctx digest_size key 0 (B.Bigstring.length key);
-      List.iter (fun x -> F.Bigstring.update ctx x 0 (B.Bigstring.length x)) msg;
-      F.Bigstring.finalize ctx res 0;
-      res
-
-    let hmac ~key msg =
-      hmacv ~key [ msg ]
-  end
-
   module Bytes =
   struct
     type buffer = Native.st
 
     let init () =
-      let t = B.Bigstring.create ctx_size in
+      let t = Bi.create ctx_size in
       ( Native.BLAKE2B.Bytes.init' t digest_size Bytes.empty 0 0; t )
 
     let feed t buf =
@@ -247,11 +211,48 @@ struct
       let t = init () in ( List.iter (feed t) bufs; get t )
 
     let hmacv ~key msg =
-      let ctx = B.Bigstring.create ctx_size in
-      let res = Bytes.create digest_size in
-      Native.BLAKE2B.Bytes.init' ctx digest_size key 0 (Bytes.length key);
-      List.iter (fun x -> F.Bytes.update ctx x 0 (Bytes.length x)) msg;
+      let ctx = Bi.create ctx_size in
+      let res = By.create digest_size in
+      Native.BLAKE2B.Bytes.init' ctx digest_size key 0 (By.length key);
+      List.iter (fun x -> F.Bytes.update ctx x 0 (By.length x)) msg;
       F.Bytes.finalize ctx res 0;
+      res
+
+    let hmac ~key msg =
+      hmacv ~key [ msg ]
+  end
+
+  module Bigstring =
+  struct
+    type buffer = Native.ba
+
+    let init () =
+      let t = Bi.create ctx_size in
+      ( Native.BLAKE2B.Bigstring.init' t digest_size Bi.empty 0 0; t )
+
+    let feed t buf =
+      F.Bigstring.update t buf 0 (Bi.length buf)
+
+    let get t =
+      let res = Bi.create digest_size in
+      F.Bigstring.finalize t res 0;
+      res
+
+    let digest buf =
+      let t = init () in ( feed t buf; get t )
+
+    let digestv bufs =
+      let t = init () in ( List.iter (feed t) bufs; get t )
+
+    let hmacv ~key msg =
+      if Bi.length key > key_size
+      then raise (Invalid_argument "BLAKE2B.hmac{v}: invalid key");
+
+      let ctx = Bi.create ctx_size in
+      let res = Bi.create digest_size in
+      Native.BLAKE2B.Bigstring.init' ctx digest_size key 0 (Bi.length key);
+      List.iter (fun x -> F.Bigstring.update ctx x 0 (Bi.length x)) msg;
+      F.Bigstring.finalize ctx res 0;
       res
 
     let hmac ~key msg =
@@ -271,12 +272,12 @@ type hash =
   | `BLAKE2B ]
 
 let module_of = function
-  | `MD5 -> (module MD5 : S)
-  | `SHA1 -> (module SHA1 : S)
-  | `SHA224 -> (module SHA224 : S)
-  | `SHA256 -> (module SHA256 : S)
-  | `SHA384 -> (module SHA384 : S)
-  | `SHA512 -> (module SHA512 : S)
+  | `MD5     -> (module MD5     : S)
+  | `SHA1    -> (module SHA1    : S)
+  | `SHA224  -> (module SHA224  : S)
+  | `SHA256  -> (module SHA256  : S)
+  | `SHA384  -> (module SHA384  : S)
+  | `SHA512  -> (module SHA512  : S)
   | `BLAKE2B -> (module BLAKE2B : S)
 
 module Bytes =

@@ -3,3 +3,4 @@ true: safe_string, bin_annot, debug
 
 <lib>: include
 <*/*.{native,byte,ml,mli}>: use_bigarray, use_librakia_stubs
+<test/*>: use_bigarray, package(alcotest)

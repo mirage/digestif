@@ -1,7 +1,19 @@
-description = "Pure implementation of zlib"
+description = "Pure implementation of hash function"
 version = "%%VERSION%%"
 requires = "bigarray"
 archive(byte) = "digestif.cma"
 archive(native) = "digestif.cmxa"
 plugin(byte) = "digestif.cma"
 plugin(native) = "digestif.cmxs"
+
+package "rakia" (
+  version = "%%VERSION%%"
+  description = "Implementation of hash function in C"
+  requires = "digestif"
+  archive(byte) = "rakia.cma"
+  archive(byte, plugin) = "rakia.cma"
+  archive(native) = "rakia.cmxa"
+  archive(native, plugin) = "rakia.cmxs"
+  freestanding_linkopts = "-lrakia_stubs"
+  exists_if = "rakia.cma"
+)

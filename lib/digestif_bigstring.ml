@@ -1,5 +1,7 @@
 open Bigarray
 
+(* XXX(dinosaure): don't use any external stub in this module. *)
+
 type t = (char, int8_unsigned_elt, c_layout) Array1.t
 type v = { off : int
          ; len : int
