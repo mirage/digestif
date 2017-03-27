@@ -1,4 +1,4 @@
-opam-version: "1.2"
+opam-version: "2.0.0"
 name:         "digestif"
 maintainer:   [ "Eyyüb Sari <eyyub.sari@epitech.eu>"
                 "Romain Calascibetta <romain.calascibetta@gmail.com>" ]
