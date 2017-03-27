@@ -1,3 +1,5 @@
+let () = Printexc.record_backtrace true
+
 module Bi         = Digestif_bigstring
 module By         = Digestif_bytes
 module Native     = Rakia_native
@@ -132,7 +134,7 @@ struct
     include C.Bytes
 
     let opad = By.init C.block_size (fun _ -> '\x5c')
-    let ipad = By.init C.block_size (fun _ -> '\x35')
+    let ipad = By.init C.block_size (fun _ -> '\x36')
 
     let rec norm key =
       match compare (By.length key) C.block_size with

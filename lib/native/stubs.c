@@ -79,7 +79,7 @@ CAMLprim value
 caml_digestif_blake2b_st_abstract_init(value ctx, value outlen, value key, value off, value len)
 {
   digestif_blake2b_abstract_init(
-    (struct blake2b_ctx *) String_val (ctx), Int_val (outlen),
+    (struct blake2b_ctx *) Caml_ba_data_val (ctx), Int_val (outlen),
     _st_uint8_off(key, off), Int_val (len));
 
   return Val_unit;

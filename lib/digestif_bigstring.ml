@@ -65,3 +65,7 @@ let equal a b =
        with Break -> false
 
 let empty = create 0
+
+let pp fmt ba =
+  for i = 0 to length ba - 1
+  do Format.fprintf fmt "%c" (get ba i) done
