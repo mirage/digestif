@@ -15,11 +15,10 @@ build-test: [ [ "ocaml" "pkg/pkg.ml" "build" "--with-alcotest" "true" "--pinned"
               [ "ocaml" "pkg/pkg.ml" "test" ] ]
 
 depends: [
+  "ocaml"          {build & >= "4.03.0"}
   "ocamlbuild"     {build}
   "ocamlfind"      {build}
   "topkg"          {build}
   "base-bytes"
   "alcotest"       {test}
 ]
-
-available: [ocaml-version >= "4.03.0"]
