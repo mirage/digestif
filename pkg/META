@@ -11,9 +11,9 @@ package "rakia" (
   description = "Implementation of hash function in C"
   requires = "digestif"
   archive(byte) = "rakia.cma"
-  archive(byte, plugin) = "rakia.cma"
   archive(native) = "rakia.cmxa"
-  archive(native, plugin) = "rakia.cmxs"
+  plugin(byte) = "rakia.cma"
+  plugin(native) = "rakia.cmxs"
   freestanding_linkopts = "-lrakia_stubs"
   exists_if = "rakia.cma"
 )
