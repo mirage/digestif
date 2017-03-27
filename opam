@@ -1,6 +1,5 @@
 opam-version: "1.2"
 name:         "digestif"
-version:      "dev"
 maintainer:   [ "Eyyüb Sari <eyyub.sari@epitech.eu>"
                 "Romain Calascibetta <romain.calascibetta@gmail.com>" ]
 authors:      [ "Eyyüb Sari <eyyub.sari@epitech.eu>"
@@ -12,7 +11,7 @@ license:      "MIT"
 
 build: [ "ocaml" "pkg/pkg.ml" "build" "--pinned" pinned ]
 
-build-test: [ [ "ocaml" "pkg/pkg.ml" "build" "--pinned" pinned "--tests" "true" ]
+build-test: [ [ "ocaml" "pkg/pkg.ml" "build" "--with-alcotest" "true" "--pinned" pinned "--tests" "true" ]
               [ "ocaml" "pkg/pkg.ml" "test" ] ]
 
 depends: [
@@ -20,6 +19,7 @@ depends: [
   "ocamlfind"      {build}
   "topkg"          {build}
   "base-bytes"
+  "alcotest"       {test}
 ]
 
 available: [ocaml-version >= "4.03.0"]
