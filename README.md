@@ -1,4 +1,4 @@
-Digestif - Implementation of some hashes functions in OCaml
+Digestif - Encryption algorithms in OCaml
 ===========================================================
 
 Digestif (and Rakia) provided some hashes functions in OCaml. Rakia provided
