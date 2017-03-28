@@ -14,6 +14,7 @@ package "rakia" (
   archive(native) = "rakia.cmxa"
   plugin(byte) = "rakia.cma"
   plugin(native) = "rakia.cmxs"
+  xen_linkopts = "-lrakia_stubs"
   freestanding_linkopts = "-lrakia_stubs"
   exists_if = "rakia.cma"
 )
