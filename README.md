@@ -63,12 +63,12 @@ This work is from the [nocrypto](https://github.com/mirleft/nocrypto) library
 and the Vincent hanquez's work
 in [ocaml-sha](https://github.com/vincenthz/ocaml-sha).
 
-All credits appear in the begin of files and this library is motivated by two reason:
+All credits appear in the begin of files and this library is motivated by two reasons:
 
   * delete the dependancy with `nocrypto` if you don't use the encryption (and common) part
   * aggregate all hashes functions in one library
   
-We deleted the `cstruct` *hard* dependancy (from `nocrypto`) and provide a
+We deleted the `cstruct` **hard** dependancy (from `nocrypto`) and provide a
 interface to compute with the `Bytes.t`. We add the `blake2b` implementation too
 and we have the plan to provide the hash function in pure OCaml and other hashes
 functions. Finally, you can use `nocrypto` _and_ `digestif` together (no clash
