@@ -20,6 +20,9 @@ sig
   val pp : t Fmt.t
 end
 
+type 'buffer inputs = (module BIntf with type t = 'buffer) -> ('buffer * 'buffer) list
+type 'buffer results = (module BIntf with type t = 'buffer) -> 'buffer list
+
 let hex (type buffer) (module B : BIntf with type t = buffer) str : buffer =
   let hexdigit = function
     | 'a' .. 'f' as x -> int_of_char x - 87
@@ -46,7 +49,7 @@ let hex (type buffer) (module B : BIntf with type t = buffer) str : buffer =
   | (cs, i, _     ) -> B.sub cs 0 i
 
 
-let inputs (type buffer) (module B : BIntf with type t = buffer) : (buffer * buffer) list =
+let inputs : type buffer. buffer inputs = fun (module B) ->
   let hex = hex (module B) in
   [
   (* Test Case 0 *)
@@ -78,7 +81,7 @@ let inputs (type buffer) (module B : BIntf with type t = buffer) : (buffer * buf
          "74696f6e") );                       (* "tion" *)
 ]
 
-let sha2_inputs (type buffer) (module B : BIntf with type t = buffer) : (buffer * buffer) list =
+let sha2_inputs : type buffer. buffer inputs = fun (module B) ->
   let hex = hex (module B) in
   inputs (module B) @ [
   (* Test Case 5 *)
@@ -116,7 +119,7 @@ let sha2_inputs (type buffer) (module B : BIntf with type t = buffer) : (buffer 
          "642062792074686520484d414320616c" ^ (* "d by the HMAC al" *)
          "676f726974686d2e") )]               (* "gorithm." *)
 
-let sha1_inputs (type buffer) (module B : BIntf with type t = buffer) : (buffer * buffer) list =
+let sha1_inputs : type buffer. buffer inputs = fun (module B) ->
   let hex = hex (module B) in
   inputs (module B) @ [
   (* Test Case 5 *)
@@ -141,7 +144,7 @@ let sha1_inputs (type buffer) (module B : BIntf with type t = buffer) : (buffer 
          "205468616e204f6e6520426c6f636b2d" ^ (* " Than One Block-" *)
          "53697a652044617461") )]             (* "Size Data" *)
 
-let md5_inputs (type buffer) (module B : BIntf with type t = buffer) : (buffer * buffer) list =
+let md5_inputs : type buffer. buffer inputs = fun (module B) ->
   let k, d = List.split (sha1_inputs (module B)) in
   let keys =
     List.mapi (fun i x ->
@@ -151,14 +154,14 @@ let md5_inputs (type buffer) (module B : BIntf with type t = buffer) : (buffer *
     k in
   List.combine keys d
 
-let blake2b_inputs (type buffer) (module B : BIntf with type t = buffer) : (buffer * buffer) list =
+let blake2b_inputs : type buffer. buffer inputs = fun (module B) ->
   let k, d = List.split (sha1_inputs (module B)) in
   let keys =
     List.mapi (fun i x -> B.(sub x 0 (min (length x) 64)))
     k in
   List.combine keys d
 
-let md5_results (type buffer) (module B : BIntf with type t = buffer) : buffer list =
+let md5_results : type buffer. buffer results = fun (module B) ->
   let hex = hex (module B) in
   [ hex "9294727a3638bb1c13f48ef8158bfc9d"
   ; hex "750c783e6ab0b503eaa86e310a5db738"
@@ -168,7 +171,7 @@ let md5_results (type buffer) (module B : BIntf with type t = buffer) : buffer l
   ; hex "6b1ab7fe4bd7bf8f0b62e6ce61b9d0cd"
   ; hex "6f630fad67cda0ee1fb1f562db3aa53e" ]
 
-let sha1_results  (type buffer) (module B : BIntf with type t = buffer) : buffer list =
+let sha1_results : type buffer. buffer results = fun (module B) ->
   let hex = hex (module B) in
   [ hex "b617318655057264e28bc0b6fb378c8ef146be00"
   ; hex "effcdf6ae5eb2fa2d27416d5f184df9c259a7c79"
@@ -178,7 +181,7 @@ let sha1_results  (type buffer) (module B : BIntf with type t = buffer) : buffer
   ; hex "aa4ae5e15272d00e95705637ce8a3b55ed402112"
   ; hex "e8e99d0f45237d786d6bbaa7965c7808bbff1a91" ]
 
-let sha224_results (type buffer) (module B : BIntf with type t = buffer) : buffer list =
+let sha224_results : type buffer. buffer results = fun (module B) ->
   let hex = hex (module B) in
   [ hex "896fb1128abbdf196832107cd49df33f\
          47b4b1169912ba4f53684b22"
@@ -194,7 +197,7 @@ let sha224_results (type buffer) (module B : BIntf with type t = buffer) : buffe
   ; hex "3a854166ac5d9f023f54d517d0b39dbd\
          946770db9c2b95c9f6f565d1" ]
 
-let sha256_results  (type buffer) (module B : BIntf with type t = buffer) : buffer list =
+let sha256_results : type buffer. buffer results = fun (module B) ->
   let hex = hex (module B) in
   [ hex "b0344c61d8db38535ca8afceaf0bf12b\
          881dc200c9833da726e9376c2e32cff7"
@@ -210,7 +213,7 @@ let sha256_results  (type buffer) (module B : BIntf with type t = buffer) : buff
   ; hex "9b09ffa71b942fcb27635fbcd5b0e944\
          bfdc63644f0713938a7f51535c3a35e2" ]
 
-let sha384_results (type buffer) (module B : BIntf with type t = buffer) : buffer list =
+let sha384_results : type buffer. buffer results = fun (module B) ->
   let hex = hex (module B) in
   [ hex "afd03944d84895626b0825f4ab46907f\
          15f9dadbe4101ec682aa034c7cebc59c\
@@ -232,7 +235,7 @@ let sha384_results (type buffer) (module B : BIntf with type t = buffer) : buffe
          602420feb0b8fb9adccebb82461e99c5\
          a678cc31e799176d3860e6110c46523e" ]
 
-let sha512_results (type buffer) (module B : BIntf with type t = buffer) : buffer list =
+let sha512_results : type buffer. buffer results = fun (module B) ->
   let hex = hex (module B) in
   [ hex "87aa7cdea5ef619d4ff0b4241a1d6cb0\
          2379f4e2ce4ec2787ad0b30545e17cde\
@@ -260,7 +263,7 @@ let sha512_results (type buffer) (module B : BIntf with type t = buffer) : buffe
          b6022cac3c4982b10d5eeb55c3e4de15\
          134676fb6de0446065c97440fa8c6a58" ]
 
-let blake2b_results (type buffer) (module B : BIntf with type t = buffer) : buffer list =
+let blake2b_results : type buffer. buffer results = fun (module B) ->
   let hex = hex (module B) in
   [ hex "35e968d3b8ea56fa47e9d929f1f1b523\
          ae90fe7fe0462b3caf2e45648043f7c5\
@@ -291,39 +294,19 @@ let blake2b_results (type buffer) (module B : BIntf with type t = buffer) : buff
          8aa9861cea094a6498837ddbd05ef3b0\
          9b01fa2130d618d09105b2c680bff556" ]
 
-module TestBigstring : Alcotest.TESTABLE with type t = Bi.t =
-struct
-  type t = Bi.t
-
-  let equal = Bi.equal
-
-  let pp fmt hash =
-    for i = 0 to Bi.length hash - 1
-    do Format.fprintf fmt "%02x" (Char.code @@ Bi.get hash i) done
-end
-
-let testable (type a) (pp : a Fmt.t) (equal : a -> a -> bool) : a Alcotest.testable =
-  let module M = struct type t = a let pp = pp let equal = equal end in
-  (module M)
-
-let test_hmac (type buffer)
-    (module B : BIntf with type t = buffer)
-    (hmac : Rakia.hash -> key:buffer -> buffer -> buffer)
-    (hash : Rakia.hash)
-    idx
-    (((key, data), result) : ((buffer * buffer) * buffer)) =
+let test_hmac
+  : type buffer. (module BIntf with type t = buffer) -> (Rakia.hash -> key:buffer -> buffer -> buffer) -> Rakia.hash -> int -> ((buffer * buffer) * buffer) -> unit
+  = fun (module B) hmac hash idx ((key, data), result) ->
   let computed = hmac hash ~key:key data in
-  Alcotest.(check (testable B.pp B.equal)) "hmac" result (if idx == 4 then B.(sub computed 0 (length result)) else computed)
+  Alcotest.(check (Alcotest.testable B.pp B.equal)) "hmac" result (if idx == 4 then B.(sub computed 0 (length result)) else computed)
 
 type 'a buffer =
   | Bytes     : (module BIntf with type t = Bytes.t) -> Bytes.t buffer
   | Bigstring : (module BIntf with type t = Bi.t) -> Bi.t buffer
 
-let make_test_hmac (type a) name hash (buffer : a buffer)
-  : ((module BIntf with type t = a) -> (a * a) list)
-    -> ((module BIntf with type t = a) -> a list)
-    -> Alcotest.test_case list
-  = match buffer with
+let make_test_hmac
+  : type a. string -> Rakia.hash -> a buffer -> a inputs -> a results -> Alcotest.test_case list
+  = fun name hash -> function
   | Bytes (module B : BIntf with type t = Bytes.t) ->
     fun inputs results ->
       let hmac = Rakia.Bytes.mac in
