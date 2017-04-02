@@ -4,4 +4,4 @@ true: safe_string, bin_annot, debug
 <lib>: include
 <*/*.{native,byte,ml,mli}>: use_bigarray
 <lib/rakia.cm{,x}a>: use_librakia_stubs
-<test/*>: use_bigarray, package(alcotest)
+<test/*>: use_bigarray, use_librakia_stubs, package(alcotest)
