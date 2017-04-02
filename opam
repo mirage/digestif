@@ -1,4 +1,4 @@
-opam-version: "2.0"
+opam-version: "1.2"
 name:         "digestif"
 maintainer:   [ "Eyyüb Sari <eyyub.sari@epitech.eu>"
                 "Romain Calascibetta <romain.calascibetta@gmail.com>" ]
@@ -9,16 +9,17 @@ bug-reports:  "https://github.com/oklm-wsh/Decompress/issues"
 dev-repo:     "https://github.com/oklm-wsh/Decompress.git"
 license:      "MIT"
 
-build: [ "ocaml" "pkg/pkg.ml" "build" "--pinned" pinned ]
+build: [ "ocaml" "pkg/pkg.ml" "build" "--pinned" "%{pinned}%" ]
 
-build-test: [ [ "ocaml" "pkg/pkg.ml" "build" "--with-alcotest" "true" "--pinned" pinned "--tests" "true" ]
+build-test: [ [ "ocaml" "pkg/pkg.ml" "build" "--with-alcotest" "true" "--pinned" "%{pinned}%" "--tests" "true" ]
               [ "ocaml" "pkg/pkg.ml" "test" ] ]
 
 depends: [
-  "ocaml"          {build & >= "4.03.0"}
   "ocamlbuild"     {build}
   "ocamlfind"      {build}
   "topkg"          {build}
   "base-bytes"
   "alcotest"       {test}
 ]
+
+available: [ ocaml-version >= "4.03.0" ]
