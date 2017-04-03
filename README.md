@@ -1,6 +1,8 @@
 Digestif - Hash algorithms in OCaml
 ===========================================================
 
+[![Build Status](https://travis-ci.org/oklm-wsh/Digestif.svg?branch=master)](https://travis-ci.org/oklm-wsh/Digestif)
+
 Digestif (and Rakia) provided some hashes functions in OCaml. Rakia provided
 theses functions by a C stub and Digestif is a pure implementation in OCaml of
 theses hashes. So theses hashes functions can be used in an
