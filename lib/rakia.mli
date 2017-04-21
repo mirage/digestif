@@ -9,29 +9,31 @@ sig
   module Bigstring :
   sig
     type buffer = Bi.t
+    type t = Bi.t
 
     val init    : unit -> ctx
     val feed    : ctx -> buffer -> unit
-    val get     : ctx -> buffer
+    val get     : ctx -> t
 
-    val digest  : buffer -> buffer
-    val digestv : buffer list -> buffer
-    val hmac    : key:buffer -> buffer -> buffer
-    val hmacv   : key:buffer -> buffer list -> buffer
+    val digest  : buffer -> t
+    val digestv : buffer list -> t
+    val hmac    : key:buffer -> buffer -> t
+    val hmacv   : key:buffer -> buffer list -> t
   end
 
   module Bytes :
   sig
     type buffer = Bytes.t
+    type t = Bytes.t
 
     val init    : unit -> ctx
     val feed    : ctx -> buffer -> unit
-    val get     : ctx -> buffer
+    val get     : ctx -> t
 
-    val digest  : buffer -> buffer
-    val digestv : buffer list -> buffer
-    val hmac    : key:buffer -> buffer -> buffer
-    val hmacv   : key:buffer -> buffer list -> buffer
+    val digest  : buffer -> t
+    val digestv : buffer list -> t
+    val hmac    : key:buffer -> buffer -> t
+    val hmacv   : key:buffer -> buffer list -> t
   end
 end
 

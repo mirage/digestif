@@ -13,29 +13,31 @@ sig
   module Bigstring :
   sig
     type buffer = Native.ba
+    type t = Native.ba
 
     val init        : unit -> ctx
     val feed        : ctx -> buffer -> unit
-    val get         : ctx -> buffer
+    val get         : ctx -> t
 
-    val digest      : buffer -> buffer
-    val digestv     : buffer list -> buffer
-    val hmac        : key:buffer -> buffer -> buffer
-    val hmacv       : key:buffer -> buffer list -> buffer
+    val digest      : buffer -> t
+    val digestv     : buffer list -> t
+    val hmac        : key:buffer -> buffer -> t
+    val hmacv       : key:buffer -> buffer list -> t
   end
 
   module Bytes :
   sig
     type buffer = Native.st
+    type t = Native.st
 
     val init        : unit -> ctx
     val feed        : ctx -> buffer -> unit
-    val get         : ctx -> buffer
+    val get         : ctx -> t
 
-    val digest      : buffer -> buffer
-    val digestv     : buffer list -> buffer
-    val hmac        : key:buffer -> buffer -> buffer
-    val hmacv       : key:buffer -> buffer list -> buffer
+    val digest      : buffer -> t
+    val digestv     : buffer list -> t
+    val hmac        : key:buffer -> buffer -> t
+    val hmacv       : key:buffer -> buffer list -> t
   end
 end
 
@@ -75,6 +77,7 @@ struct
   module Bytes =
   struct
     type buffer = Native.st
+    type t = Native.st
 
     let init () =
       let t = Bi.create ctx_size in
@@ -98,6 +101,7 @@ struct
   module Bigstring =
   struct
     type buffer = Native.ba
+    type t = Native.ba
 
     let init () =
       let t = Bi.create ctx_size in
@@ -193,6 +197,7 @@ struct
   module Bytes =
   struct
     type buffer = Native.st
+    type t = Native.st
 
     let init () =
       let t = Bi.create ctx_size in
@@ -227,6 +232,7 @@ struct
   module Bigstring =
   struct
     type buffer = Native.ba
+    type t = Native.ba
 
     let init () =
       let t = Bi.create ctx_size in
