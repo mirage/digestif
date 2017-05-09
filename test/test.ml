@@ -16,11 +16,11 @@ sig
   val create : int -> t
   val sub    : t -> int -> int -> t
   val length : t -> int
-  val equal : t -> t -> bool
-  val pp : t Fmt.t
+  val eq     : t -> t -> bool
+  val pp     : t Fmt.t
 end
 
-type 'buffer inputs = (module BIntf with type t = 'buffer) -> ('buffer * 'buffer) list
+type 'buffer inputs  = (module BIntf with type t = 'buffer) -> ('buffer * 'buffer) list
 type 'buffer results = (module BIntf with type t = 'buffer) -> 'buffer list
 
 let hex (type buffer) (module B : BIntf with type t = buffer) str : buffer =
@@ -47,7 +47,6 @@ let hex (type buffer) (module B : BIntf with type t = buffer) str : buffer =
   with
   | (_ , _, Some _) -> raise (Invalid_argument "hex: dangling nibble")
   | (cs, i, _     ) -> B.sub cs 0 i
-
 
 let inputs : type buffer. buffer inputs = fun (module B) ->
   let hex = hex (module B) in
@@ -298,7 +297,7 @@ let test_hmac
   : type buffer. (module BIntf with type t = buffer) -> (Rakia.hash -> key:buffer -> buffer -> buffer) -> Rakia.hash -> int -> ((buffer * buffer) * buffer) -> unit
   = fun (module B) hmac hash idx ((key, data), result) ->
   let computed = hmac hash ~key:key data in
-  Alcotest.(check (Alcotest.testable B.pp B.equal)) "hmac" result (if idx == 4 then B.(sub computed 0 (length result)) else computed)
+  Alcotest.(check (Alcotest.testable B.pp B.eq)) "hmac" result (if idx == 4 then B.(sub computed 0 (length result)) else computed)
 
 type 'a buffer =
   | Bytes     : (module BIntf with type t = Bytes.t) -> Bytes.t buffer
@@ -339,6 +338,8 @@ struct
   let pp fmt by =
     for i = 0 to length by
     do Format.fprintf fmt "%c" (get by i) done
+
+  let eq a b = compare a b = 0
 end
 
 let () =
