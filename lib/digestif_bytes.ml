@@ -25,3 +25,6 @@ let rpad a size x =
   blit a 0 b 0 l;
   fill b l (size - l) x;
   b
+
+let eq a b = Bytes.compare a b = 0
+let neq a b = not (eq a b)
