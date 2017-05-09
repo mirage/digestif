@@ -53,16 +53,25 @@ let rpad a size x =
   fill b l (size - l) x;
   b
 
-exception Break
+exception Break of int
 
-let equal a b =
+let compare a b =
   if length a <> length b
-  then false
-  else try
-         for i = 0 to length a - 1
-         do if get a i <> get b i then raise Break done;
-         true
-       with Break -> false
+  then (if length a < length b then 0 - (Char.code (get b (length a))) else (Char.code (get a (length b))))
+  else
+    try
+      for i = 0 to length a - 1
+      do if get a i <> get b i then raise (Break ((Char.code (get a i)) - (Char.code (get b i)))) done;
+      0
+    with Break n -> n
+
+let eq a b = compare a b = 0
+let neq a b = not (eq a b)
+
+let iter f x =
+  let l = length x in
+
+  for i = 0 to l - 1 do f (get x i) done
 
 let empty = create 0
 
