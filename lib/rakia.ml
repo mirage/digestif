@@ -1,5 +1,3 @@
-let () = Printexc.record_backtrace true
-
 module Bi         = Digestif_bigstring
 module By         = Digestif_bytes
 module Native     = Rakia_native
