@@ -6,7 +6,7 @@
 
 open Topkg
 
-let opam = Pkg.opam_file ~lint_deps_excluding:None "opam"
+let opam = Pkg.opam_file ~lint_deps_excluding:(Some [ "ocamlbuild"; "topkg"; "ocaml"; "ocamlfind" ]) "opam"
 let alcotest = Conf.with_pkg ~default:false "alcotest"
 
 let () =
