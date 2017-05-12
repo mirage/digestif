@@ -7,6 +7,7 @@ authors:      [ "Eyyüb Sari <eyyub.sari@epitech.eu>"
 homepage:     "https://github.com/mirage/digestif"
 bug-reports:  "https://github.com/mirage/digestif/issues"
 dev-repo:     "https://github.com/mirage/digestif.git"
+doc:          "https://mirage.github.io/digestif/"
 license:      "MIT"
 
 build: [ "ocaml" "pkg/pkg.ml" "build" "--pinned" "%{pinned}%" "--tests" "false" ]
