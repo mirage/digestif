@@ -1,0 +1,39 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Digestif.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Digestif" rel="Chapter" href="Digestif.html">
+<link title="Rakia" rel="Chapter" href="Rakia.html"><title>Rakia</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Digestif.html" title="Digestif">Previous</a>
+&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;</div>
+<h1>Module <a href="type_Rakia.html">Rakia</a></h1>
+
+<pre><span class="keyword">module</span> Rakia: <code class="code"><span class="keyword">sig</span></code> <a href="Rakia.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><hr width="100%">
+
+<pre><span class="keyword">module</span> <a href="Rakia.Bi.html">Bi</a>: <code class="type">module type of Digestif_bigstring</code></pre>
+<pre><span class="keyword">module type</span> <a href="Rakia.S.html">S</a> = <code class="code"><span class="keyword">sig</span></code> <a href="Rakia.S.html">..</a> <code class="code"><span class="keyword">end</span></code></pre>
+<pre><span class="keyword">module</span> <a href="Rakia.MD5.html">MD5</a>: <code class="type"><a href="Rakia.S.html">S</a></code><code class="type"> </code></pre>
+<pre><span class="keyword">module</span> <a href="Rakia.SHA1.html">SHA1</a>: <code class="type"><a href="Rakia.S.html">S</a></code><code class="type"> </code></pre>
+<pre><span class="keyword">module</span> <a href="Rakia.SHA224.html">SHA224</a>: <code class="type"><a href="Rakia.S.html">S</a></code><code class="type"> </code></pre>
+<pre><span class="keyword">module</span> <a href="Rakia.SHA256.html">SHA256</a>: <code class="type"><a href="Rakia.S.html">S</a></code><code class="type"> </code></pre>
+<pre><span class="keyword">module</span> <a href="Rakia.SHA384.html">SHA384</a>: <code class="type"><a href="Rakia.S.html">S</a></code><code class="type"> </code></pre>
+<pre><span class="keyword">module</span> <a href="Rakia.SHA512.html">SHA512</a>: <code class="type"><a href="Rakia.S.html">S</a></code><code class="type"> </code></pre>
+<pre><span class="keyword">module</span> <a href="Rakia.BLAKE2B.html">BLAKE2B</a>: <code class="type"><a href="Rakia.S.html">S</a></code><code class="type"> </code></pre>
+<pre><span id="TYPEhash"><span class="keyword">type</span> <code class="type"></code>hash</span> = <code class="type">[ `BLAKE2B | `MD5 | `SHA1 | `SHA224 | `SHA256 | `SHA384 | `SHA512 ]</code> </pre>
+
+
+<pre><span class="keyword">module</span> <a href="Rakia.Bytes.html">Bytes</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Rakia.Bytes.html">..</a> <code class="code"><span class="keyword">end</span></code></pre>
+<pre><span class="keyword">module</span> <a href="Rakia.Bigstring.html">Bigstring</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Rakia.Bigstring.html">..</a> <code class="code"><span class="keyword">end</span></code></pre>
+<pre><span id="VALdigest_size"><span class="keyword">val</span> digest_size</span> : <code class="type"><a href="Rakia.html#TYPEhash">hash</a> -> int</code></pre></body></html>
