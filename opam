@@ -12,15 +12,11 @@ license:      "MIT"
 
 build: [ "ocaml" "pkg/pkg.ml" "build" "--pinned" "%{pinned}%" "--tests" "false" ]
 
-build-test: [ [ "ocaml" "pkg/pkg.ml" "build" "--pinned" "%{pinned}%" "--tests" "true" ]
-              [ "ocaml" "pkg/pkg.ml" "test" ] ]
-
 depends: [
   "ocamlbuild"     {build}
   "ocamlfind"      {build}
   "topkg"          {build}
   "base-bytes"
-  "alcotest"       {test}
 ]
 
 available: [ ocaml-version >= "4.03.0" ]
