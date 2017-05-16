@@ -1,7 +1,5 @@
-true: safe_string, bin_annot, debug
-# <*/*>: warn_error(+1..49), warn(A-4-41-44)
+true: safe_string, bin_annot
 
-<lib>: include
-<*/*.{native,byte,ml,mli}>: use_bigarray
-<lib/rakia.cm{,x}a>: use_librakia_stubs
-<test/*>: use_bigarray, use_librakia_stubs, package(alcotest)
+<src-c/digestif.{cma,cmxa}>: record_digestif_rakia_stubs
+<src-c/digestif.cmxs>: link_digestif_rakia_stubs, use_bigarray
+<src-ocaml/digestif.cmxs>: use_bigarray
