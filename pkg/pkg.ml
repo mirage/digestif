@@ -17,6 +17,6 @@ let () =
 
      (* c implementation *)
      ; Pkg.clib "src-c/librakia_stubs.clib" ~lib_dst_dir:"c"
-     ; Pkg.lib ~exts:Exts.module_library "src-c/digestif" ~dst:"c/digestif"
+     ; Pkg.mllib ~api:["Digestif"] "src-c/digestif.mllib" ~dst_dir:"c"
 
-     ; Pkg.lib ~exts:Exts.module_library "src-ocaml/digestif" ~dst:"ocaml/digestif" ]
+     ; Pkg.mllib ~api:["Digestif"] "src-ocaml/digestif.mllib" ~dst_dir:"ocaml" ]
