@@ -53,6 +53,8 @@ void digestif_sha1_init(struct sha1_ctx *ctx)
 #define M(i)  (w[i & 0x0f] = rol32(w[i & 0x0f] ^ w[(i - 14) & 0x0f] \
               ^ w[(i - 8) & 0x0f] ^ w[(i - 3) & 0x0f], 1))
 
+#include <stdio.h>
+
 static inline void sha1_do_chunk(struct sha1_ctx *ctx, uint32_t *buf)
 {
 	uint32_t a, b, c, d, e;

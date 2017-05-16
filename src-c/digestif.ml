@@ -1,16 +1,16 @@
 module Bi         = Digestif_bigstring
 module By         = Digestif_bytes
+module Pp         = Digestif_pp
 module Native     = Rakia_native
 
 module type S =
 sig
-  type ctx
-
   val digest_size : int
 
   module Bigstring :
   sig
     type buffer = Native.ba
+    type ctx
     type t = Native.ba
 
     val init        : unit -> ctx
@@ -34,6 +34,7 @@ sig
   module Bytes :
   sig
     type buffer = Native.st
+    type ctx
     type t = Native.st
 
     val init        : unit -> ctx
@@ -91,59 +92,6 @@ sig
   val neq     : t -> t -> bool
 end
 
-module PrettyPrint (S : sig type t val create : int -> t val iter : (char -> unit) -> t -> unit val set : t -> int -> char -> unit val get : t -> int -> char end) (D : Desc) =
-struct
-  let to_hex hash =
-    let res = S.create (D.digest_size * 2) in
-
-    let chr x = match x with
-      | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 -> Char.chr (48 + x)
-      | _ -> Char.chr (65 + (x - 10))
-    in
-
-    for i = 0 to D.digest_size - 1
-    do
-      let v = Char.code (S.get hash i) in
-      S.set res (i * 2) (chr (v lsr 4));
-      S.set res (i * 2 + 1) (chr (v land 0x0F));
-    done;
-
-    res
-
-  let fold_s f a s =
-    let r = ref a in
-    S.iter (fun x -> r := f !r x) s; !r
-
-  let of_hex hex =
-    let code x = match x with
-      | '0' .. '9' -> Char.code x - 48
-      | 'A' .. 'F' -> Char.code x - 55
-      | 'a' .. 'z' -> Char.code x - 87
-      | _ -> raise (Invalid_argument "of_hex")
-    in
-
-    let wsp = function ' ' | '\t' | '\r' | '\n' -> true | _ -> false in
-
-    fold_s
-      (fun (res, i, acc) -> function
-         | chr when wsp chr -> (res, i, acc)
-         | chr ->
-           match acc, code chr with
-           | None, x -> (res, i, Some (x lsl 4))
-           | Some y, x -> S.set res i (Char.unsafe_chr (x lor y)); (res, succ i, None))
-      (S.create D.digest_size, 0, None)
-      hex
-    |> function (_, _, Some _)  -> raise (Invalid_argument "of_hex")
-              | (res, i, _) ->
-                if i = D.digest_size
-                then res
-                else (for i = i to D.digest_size - 1 do S.set res i '\000' done; res)
-
-  let pp fmt hash =
-    for i = 0 to D.digest_size - 1
-    do Format.fprintf fmt "%02x" (Char.code (S.get hash i)) done
-end
-
 module Core (F : Foreign) (D : Desc) =
 struct
   let block_size  = D.block_size
@@ -153,9 +101,10 @@ struct
   module Bytes =
   struct
     type buffer = Native.st
+    type ctx = Native.ctx
 
     include (By : Convenience with type t = Native.st)
-    include PrettyPrint (By) (D)
+    include Pp.Make (By) (D)
 
     let init () =
       let t = Bi.create ctx_size in
@@ -179,9 +128,10 @@ struct
   module Bigstring =
   struct
     type buffer = Native.ba
+    type ctx = Native.ctx
 
     include (Bi : Convenience with type t = Native.ba)
-    include PrettyPrint (Bi) (D)
+    include Pp.Make (Bi) (D)
 
     let init () =
       let t = Bi.create ctx_size in
@@ -267,8 +217,6 @@ module SHA512  : S = Make (Native.SHA512) (struct let (digest_size, block_size) 
 
 module Make_BLAKE2B (F : Foreign) (D : Desc) : S =
 struct
-  type ctx = Native.ctx
-
   let block_size  = D.block_size
   and digest_size = D.digest_size
   and ctx_size    = F.ctx_size ()
@@ -277,9 +225,10 @@ struct
   module Bytes =
   struct
     type buffer = Native.st
+    type ctx = Native.ctx
 
     include (By : Convenience with type t = Native.st)
-    include PrettyPrint (By) (D)
+    include Pp.Make (By) (D)
 
     let init () =
       let t = Bi.create ctx_size in
@@ -314,9 +263,10 @@ struct
   module Bigstring =
   struct
     type buffer = Native.ba
+    type ctx = Native.ctx
 
     include (Bi : Convenience with type t = Native.ba)
-    include PrettyPrint (Bi) (D)
+    include Pp.Make (Bi) (D)
 
     let init () =
       let t = Bi.create ctx_size in

@@ -74,6 +74,8 @@ static const uint32_t k[] = {
 #define s0(x)       (ror32(x, 7) ^ ror32(x,18) ^ (x >> 3))
 #define s1(x)       (ror32(x,17) ^ ror32(x,19) ^ (x >> 10))
 
+#include <stdio.h>
+
 static void sha256_do_chunk(struct sha256_ctx *ctx, uint32_t buf[])
 {
 	uint32_t a, b, c, d, e, f, g, h, t1, t2;
@@ -94,6 +96,9 @@ static void sha256_do_chunk(struct sha256_ctx *ctx, uint32_t buf[])
 	h = t1 + t2;
 
 	for (i = 0; i < 64; i += 8) {
+    printf("a: %x, b: %x, c: %x, d: %x, e: %x, f: %x, g: %x, h: %x\n",
+           a, b, c, d, e, f, g, h);
+
 		R(a, b, c, d, e, f, g, h, k[i + 0], w[i + 0]);
 		R(h, a, b, c, d, e, f, g, k[i + 1], w[i + 1]);
 		R(g, h, a, b, c, d, e, f, k[i + 2], w[i + 2]);
