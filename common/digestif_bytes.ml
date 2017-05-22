@@ -58,6 +58,11 @@ let be32_to_cpu s i =
   then get_u32 s i
   else swap32 @@ get_u32 s i
 
+let be64_to_cpu s i =
+  if Sys.big_endian
+  then get_u64 s i
+  else swap64 @@ get_u64 s i
+
 let benat_to_cpu s i =
   if Sys.big_endian
   then get_nat s i
