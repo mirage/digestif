@@ -21,6 +21,10 @@ struct
     let chr x = match x with
       | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 -> Char.chr (48 + x)
       | _ -> Char.chr (97 + (x - 10))
+      (* XXX(dinosaure): I decided to use small character because we planned to
+         used it in ocaml-git. So, this expected result is close to the Git
+         format. A good idea is to put a new argument and specify the
+         alphabet. *)
     in
 
     for i = 0 to D.digest_size - 1
