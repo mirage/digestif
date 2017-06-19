@@ -20,7 +20,7 @@ struct
 
     let chr x = match x with
       | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 -> Char.chr (48 + x)
-      | _ -> Char.chr (65 + (x - 10))
+      | _ -> Char.chr (97 + (x - 10))
     in
 
     for i = 0 to D.digest_size - 1
