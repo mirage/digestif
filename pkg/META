@@ -1,7 +1,7 @@
 description = "Implementation of hash function in C and OCaml"
 version = "%%VERSION%%"
 
-package "rakia" (
+package "c" (
   directory = "c"
   version = "%%VERSION%%"
   description = "Implementation of hash function in C"
@@ -13,7 +13,7 @@ package "rakia" (
   exists_if = "digestif.cma"
 )
 
-package "baijiu" (
+package "ocaml" (
   directory = "ocaml"
   version = "%%VERSION%%"
   description = "Implementation of hash function in OCaml"
