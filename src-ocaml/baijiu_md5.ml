@@ -1,3 +1,5 @@
+let () = Printexc.record_backtrace true
+
 module Int32 =
 struct
   include Int32
@@ -60,7 +62,7 @@ module Make (B : Baijiu_buffer.S)
            ; 0x10325476l |] }
 
   let f1 x y z = Int32.(z lxor (x land (y lxor z)))
-  let f2 x y z = f1 x y z
+  let f2 x y z = f1 z x y
   let f3 x y z = Int32.(x lxor y lxor z)
   let f4 x y z = Int32.(y lxor (x lor (lnot z)))
 
@@ -204,7 +206,7 @@ module Make (B : Baijiu_buffer.S)
     feed ctx padding 0 padlen;
     feed ctx bits 0 8;
 
-    for i = 0 to 4
+    for i = 0 to 3
     do B.cpu_to_le32 res (i * 4) ctx.h.(i) done;
 
     res
