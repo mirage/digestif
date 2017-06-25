@@ -196,7 +196,7 @@ struct
   let block_size = 0
 end
 
-module MD5     : S = Make (NI) (DI)
+module MD5     : S = Make (Baijiu_md5.Make) (struct let (digest_size, block_size) = (16, 64) end)
 module SHA1    : S = Make (Baijiu_sha1.Make)   (struct let (digest_size, block_size) = (20, 64) end)
 module SHA224  : S = Make (Baijiu_sha224.Make) (struct let (digest_size, block_size) = (28, 64) end)
 module SHA256  : S = Make (Baijiu_sha256.Make) (struct let (digest_size, block_size) = (32, 64) end)
