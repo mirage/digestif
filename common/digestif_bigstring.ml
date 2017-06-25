@@ -98,20 +98,40 @@ let cpu_to_be32 s i v =
   then set_u32 s i v
   else set_u32 s i (swap32 v)
 
+let cpu_to_le32 s i v =
+  if Sys.big_endian
+  then set_u32 s i (swap32 v)
+  else set_u32 s i v
+
 let cpu_to_be64 s i v =
   if Sys.big_endian
   then set_u64 s i v
   else set_u64 s i (swap64 v)
+
+let cpu_to_le64 s i v =
+  if Sys.big_endian
+  then set_u64 s i (swap64 v)
+  else set_u64 s i v
 
 let be32_to_cpu s i =
   if Sys.big_endian
   then get_u32 s i
   else swap32 @@ get_u32 s i
 
+let le32_to_cpu s i =
+  if Sys.big_endian
+  then swap32 @@ get_u32 s i
+  else get_u32 s i
+
 let be64_to_cpu s i =
   if Sys.big_endian
   then get_u64 s i
   else swap64 @@ get_u64 s i
+
+let le64_to_cpu s i =
+  if Sys.big_endian
+  then swap64 @@ get_u64 s i
+  else get_u64 s i
 
 let benat_to_cpu s i =
   if Sys.big_endian
