@@ -15,8 +15,6 @@ let () =
      ; Pkg.doc "README.md"
      ; Pkg.doc "CHANGES.md"
 
-     (* c implementation *)
      ; Pkg.clib "src-c/librakia_stubs.clib" ~lib_dst_dir:"c"
      ; Pkg.mllib ~api:["Digestif"] "src-c/digestif.mllib" ~dst_dir:"c"
-
      ; Pkg.mllib ~api:["Digestif"] "src-ocaml/digestif.mllib" ~dst_dir:"ocaml" ]

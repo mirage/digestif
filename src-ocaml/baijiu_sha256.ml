@@ -38,7 +38,7 @@ end
 
 module Make (B : Baijiu_buffer.S)
   : S with type buffer = B.buffer and type t = B.buffer
-  = struct
+= struct
   type ctx =
     { mutable size : int64
     ; b            : buffer
