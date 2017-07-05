@@ -32,7 +32,7 @@ sig
   and buffer
 
   val init : unit -> ctx
-  val feed : ctx -> t -> int -> int -> unit
+  val feed : ctx -> buffer -> int -> int -> unit
   val get  : ctx -> t
 end
 
