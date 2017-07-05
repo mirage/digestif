@@ -190,6 +190,71 @@ struct
   let get ctx = not_implemented ()
 end
 
+module type Hash' =
+  functor (Buffer : BUFFER) -> sig
+    type ctx
+    type buffer
+
+    val init : unit -> ctx
+    val init': buffer -> int -> int -> ctx
+    val feed : ctx -> buffer -> int -> int -> unit
+    val get  : ctx -> buffer
+  end with type buffer = Buffer.buffer
+
+module Make_BLAKE2B (Hash : Hash') (D : Desc) : S =
+struct
+  let digest_size = D.digest_size
+
+  module Bytes =
+  struct
+    include (By : Convenience with type t = By.t)
+    include Hash (struct include By type buffer = t end)
+    include Pp.Make (By) (D)
+
+    let feed ctx buf =
+      feed ctx buf 0 (By.length buf)
+
+    let digest buf =
+      let t = init () in ( feed t buf; get t)
+
+    let digestv bufs =
+      let t = init () in ( List.iter (feed t) bufs; get t )
+
+    let hmacv ~key msg =
+      let ctx = init' key 0 (By.length key) in
+      List.iter (fun x -> feed ctx x) msg;
+      get ctx
+
+    let hmac ~key msg =
+      hmacv ~key [ msg ]
+  end
+
+  module Bigstring =
+  struct
+    include (Bi : Convenience with type t = Bi.t)
+    include Hash (struct include Bi type buffer = t end)
+    include Pp.Make (Bi) (D)
+
+    let feed ctx buf =
+      feed ctx buf 0 (Bi.length buf)
+
+    let digest buf =
+      let t = init () in ( feed t buf; get t)
+
+    let digestv bufs =
+      let t = init () in ( List.iter (feed t) bufs; get t )
+
+    let hmacv ~key msg =
+      let ctx = init' key 0 (Bi.length key) in
+      List.iter (fun x -> feed ctx x) msg;
+      get ctx
+
+    let hmac ~key msg =
+      hmacv ~key [ msg ]
+  end
+end
+
+
 module DI =
 struct
   let digest_size = 0
@@ -202,7 +267,7 @@ module SHA224  : S = Make (Baijiu_sha224.Make) (struct let (digest_size, block_s
 module SHA256  : S = Make (Baijiu_sha256.Make) (struct let (digest_size, block_size) = (32, 64) end)
 module SHA384  : S = Make (Baijiu_sha384.Make) (struct let (digest_size, block_size) = (48, 128) end)
 module SHA512  : S = Make (Baijiu_sha512.Make) (struct let (digest_size, block_size) = (64, 128) end)
-module BLAKE2B : S = Make (NI) (DI)
+module BLAKE2B = Make_BLAKE2B(Baijiu_blake2b.Make) (struct let (digest_size, block_size) = (64, 128) end)
 
 type hash =
   [ `MD5
