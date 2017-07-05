@@ -6,7 +6,7 @@
 
 open Topkg
 
-let opam = Pkg.opam_file ~lint_deps_excluding:(Some [ "ocamlbuild"; "topkg"; "ocaml"; "ocamlfind" ]) "opam"
+let opam = Pkg.opam_file ~lint_deps_excluding:(Some [ "ocamlbuild"; "topkg"; "ocaml"; "ocamlfind"; "base-bytes" ]) "opam"
 
 let () =
   Pkg.describe ~opams:[opam] "digestif" @@ fun c ->
