@@ -1,5 +1,3 @@
-let () = Printexc.record_backtrace true
-
 module Int32 =
 struct
   include Int32
@@ -17,6 +15,7 @@ struct
   let ror32 a n =
     (a asr n) lor (a lsl (32 - n))
 end
+
 
 module Int64 =
 struct

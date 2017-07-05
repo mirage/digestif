@@ -1,5 +1,3 @@
-let () = Printexc.record_backtrace true
-
 module Int32 =
 struct
   include Int32
