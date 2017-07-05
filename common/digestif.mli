@@ -2,13 +2,12 @@ module Bi : module type of Digestif_bigstring
 
 module type S =
 sig
-  type ctx
-
   val digest_size : int
 
   module Bigstring :
   sig
     type buffer = Bi.t
+    type ctx
     type t = Bi.t
 
     val init    : unit -> ctx
@@ -32,6 +31,7 @@ sig
   module Bytes :
   sig
     type buffer = Bytes.t
+    type ctx
     type t = Bytes.t
 
     val init    : unit -> ctx

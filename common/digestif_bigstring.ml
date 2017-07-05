@@ -23,12 +23,22 @@ let copy v =
   let v' = create (length v) in
   Array1.blit v v'; v'
 
+let get_u8 : t -> int -> int = fun s i -> Char.code @@ get s i
 external get_u16 : t -> int -> int   = "%caml_bigstring_get16u"
 external get_u32 : t -> int -> int32 = "%caml_bigstring_get32u"
 external get_u64 : t -> int -> int64 = "%caml_bigstring_get64u"
+let get_nat : t -> int -> nativeint = fun s i ->
+  if Sys.word_size = 32
+  then Nativeint.of_int32 @@ get_u32 s i
+  else Int64.to_nativeint @@ get_u64 s i
+let set_u8 : t -> int -> int -> unit = fun s i v -> set s i (Char.unsafe_chr v)
 external set_u16 : t -> int -> int -> unit   = "%caml_bigstring_set16u"
 external set_u32 : t -> int -> int32 -> unit = "%caml_bigstring_set32u"
 external set_u64 : t -> int -> int64 -> unit = "%caml_bigstring_set64u"
+let set_nat : t -> int -> nativeint -> unit = fun s i v ->
+  if Sys.word_size = 32
+  then set_u32 s i (Nativeint.to_int32 v)
+  else set_u64 s i (Int64.of_nativeint v)
 
 let to_string v =
   let buf = Bytes.create (length v) in
@@ -78,3 +88,57 @@ let empty = create 0
 let pp fmt ba =
   for i = 0 to length ba - 1
   do Format.fprintf fmt "%c" (get ba i) done
+
+external swap32 : int32 -> int32 = "%bswap_int32"
+external swap64 : int64 -> int64 = "%bswap_int64"
+external swapnat : nativeint -> nativeint = "%bswap_native"
+
+let cpu_to_be32 s i v =
+  if Sys.big_endian
+  then set_u32 s i v
+  else set_u32 s i (swap32 v)
+
+let cpu_to_le32 s i v =
+  if Sys.big_endian
+  then set_u32 s i (swap32 v)
+  else set_u32 s i v
+
+let cpu_to_be64 s i v =
+  if Sys.big_endian
+  then set_u64 s i v
+  else set_u64 s i (swap64 v)
+
+let cpu_to_le64 s i v =
+  if Sys.big_endian
+  then set_u64 s i (swap64 v)
+  else set_u64 s i v
+
+let be32_to_cpu s i =
+  if Sys.big_endian
+  then get_u32 s i
+  else swap32 @@ get_u32 s i
+
+let le32_to_cpu s i =
+  if Sys.big_endian
+  then swap32 @@ get_u32 s i
+  else get_u32 s i
+
+let be64_to_cpu s i =
+  if Sys.big_endian
+  then get_u64 s i
+  else swap64 @@ get_u64 s i
+
+let le64_to_cpu s i =
+  if Sys.big_endian
+  then swap64 @@ get_u64 s i
+  else get_u64 s i
+
+let benat_to_cpu s i =
+  if Sys.big_endian
+  then get_nat s i
+  else swapnat @@ get_nat s i
+
+let cpu_to_benat s i v =
+  if Sys.big_endian
+  then set_nat s i v
+  else set_nat s i (swapnat v)
