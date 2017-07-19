@@ -366,7 +366,7 @@ module Make (B : Baijiu_buffer.S)
 
     increment_counter ctx (Int64.of_int ctx.buflen);
     set_lastblock ctx;
-    B.fill ctx.buf ctx.buflen (64 - ctx.buflen) '\x00';
+    B.fill ctx.buf ctx.buflen (128 - ctx.buflen) '\x00';
     compress ctx ctx.buf 0;
 
     for i = 0 to 7

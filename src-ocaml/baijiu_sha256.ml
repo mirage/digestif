@@ -96,7 +96,7 @@ module Make (B : Baijiu_buffer.S)
     let w = Array.make 64 0l in
 
     for i = 0 to 15
-    do w.(i) <- B.be32_to_cpu buf (i * 4) done;
+    do w.(i) <- B.be32_to_cpu buf (off + i * 4) done;
 
     let ( -- ) a b = a - b in
 
