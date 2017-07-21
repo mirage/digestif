@@ -75,7 +75,7 @@ module Make (B : Baijiu_buffer.S)
     let w = Array.make 16 0l in
 
     for i = 0 to 15
-    do w.(i) <- B.le32_to_cpu buf (i * 4) done;
+    do w.(i) <- B.le32_to_cpu buf (off + (i * 4)) done;
 
     let round f a b c d i k s =
       let open Int32 in
@@ -178,9 +178,12 @@ module Make (B : Baijiu_buffer.S)
       idx := 0;
     end;
 
+    Format.printf "len: %d, off: %d, idx: %d.\n%!"
+      !len !off !idx;
+
     while !len >= 64
     do md5_do_chunk ctx buf !off;
-      len := !len - 64;
+       len := !len - 64;
        off := !off + 64;
     done;
 
