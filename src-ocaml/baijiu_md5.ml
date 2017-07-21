@@ -178,9 +178,6 @@ module Make (B : Baijiu_buffer.S)
       idx := 0;
     end;
 
-    Format.printf "len: %d, off: %d, idx: %d.\n%!"
-      !len !off !idx;
-
     while !len >= 64
     do md5_do_chunk ctx buf !off;
        len := !len - 64;
