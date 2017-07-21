@@ -1,3 +1,9 @@
+v0.3 2017-07-21 Phnom Penh (Cambodia)
+-------------------------------------
+
+- Fixed issue #6
+- Make a new test suit
+
 v0.2 2017-05-12 Phnom Penh (Cambodia)
 -------------------------------------
 
