@@ -15,6 +15,8 @@ sig
 
     val init        : unit -> ctx
     val feed        : ctx -> buffer -> unit
+    val feed_bytes     : ctx -> Bytes.t -> unit
+    val feed_bigstring : ctx -> Bi.t -> unit
     val get         : ctx -> t
 
     val digest      : buffer -> t
@@ -39,6 +41,8 @@ sig
 
     val init        : unit -> ctx
     val feed        : ctx -> buffer -> unit
+    val feed_bytes     : ctx -> Bytes.t -> unit
+    val feed_bigstring : ctx -> Bi.t -> unit
     val get         : ctx -> t
 
     val digest      : buffer -> t
@@ -80,6 +84,8 @@ module type Hash =
 
     val init : unit -> ctx
     val feed : ctx -> buffer -> int -> int -> unit
+    val feed_bytes : ctx -> By.t -> int -> int -> unit
+    val feed_bigstring : ctx -> Bi.t -> int -> int -> unit
     val get  : ctx -> buffer
   end with type buffer = Buffer.buffer
 
@@ -96,6 +102,10 @@ struct
 
     let feed ctx buf =
       feed ctx buf 0 (Bi.length buf)
+    let feed_bytes ctx buf =
+      feed_bytes ctx buf 0 (By.length buf)
+    let feed_bigstring ctx buf =
+      feed_bigstring ctx buf 0 (Bi.length buf)
 
     let digest buf =
       let t = init () in ( feed t buf; get t)
@@ -112,6 +122,10 @@ struct
 
     let feed ctx buf =
       feed ctx buf 0 (By.length buf)
+    let feed_bytes ctx buf =
+      feed_bytes ctx buf 0 (By.length buf)
+    let feed_bigstring ctx buf =
+      feed_bigstring ctx buf 0 (Bi.length buf)
 
     let digest buf =
       let t = init () in ( feed t buf; get t)
@@ -198,6 +212,8 @@ module type Hash' =
     val init : unit -> ctx
     val init': buffer -> int -> int -> ctx
     val feed : ctx -> buffer -> int -> int -> unit
+    val feed_bytes : ctx -> By.t -> int -> int -> unit
+    val feed_bigstring : ctx -> Bi.t -> int -> int -> unit
     val get  : ctx -> buffer
   end with type buffer = Buffer.buffer
 
@@ -213,6 +229,10 @@ struct
 
     let feed ctx buf =
       feed ctx buf 0 (By.length buf)
+    let feed_bytes ctx buf =
+      feed_bytes ctx buf 0 (By.length buf)
+    let feed_bigstring ctx buf =
+      feed_bigstring ctx buf 0 (Bi.length buf)
 
     let digest buf =
       let t = init () in ( feed t buf; get t)
@@ -237,6 +257,10 @@ struct
 
     let feed ctx buf =
       feed ctx buf 0 (Bi.length buf)
+    let feed_bytes ctx buf =
+      feed_bytes ctx buf 0 (By.length buf)
+    let feed_bigstring ctx buf =
+      feed_bigstring ctx buf 0 (Bi.length buf)
 
     let digest buf =
       let t = init () in ( feed t buf; get t)

@@ -10,22 +10,24 @@ sig
     type ctx
     type t = Bi.t
 
-    val init    : unit -> ctx
-    val feed    : ctx -> buffer -> unit
-    val get     : ctx -> t
+    val init           : unit -> ctx
+    val feed           : ctx -> buffer -> unit
+    val feed_bytes     : ctx -> Bytes.t -> unit
+    val feed_bigstring : ctx -> Bi.t -> unit
+    val get            : ctx -> t
 
-    val digest  : buffer -> t
-    val digestv : buffer list -> t
-    val hmac    : key:buffer -> buffer -> t
-    val hmacv   : key:buffer -> buffer list -> t
+    val digest         : buffer -> t
+    val digestv        : buffer list -> t
+    val hmac           : key:buffer -> buffer -> t
+    val hmacv          : key:buffer -> buffer list -> t
 
-    val compare : t -> t -> int
-    val eq      : t -> t -> bool
-    val neq     : t -> t -> bool
+    val compare        : t -> t -> int
+    val eq             : t -> t -> bool
+    val neq            : t -> t -> bool
 
-    val pp      : Format.formatter -> t -> unit
-    val of_hex  : buffer -> t
-    val to_hex  : t -> buffer
+    val pp             : Format.formatter -> t -> unit
+    val of_hex         : buffer -> t
+    val to_hex         : t -> buffer
   end
 
   module Bytes :
@@ -34,22 +36,24 @@ sig
     type ctx
     type t = Bytes.t
 
-    val init    : unit -> ctx
-    val feed    : ctx -> buffer -> unit
-    val get     : ctx -> t
+    val init           : unit -> ctx
+    val feed           : ctx -> buffer -> unit
+    val feed_bytes     : ctx -> Bytes.t -> unit
+    val feed_bigstring : ctx -> Bi.t -> unit
+    val get            : ctx -> t
 
-    val digest  : buffer -> t
-    val digestv : buffer list -> t
-    val hmac    : key:buffer -> buffer -> t
-    val hmacv   : key:buffer -> buffer list -> t
+    val digest         : buffer -> t
+    val digestv        : buffer list -> t
+    val hmac           : key:buffer -> buffer -> t
+    val hmacv          : key:buffer -> buffer list -> t
 
-    val compare : t -> t -> int
-    val eq      : t -> t -> bool
-    val neq     : t -> t -> bool
+    val compare        : t -> t -> int
+    val eq             : t -> t -> bool
+    val neq            : t -> t -> bool
 
-    val pp      : Format.formatter -> t -> unit
-    val of_hex  : buffer -> t
-    val to_hex  : t -> buffer
+    val pp             : Format.formatter -> t -> unit
+    val of_hex         : buffer -> t
+    val to_hex         : t -> buffer
   end
 end
 
