@@ -61,7 +61,7 @@ let test
       atest (module Bi) hash Digestif.Bigstring.mac key input expect
 
 let make
-  : type a. name:string -> a buffer -> Digestif.hash -> a -> a -> a -> Alcotest.test_case
+  : type a. name:string -> a buffer -> Digestif.hash -> a -> a -> a -> unit Alcotest.test_case
   = fun ~name buffer hash key input expect ->
     name, `Slow, (fun () -> test buffer hash key input expect)
 
