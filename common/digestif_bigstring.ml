@@ -27,6 +27,9 @@ let get_u8 : t -> int -> int = fun s i -> Char.code @@ get s i
 external get_u16 : t -> int -> int   = "%caml_bigstring_get16u"
 external get_u32 : t -> int -> int32 = "%caml_bigstring_get32u"
 external get_u64 : t -> int -> int64 = "%caml_bigstring_get64u"
+external by_get_u16 : Bytes.t -> int -> int   = "%caml_string_get16u"
+external by_get_u32 : Bytes.t -> int -> int32 = "%caml_string_get32u"
+external by_get_u64 : Bytes.t -> int -> int64 = "%caml_string_get64u"
 let get_nat : t -> int -> nativeint = fun s i ->
   if Sys.word_size = 32
   then Nativeint.of_int32 @@ get_u32 s i
@@ -52,9 +55,11 @@ let blit src src_off dst dst_off len =
 
   Array1.blit a b
 
-let blit_bytes src src_off dst dst_off len =
+let blit_from_bytes src src_off dst dst_off len =
   for i = 0 to len - 1
   do set dst (dst_off + i) (Bytes.get src (src_off + i)) done
+
+let blit_from_bigstring = blit
 
 let rpad a size x =
   let l = length a
@@ -118,20 +123,48 @@ let be32_to_cpu s i =
   then get_u32 s i
   else swap32 @@ get_u32 s i
 
+let be32_from_bigstring_to_cpu = be32_to_cpu
+
+let be32_from_bytes_to_cpu s i =
+  if Sys.big_endian
+  then by_get_u32 s i
+  else swap32 @@ by_get_u32 s i
+
 let le32_to_cpu s i =
   if Sys.big_endian
   then swap32 @@ get_u32 s i
   else get_u32 s i
+
+let le32_from_bigstring_to_cpu = le32_to_cpu
+
+let le32_from_bytes_to_cpu s i =
+  if Sys.big_endian
+  then swap32 @@ by_get_u32 s i
+  else by_get_u32 s i
 
 let be64_to_cpu s i =
   if Sys.big_endian
   then get_u64 s i
   else swap64 @@ get_u64 s i
 
+let be64_from_bigstring_to_cpu = be64_to_cpu
+
+let be64_from_bytes_to_cpu s i =
+  if Sys.big_endian
+  then by_get_u64 s i
+  else swap64 @@ by_get_u64 s i
+
 let le64_to_cpu s i =
   if Sys.big_endian
   then swap64 @@ get_u64 s i
   else get_u64 s i
+
+let le64_from_bigstring_to_cpu = le64_to_cpu
+
+let le64_from_bytes_to_cpu s i =
+  if Sys.big_endian
+  then swap64 @@ by_get_u64 s i
+  else by_get_u64 s i
 
 let benat_to_cpu s i =
   if Sys.big_endian

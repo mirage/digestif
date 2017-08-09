@@ -12,6 +12,9 @@ let get_u8 : t -> int -> int = fun s i -> Char.code @@ get s i
 external get_u16 : t -> int -> int   = "%caml_string_get16u"
 external get_u32 : t -> int -> int32 = "%caml_string_get32u"
 external get_u64 : t -> int -> int64 = "%caml_string_get64u"
+external bi_get_u16 : (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t -> int -> int   = "%caml_bigstring_get16u"
+external bi_get_u32 : (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t -> int -> int32 = "%caml_bigstring_get32u"
+external bi_get_u64 : (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t -> int -> int64 = "%caml_bigstring_get64u"
 let get_nat : t -> int -> nativeint = fun s i ->
   if Sys.word_size = 32
   then Nativeint.of_int32 @@ get_u32 s i
@@ -25,9 +28,11 @@ let set_nat : t -> int -> nativeint -> unit = fun s i v ->
   then set_u32 s i (Nativeint.to_int32 v)
   else set_u64 s i (Int64.of_nativeint v)
 
-let blit_bigstring src src_off dst dst_off len =
+let blit_from_bigstring src src_off dst dst_off len =
   for i = 0 to len - 1
   do set dst (dst_off + i) (B.get src (src_off + i)) done
+
+let blit_from_bytes = blit
 
 let rpad a size x =
   let l = length a
@@ -68,20 +73,48 @@ let be32_to_cpu s i =
   then get_u32 s i
   else swap32 @@ get_u32 s i
 
+let be32_from_bytes_to_cpu = be32_to_cpu
+
+let be32_from_bigstring_to_cpu s i =
+  if Sys.big_endian
+  then bi_get_u32 s i
+  else swap32 @@ bi_get_u32 s i
+
 let le32_to_cpu s i =
   if Sys.big_endian
   then swap32 @@ get_u32 s i
   else get_u32 s i
+
+let le32_from_bytes_to_cpu = le32_to_cpu
+
+let le32_from_bigstring_to_cpu s i =
+  if Sys.big_endian
+  then swap32 @@ bi_get_u32 s i
+  else bi_get_u32 s i
 
 let be64_to_cpu s i =
   if Sys.big_endian
   then get_u64 s i
   else swap64 @@ get_u64 s i
 
+let be64_from_bytes_to_cpu = be64_to_cpu
+
+let be64_from_bigstring_to_cpu s i =
+  if Sys.big_endian
+  then bi_get_u64 s i
+  else swap64 @@ bi_get_u64 s i
+
 let le64_to_cpu s i =
   if Sys.big_endian
   then swap64 @@ get_u64 s i
   else get_u64 s i
+
+let le64_from_bytes_to_cpu = le64_to_cpu
+
+let le64_from_bigstring_to_cpu s i =
+  if Sys.big_endian
+  then swap64 @@ bi_get_u64 s i
+  else bi_get_u64 s i
 
 let benat_to_cpu s i =
   if Sys.big_endian

@@ -13,22 +13,24 @@ sig
     type ctx
     type t = Native.ba
 
-    val init        : unit -> ctx
-    val feed        : ctx -> buffer -> unit
-    val get         : ctx -> t
+    val init           : unit -> ctx
+    val feed           : ctx -> buffer -> unit
+    val feed_bytes     : ctx -> By.t -> unit
+    val feed_bigstring : ctx -> Bi.t -> unit
+    val get            : ctx -> t
 
-    val digest      : buffer -> t
-    val digestv     : buffer list -> t
-    val hmac        : key:buffer -> buffer -> t
-    val hmacv       : key:buffer -> buffer list -> t
+    val digest         : buffer -> t
+    val digestv        : buffer list -> t
+    val hmac           : key:buffer -> buffer -> t
+    val hmacv          : key:buffer -> buffer list -> t
 
-    val compare     : t -> t -> int
-    val eq          : t -> t -> bool
-    val neq         : t -> t -> bool
+    val compare        : t -> t -> int
+    val eq             : t -> t -> bool
+    val neq            : t -> t -> bool
 
-    val pp          : Format.formatter -> t -> unit
-    val of_hex      : buffer -> t
-    val to_hex      : t -> buffer
+    val pp             : Format.formatter -> t -> unit
+    val of_hex         : buffer -> t
+    val to_hex         : t -> buffer
   end
 
   module Bytes :
@@ -37,22 +39,24 @@ sig
     type ctx
     type t = Native.st
 
-    val init        : unit -> ctx
-    val feed        : ctx -> buffer -> unit
-    val get         : ctx -> t
+    val init           : unit -> ctx
+    val feed           : ctx -> buffer -> unit
+    val feed_bytes     : ctx -> By.t -> unit
+    val feed_bigstring : ctx -> Bi.t -> unit
+    val get            : ctx -> t
 
-    val digest      : buffer -> t
-    val digestv     : buffer list -> t
-    val hmac        : key:buffer -> buffer -> t
-    val hmacv       : key:buffer -> buffer list -> t
+    val digest         : buffer -> t
+    val digestv        : buffer list -> t
+    val hmac           : key:buffer -> buffer -> t
+    val hmacv          : key:buffer -> buffer list -> t
 
-    val compare : t -> t -> int
-    val eq      : t -> t -> bool
-    val neq     : t -> t -> bool
+    val compare        : t -> t -> int
+    val eq             : t -> t -> bool
+    val neq            : t -> t -> bool
 
-    val pp      : Format.formatter -> t -> unit
-    val of_hex  : buffer -> t
-    val to_hex  : t -> buffer
+    val pp             : Format.formatter -> t -> unit
+    val of_hex         : buffer -> t
+    val to_hex         : t -> buffer
   end
 end
 
@@ -113,6 +117,11 @@ struct
     let feed t buf =
       F.Bytes.update t buf 0 (By.length buf)
 
+    let feed_bytes = feed
+
+    let feed_bigstring t buf =
+      F.Bigstring.update t buf 0 (Bi.length buf)
+
     let get t =
       let res = By.create digest_size in
       F.Bytes.finalize t res 0;
@@ -139,6 +148,11 @@ struct
 
     let feed t buf =
       F.Bigstring.update t buf 0 (Bi.length buf)
+
+    let feed_bigstring = feed
+
+    let feed_bytes t buf =
+      F.Bytes.update t buf 0 (By.length buf)
 
     let get t =
       let res = Bi.create digest_size in
@@ -232,10 +246,15 @@ struct
 
     let init () =
       let t = Bi.create ctx_size in
-      ( Native.BLAKE2B.Bytes.init' t digest_size Bytes.empty 0 0; t )
+      ( Native.BLAKE2B.Bytes.init' t digest_size By.empty 0 0; t )
 
     let feed t buf =
-      F.Bytes.update t buf 0 (Bytes.length buf)
+      F.Bytes.update t buf 0 (By.length buf)
+
+    let feed_bytes = feed
+
+    let feed_bigstring t buf =
+      F.Bigstring.update t buf 0 (Bi.length buf)
 
     let get t =
       let res = Bytes.create digest_size in
@@ -274,6 +293,11 @@ struct
 
     let feed t buf =
       F.Bigstring.update t buf 0 (Bi.length buf)
+
+    let feed_bigstring = feed
+
+    let feed_bytes t buf =
+      F.Bytes.update t buf 0 (By.length buf)
 
     let get t =
       let res = Bi.create digest_size in

@@ -33,6 +33,8 @@ sig
 
   val init : unit -> ctx
   val feed : ctx -> buffer -> int -> int -> unit
+  val feed_bytes : ctx -> Bytes.t -> int -> int -> unit
+  val feed_bigstring : ctx -> (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t -> int -> int -> unit
   val get  : ctx -> t
 end
 
@@ -80,7 +82,9 @@ module Make (B : Baijiu_buffer.S)
   let s0 x = Int32.((ror32 x 7) lxor (ror32 x 18) lxor (srl x 3))
   let s1 x = Int32.((ror32 x 17) lxor (ror32 x 19) lxor (srl x 10))
 
-  let sha256_do_chunk ctx buf off =
+  let sha256_do_chunk
+    : type a. be32_to_cpu:(a -> int -> int32) -> ctx -> a -> int -> unit
+    = fun ~be32_to_cpu ctx buf off ->
     let a, b, c, d, e, f, g, h, t1, t2 =
       ref ctx.h.(0),
       ref ctx.h.(1),
@@ -96,7 +100,7 @@ module Make (B : Baijiu_buffer.S)
     let w = Array.make 64 0l in
 
     for i = 0 to 15
-    do w.(i) <- B.be32_to_cpu buf (off + i * 4) done;
+    do w.(i) <- be32_to_cpu buf (off + i * 4) done;
 
     let ( -- ) a b = a - b in
 
@@ -135,7 +139,11 @@ module Make (B : Baijiu_buffer.S)
 
     ()
 
-  let feed ctx buf off len =
+  let feed : type a.
+       blit:(a -> int -> B.buffer -> int -> int -> unit)
+    -> be32_to_cpu:(a -> int -> int32)
+    -> ctx -> a -> int -> int -> unit
+    = fun ~blit ~be32_to_cpu ctx buf off len ->
     let idx = ref Int64.(to_int (ctx.size land 0x3FL)) in
     let len = ref len in
     let off = ref off in
@@ -146,23 +154,27 @@ module Make (B : Baijiu_buffer.S)
 
     if !idx <> 0 && !len >= to_fill
     then begin
-      B.blit buf !off ctx.b !idx to_fill;
-      sha256_do_chunk ctx ctx.b 0;
+      blit buf !off ctx.b !idx to_fill;
+      sha256_do_chunk ~be32_to_cpu:B.be32_to_cpu ctx ctx.b 0;
       len := !len - to_fill;
       off := !off + to_fill;
       idx := 0;
     end;
 
     while !len >= 64
-    do sha256_do_chunk ctx buf !off;
+    do sha256_do_chunk ~be32_to_cpu ctx buf !off;
       len := !len - 64;
       off := !off + 64;
     done;
 
     if !len <> 0
-    then B.blit buf !off ctx.b !idx !len;
+    then blit buf !off ctx.b !idx !len;
 
     ()
+
+  let feed_bytes = feed ~blit:B.blit_from_bytes ~be32_to_cpu:B.be32_from_bytes_to_cpu
+  let feed_bigstring = feed ~blit:B.blit_from_bigstring ~be32_to_cpu:B.be32_from_bigstring_to_cpu
+  let feed = feed ~blit:B.blit ~be32_to_cpu:B.be32_to_cpu
 
   let get ctx =
     let padding = B.create 64 in

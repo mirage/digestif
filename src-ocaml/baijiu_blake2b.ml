@@ -44,6 +44,8 @@ sig
   val init : unit -> ctx
   val init': buffer -> int -> int -> ctx
   val feed : ctx -> buffer -> int -> int -> unit
+  val feed_bytes : ctx -> Bytes.t -> int -> int -> unit
+  val feed_bigstring : ctx -> (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t -> int -> int -> unit
   val get  : ctx -> t
 end
 
@@ -230,7 +232,8 @@ module Make (B : Baijiu_buffer.S)
    ; [|  0;  1;  2;  3;  4;  5;  6;  7;  8;  9; 10; 11; 12; 13; 14; 15 |]
    ; [| 14; 10;  4;  8;  9; 15; 13;  6;  1; 12;  0;  2; 11;  7;  5;  3 |] |]
 
-  let compress ctx block off =
+  let compress : type a. le64_to_cpu:(a -> int -> int64) -> ctx -> a -> int -> unit =
+    fun ~le64_to_cpu ctx block off ->
     let v = Array.make 16 0L in
     let m = Array.make 16 0L in
 
@@ -260,7 +263,7 @@ module Make (B : Baijiu_buffer.S)
     in
 
     for i = 0 to 15
-    do m.(i) <- B.le64_to_cpu block (off + i * 8);
+    do m.(i) <- le64_to_cpu block (off + i * 8);
     done;
 
     for i = 0 to 7
@@ -296,7 +299,11 @@ module Make (B : Baijiu_buffer.S)
 
     ()
 
-  let feed ctx buf off len =
+  let feed : type a.
+       blit:(a -> int -> B.buffer -> int -> int -> unit)
+    -> le64_to_cpu:(a -> int -> int64)
+    -> ctx -> a -> int -> int -> unit =
+    fun ~blit ~le64_to_cpu ctx buf off len ->
     let in_off = ref off in
     let in_len = ref len in
 
@@ -308,26 +315,30 @@ module Make (B : Baijiu_buffer.S)
       if !in_len > fill
       then begin
         ctx.buflen <- 0;
-        B.blit buf !in_off ctx.buf left fill;
+        blit buf !in_off ctx.buf left fill;
         increment_counter ctx 128L;
-        compress ctx ctx.buf 0;
+        compress ~le64_to_cpu:B.le64_to_cpu ctx ctx.buf 0;
         in_off := !in_off + fill;
         in_len := !in_len - fill;
 
         while !in_len > 128
         do
           increment_counter ctx 128L;
-          compress ctx buf !in_off;
+          compress ~le64_to_cpu ctx buf !in_off;
           in_off := !in_off + 128;
           in_len := !in_len - 128;
         done;
       end;
 
-      B.blit buf !in_off ctx.buf ctx.buflen !in_len;
+      blit buf !in_off ctx.buf ctx.buflen !in_len;
       ctx.buflen <- ctx.buflen + !in_len;
     end;
 
     ()
+
+  let feed_bytes = feed ~blit:B.blit_from_bytes ~le64_to_cpu:B.le64_from_bytes_to_cpu
+  let feed_bigstring = feed ~blit:B.blit_from_bigstring ~le64_to_cpu:B.le64_from_bigstring_to_cpu
+  let feed = feed ~blit:B.blit ~le64_to_cpu:B.le64_to_cpu
 
   let init' key off len =
     let buf = B.create 128 in
@@ -367,7 +378,7 @@ module Make (B : Baijiu_buffer.S)
     increment_counter ctx (Int64.of_int ctx.buflen);
     set_lastblock ctx;
     B.fill ctx.buf ctx.buflen (128 - ctx.buflen) '\x00';
-    compress ctx ctx.buf 0;
+    compress ~le64_to_cpu:B.le64_to_cpu ctx ctx.buf 0;
 
     for i = 0 to 7
     do B.cpu_to_le64 res (i * 8) ctx.h.(i) done;
