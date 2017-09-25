@@ -5,6 +5,7 @@
 #include "sha256.h"
 #include "sha512.h"
 #include "blake2b.h"
+#include "ripemd160.h"
 
 #define __define_hash(name, upper)                                           \
                                                                              \
@@ -64,6 +65,7 @@ __define_hash (sha256, SHA256)
 __define_hash (sha384, SHA384)
 __define_hash (sha512, SHA512)
 __define_hash (blake2b, BLAKE2B)
+__define_hash (rmd160, RMD160)
 
 CAMLprim value
 caml_digestif_blake2b_ba_abstract_init(value ctx, value outlen, value key, value off, value len)

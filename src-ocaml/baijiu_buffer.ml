@@ -4,6 +4,7 @@ sig
 
   val create : int -> buffer
   val set : buffer -> int -> char -> unit
+  val get : buffer -> int -> char
   val be32_to_cpu : buffer -> int -> int32
   val be32_from_bytes_to_cpu : Bytes.t -> int -> int32
   val be32_from_bigstring_to_cpu : (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t -> int -> int32
