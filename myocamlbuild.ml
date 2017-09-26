@@ -7,7 +7,8 @@ let headers =
   ; "src-c/native/md5.h"
   ; "src-c/native/sha1.h"
   ; "src-c/native/sha256.h"
-  ; "src-c/native/sha512.h" ]
+  ; "src-c/native/sha512.h"
+  ; "src-c/native/ripemd160.h" ]
 
 let static = true
 

@@ -266,6 +266,39 @@ struct
                        [@@noalloc]
 end
 
+module RMD160 =
+struct
+  module Bigstring =
+  struct
+    external init     : ctx -> unit
+                      = "caml_digestif_rmd160_ba_init"
+                      [@@noalloc]
+    external update   : ctx -> ba -> off -> size -> unit
+                      = "caml_digestif_rmd160_ba_update"
+                      [@@noalloc]
+    external finalize : ctx -> ba -> off -> unit
+                      = "caml_digestif_rmd160_ba_finalize"
+                      [@@noalloc]
+  end
+
+  module Bytes =
+  struct
+    external init     : ctx -> unit
+                      = "caml_digestif_rmd160_st_init"
+                      [@@noalloc]
+    external update   : ctx -> st -> off -> size -> unit
+                      = "caml_digestif_rmd160_st_update"
+                      [@@noalloc]
+    external finalize : ctx -> st -> off -> unit
+                      = "caml_digestif_rmd160_st_finalize"
+                      [@@noalloc]
+  end
+
+  external ctx_size   : unit -> int
+                      = "caml_digestif_rmd160_ctx_size"
+                      [@@noalloc]
+end
+
 let imin (a : int) (b : int) = if a < b then a else b
 
 module XOR =
