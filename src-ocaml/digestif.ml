@@ -201,6 +201,8 @@ struct
 
   let init = not_implemented
   let feed ctx buf = not_implemented ()
+  let feed_bytes ctx buf = not_implemented ()
+  let feed_bigstring ctx buf = not_implemented ()
   let get ctx = not_implemented ()
 end
 
@@ -292,6 +294,7 @@ module SHA256  : S = Make (Baijiu_sha256.Make) (struct let (digest_size, block_s
 module SHA384  : S = Make (Baijiu_sha384.Make) (struct let (digest_size, block_size) = (48, 128) end)
 module SHA512  : S = Make (Baijiu_sha512.Make) (struct let (digest_size, block_size) = (64, 128) end)
 module BLAKE2B = Make_BLAKE2B(Baijiu_blake2b.Make) (struct let (digest_size, block_size) = (64, 128) end)
+module BLAKE2S : S = Make (NI) (DI)
 module RMD160  : S = Make (Baijiu_rmd160.Make) (struct let (digest_size, block_size) = (20, 64) end)
 
 type hash =
@@ -302,6 +305,7 @@ type hash =
   | `SHA384
   | `SHA512
   | `BLAKE2B
+  | `BLAKE2S
   | `RMD160 ]
 
 let module_of = function
@@ -312,6 +316,7 @@ let module_of = function
   | `SHA384  -> (module SHA384  : S)
   | `SHA512  -> (module SHA512  : S)
   | `BLAKE2B -> (module BLAKE2B : S)
+  | `BLAKE2S -> (module BLAKE2S : S)
   | `RMD160  -> (module RMD160  : S)
 
 module Bytes =

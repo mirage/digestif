@@ -222,19 +222,36 @@ struct
   end
 end
 
-module MD5     : S = Make (Native.MD5)    (struct let (digest_size, block_size) = (16, 64) end)
-module SHA1    : S = Make (Native.SHA1)   (struct let (digest_size, block_size) = (20, 64) end)
-module SHA224  : S = Make (Native.SHA224) (struct let (digest_size, block_size) = (28, 64) end)
-module SHA256  : S = Make (Native.SHA256) (struct let (digest_size, block_size) = (32, 64) end)
-module SHA384  : S = Make (Native.SHA384) (struct let (digest_size, block_size) = (48, 128) end)
-module SHA512  : S = Make (Native.SHA512) (struct let (digest_size, block_size) = (64, 128) end)
+module type ForeignExt =
+sig
+  open Native
 
-module Make_BLAKE2B (F : Foreign) (D : Desc) : S =
+  module Bigstring :
+  sig
+    val init     : ctx -> unit
+    val init'    : ctx -> int -> ba -> int -> int -> unit
+    val update   : ctx -> ba -> int -> int -> unit
+    val finalize : ctx -> ba -> int -> unit
+  end
+
+  module Bytes :
+  sig
+    val init     : ctx -> unit
+    val init'    : ctx -> int -> st -> int -> int -> unit
+    val update   : ctx -> st -> int -> int -> unit
+    val finalize : ctx -> st -> int -> unit
+  end
+
+  val ctx_size   : unit -> int
+  val key_size   : unit -> int
+end
+
+module Make_BLAKE2 (F : ForeignExt) (D : Desc) : S =
 struct
   let block_size  = D.block_size
   and digest_size = D.digest_size
   and ctx_size    = F.ctx_size ()
-  and key_size    = Native.BLAKE2B.key_size ()
+  and key_size    = F.key_size ()
 
   module Bytes =
   struct
@@ -246,7 +263,7 @@ struct
 
     let init () =
       let t = Bi.create ctx_size in
-      ( Native.BLAKE2B.Bytes.init' t digest_size By.empty 0 0; t )
+      ( F.Bytes.init' t digest_size By.empty 0 0; t )
 
     let feed t buf =
       F.Bytes.update t buf 0 (By.length buf)
@@ -270,7 +287,7 @@ struct
     let hmacv ~key msg =
       let ctx = Bi.create ctx_size in
       let res = By.create digest_size in
-      Native.BLAKE2B.Bytes.init' ctx digest_size key 0 (By.length key);
+      F.Bytes.init' ctx digest_size key 0 (By.length key);
       List.iter (fun x -> F.Bytes.update ctx x 0 (By.length x)) msg;
       F.Bytes.finalize ctx res 0;
       res
@@ -289,7 +306,7 @@ struct
 
     let init () =
       let t = Bi.create ctx_size in
-      ( Native.BLAKE2B.Bigstring.init' t digest_size Bi.empty 0 0; t )
+      ( F.Bigstring.init' t digest_size Bi.empty 0 0; t )
 
     let feed t buf =
       F.Bigstring.update t buf 0 (Bi.length buf)
@@ -316,7 +333,7 @@ struct
 
       let ctx = Bi.create ctx_size in
       let res = Bi.create digest_size in
-      Native.BLAKE2B.Bigstring.init' ctx digest_size key 0 (Bi.length key);
+      F.Bigstring.init' ctx digest_size key 0 (Bi.length key);
       List.iter (fun x -> F.Bigstring.update ctx x 0 (Bi.length x)) msg;
       F.Bigstring.finalize ctx res 0;
       res
@@ -326,8 +343,15 @@ struct
   end
 end
 
-module BLAKE2B = Make_BLAKE2B(Native.BLAKE2B) (struct let (digest_size, block_size) = (64, 128) end)
-module RMD160 : S = Make (Native.RMD160) (struct let (digest_size, block_size) = (20, 64) end)
+module MD5     : S = Make (Native.MD5)    (struct let (digest_size, block_size) = (16, 64) end)
+module SHA1    : S = Make (Native.SHA1)   (struct let (digest_size, block_size) = (20, 64) end)
+module SHA224  : S = Make (Native.SHA224) (struct let (digest_size, block_size) = (28, 64) end)
+module SHA256  : S = Make (Native.SHA256) (struct let (digest_size, block_size) = (32, 64) end)
+module SHA384  : S = Make (Native.SHA384) (struct let (digest_size, block_size) = (48, 128) end)
+module SHA512  : S = Make (Native.SHA512) (struct let (digest_size, block_size) = (64, 128) end)
+module BLAKE2B = Make_BLAKE2(Native.BLAKE2B) (struct let (digest_size, block_size) = (64, 128) end)
+module BLAKE2S = Make_BLAKE2(Native.BLAKE2S) (struct let (digest_size, block_size) = (32, 64) end)
+module RMD160  : S = Make (Native.RMD160) (struct let (digest_size, block_size) = (20, 64) end)
 
 type hash =
   [ `MD5
@@ -337,6 +361,7 @@ type hash =
   | `SHA384
   | `SHA512
   | `BLAKE2B
+  | `BLAKE2S
   | `RMD160 ]
 
 let module_of = function
@@ -347,6 +372,7 @@ let module_of = function
   | `SHA384  -> (module SHA384  : S)
   | `SHA512  -> (module SHA512  : S)
   | `BLAKE2B -> (module BLAKE2B : S)
+  | `BLAKE2S -> (module BLAKE2S : S)
   | `RMD160  -> (module RMD160  : S)
 
 module Bytes =

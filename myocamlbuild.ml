@@ -4,6 +4,7 @@ let headers =
   [ "src-c/native/digestif.h"
   ; "src-c/native/bitfn.h"
   ; "src-c/native/blake2b.h"
+  ; "src-c/native/blake2s.h"
   ; "src-c/native/md5.h"
   ; "src-c/native/sha1.h"
   ; "src-c/native/sha256.h"

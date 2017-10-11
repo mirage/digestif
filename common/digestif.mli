@@ -64,6 +64,7 @@ module SHA256  : S
 module SHA384  : S
 module SHA512  : S
 module BLAKE2B : S
+module BLAKE2S : S
 module RMD160  : S
 
 type hash =
@@ -74,6 +75,7 @@ type hash =
   | `SHA384
   | `SHA512
   | `BLAKE2B
+  | `BLAKE2S
   | `RMD160 ]
 
 module Bytes :

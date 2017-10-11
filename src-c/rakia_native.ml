@@ -264,6 +264,53 @@ struct
   external digest_size : ctx -> int
                        = "caml_digestif_blake2b_digest_size"
                        [@@noalloc]
+                     end
+
+module BLAKE2S =
+struct
+  module Bigstring =
+  struct
+    external init     : ctx -> unit
+                      = "caml_digestif_blake2s_ba_init"
+                      [@@noalloc]
+    external init'    : ctx -> size -> ba -> off -> size -> unit
+                      = "caml_digestif_blake2s_ba_abstract_init"
+                      [@@noalloc]
+    external update   : ctx -> ba -> off -> size -> unit
+                      = "caml_digestif_blake2s_ba_update"
+                      [@@noalloc]
+    external finalize : ctx -> ba -> off -> unit
+                      = "caml_digestif_blake2s_ba_finalize"
+                      [@@noalloc]
+  end
+
+  module Bytes =
+  struct
+    external init     : ctx -> unit
+                      = "caml_digestif_blake2s_st_init"
+                      [@@noalloc]
+    external init'    : ctx -> size -> st -> off -> size -> unit
+                      = "caml_digestif_blake2s_st_abstract_init"
+                      [@@noalloc]
+    external update   : ctx -> st -> off -> size -> unit
+                      = "caml_digestif_blake2s_st_update"
+                      [@@noalloc]
+    external finalize : ctx -> st -> off -> unit
+                      = "caml_digestif_blake2s_st_finalize"
+                      [@@noalloc]
+  end
+
+  external ctx_size   : unit -> int
+                      = "caml_digestif_blake2s_ctx_size"
+                      [@@noalloc]
+
+  external key_size   : unit -> int
+                      = "caml_digestif_blake2s_key_size"
+                      [@@noalloc]
+
+  external digest_size : ctx -> int
+                       = "caml_digestif_blake2s_digest_size"
+                       [@@noalloc]
 end
 
 module RMD160 =
