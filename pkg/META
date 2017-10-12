@@ -1,11 +1,6 @@
 version = "%%VERSION%%"
 requires = "bigarray"
 description = "Interface of the library"
-archive(byte) = "digestif.cma"
-archive(native) = "digestif.cmxa"
-plugin(byte) = "digestif.cma"
-plugin(native) = "digestif.cmxs"
-exists_if = "digestif.cma"
 
 package "c" (
   directory = "c"
