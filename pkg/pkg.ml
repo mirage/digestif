@@ -17,4 +17,6 @@ let () =
 
      ; Pkg.clib "src-c/librakia_stubs.clib" ~lib_dst_dir:"c"
      ; Pkg.mllib ~api:["Digestif"] "src-c/digestif.mllib" ~dst_dir:"c"
-     ; Pkg.mllib ~api:["Digestif"] "src-ocaml/digestif.mllib" ~dst_dir:"ocaml" ]
+     ; Pkg.mllib ~api:["Digestif"] "src-ocaml/digestif.mllib" ~dst_dir:"ocaml"
+     ; Pkg.test "test/test"
+     ]
