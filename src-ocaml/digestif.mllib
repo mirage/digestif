@@ -11,4 +11,5 @@ Baijiu_sha384
 Baijiu_sha512
 Baijiu_md5
 Baijiu_blake2b
+Baijiu_blake2s
 Baijiu_rmd160

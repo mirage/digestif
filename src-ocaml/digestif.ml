@@ -294,7 +294,7 @@ module SHA256  : S = Make (Baijiu_sha256.Make) (struct let (digest_size, block_s
 module SHA384  : S = Make (Baijiu_sha384.Make) (struct let (digest_size, block_size) = (48, 128) end)
 module SHA512  : S = Make (Baijiu_sha512.Make) (struct let (digest_size, block_size) = (64, 128) end)
 module BLAKE2B = Make_BLAKE2B(Baijiu_blake2b.Make) (struct let (digest_size, block_size) = (64, 128) end)
-module BLAKE2S : S = Make (NI) (DI)
+module BLAKE2S = Make_BLAKE2B(Baijiu_blake2s.Make) (struct let (digest_size, block_size) = (32, 64) end)
 module RMD160  : S = Make (Baijiu_rmd160.Make) (struct let (digest_size, block_size) = (20, 64) end)
 
 type hash =
