@@ -16,6 +16,8 @@ depends: [
   "ocamlbuild"     {build}
   "ocamlfind"      {build}
   "topkg"          {build}
+  "alcotest"       {test}
+  "fmt"            {test}
   "base-bytes"
 ]
 
