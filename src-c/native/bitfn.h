@@ -197,6 +197,34 @@ static __INLINE uint64_t load64( const void *src )
 #endif
 }
 
+static __INLINE uint32_t load32( const void *src )
+{
+#if defined(NATIVE_LITTLE_ENDIAN)
+  uint32_t w;
+  memcpy(&w, src, sizeof w);
+  return w;
+#else
+  const uint8_t *p = ( const uint8_t * )src;
+  return (( uint32_t )( p[0] ) <<  0) |
+         (( uint32_t )( p[1] ) <<  8) |
+         (( uint32_t )( p[2] ) << 16) |
+         (( uint32_t )( p[3] ) << 24) ;
+#endif
+}
+
+static __INLINE void store32( void *dst, uint32_t w )
+{
+#if defined(NATIVE_LITTLE_ENDIAN)
+  memcpy(dst, &w, sizeof w);
+#else
+  uint8_t *p = ( uint8_t * )dst;
+  p[0] = (uint8_t)(w >>  0);
+  p[1] = (uint8_t)(w >>  8);
+  p[2] = (uint8_t)(w >> 16);
+  p[3] = (uint8_t)(w >> 24);
+#endif
+}
+
 static __INLINE void store64( void *dst, uint64_t w )
 {
 #if defined(NATIVE_LITTLE_ENDIAN)

@@ -16,6 +16,7 @@ let title = function
   | `SHA384  -> "hmac:sha384"
   | `SHA512  -> "hmac:sha512"
   | `BLAKE2B -> "hmac:blake2b"
+  | `BLAKE2S -> "hmac:blake2s"
   | `RMD160  -> "hmac:rmd160"
 
 type _ buffer =
@@ -191,6 +192,16 @@ let results_rmd160_by, results_rmd160_bi =
   |> List.map (fun s -> s, to_bigstring s)
   |> List.split
 
+let results_blake2s_by, results_blake2s_bi =
+  [ "73842d110e4c2b77a9231c9dbc76b791a2ea9b1e660a8237c0c8c99caa653628"
+  ; "d7fe099d889ba98178a934de6bd36da084600d7831ff16b8deaeefa8f6c00af4"
+  ; "88f53c94bf50819acd1d5db805c61fed44de72d58962802780b9972cf974274b"
+  ; "af80be61a4103fc5daac2fe4b70125f146999850627d63a38aa416e59f237644"
+  ; "e6a5a4794cd3421ad19f6e7621415bad773776859189c4d5173aed8677f93a31" ]
+  |> List.map (fun x -> Bytes.unsafe_of_string x |> Digestif.Bytes.of_hex `BLAKE2S)
+  |> List.map (fun s -> s, to_bigstring s)
+  |> List.split
+
 let tests () =
   Alcotest.run "digestif"
     [ "md5",                 makes ~name:"md5"     bytes     `MD5     keys_by inputs_by results_md5_by
@@ -208,6 +219,8 @@ let tests () =
     ; "blake2b",             makes ~name:"blake2b" bytes     `BLAKE2B keys_by inputs_by results_blake2b_by
     ; "blake2b (bigstring)", makes ~name:"blake2b" bigstring `BLAKE2B keys_bi inputs_bi results_blake2b_bi
     ; "rmd160",              makes ~name:"rmd160"  bytes     `RMD160  keys_by inputs_by results_rmd160_by
-    ; "rmd160 (bigstring)",  makes ~name:"rmd160"  bigstring `RMD160  keys_bi inputs_bi results_rmd160_bi ]
+    ; "rmd160 (bigstring)",  makes ~name:"rmd160"  bigstring `RMD160  keys_bi inputs_bi results_rmd160_bi
+    ; "blake2s",             makes ~name:"blake2s" bytes     `BLAKE2S keys_by inputs_by results_blake2s_by
+    ; "blake2s (bigstring)", makes ~name:"blake2s" bigstring `BLAKE2S keys_bi inputs_bi results_blake2s_bi ]
 
 let () = tests ()

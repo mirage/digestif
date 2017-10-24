@@ -5,4 +5,5 @@ native/sha1.o
 native/sha256.o
 native/sha512.o
 native/blake2b.o
+native/blake2s.o
 native/ripemd160.o

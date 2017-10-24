@@ -68,7 +68,7 @@ void digestif_blake2b_init(struct blake2b_ctx *ctx)
 
   memset( ctx, 0, sizeof( struct blake2b_ctx ) );
 
-  for(i = 0; i < 8; ++i ) {
+  for( i = 0; i < 8; ++i ) {
     ctx->h[i] = IV[i] ^ load64(p + sizeof(uint64_t) * i);
   }
 
@@ -98,7 +98,6 @@ void digestif_blake2b_init(struct blake2b_ctx *ctx)
     G(r,6,v[ 2],v[ 7],v[ 8],v[13]); \
     G(r,7,v[ 3],v[ 4],v[ 9],v[14]); \
   } while(0)
-
 
 static void blake2b_compress(struct blake2b_ctx *ctx, const uint8_t block[BLAKE2B_BLOCKBYTES])
 {
@@ -197,19 +196,19 @@ void digestif_blake2b_abstract_init(struct blake2b_ctx *ctx, size_t outlen, cons
   memset( P->salt, 0, sizeof( P->salt ) );
   memset( P->personal, 0, sizeof( P->personal ) );
 
-  for(i = 0; i < 8; ++i )
+  for( i = 0; i < 8; ++i )
     ctx->h[i] = IV[i] ^ load64(p + sizeof(uint64_t) * i);
 
   ctx->outlen = P->digest_length;
 
   if( keylen > 0 )
-  {
-    uint8_t block[BLAKE2B_BLOCKBYTES];
-    memset( block, 0, BLAKE2B_BLOCKBYTES );
-    memcpy( block, key, keylen );
-    digestif_blake2b_update( ctx, block, BLAKE2B_BLOCKBYTES );
-    secure_zero_memory( block, BLAKE2B_BLOCKBYTES );
-  }
+    {
+      uint8_t block[BLAKE2B_BLOCKBYTES];
+      memset( block, 0, BLAKE2B_BLOCKBYTES );
+      memcpy( block, key, keylen );
+      digestif_blake2b_update( ctx, block, BLAKE2B_BLOCKBYTES );
+      secure_zero_memory( block, BLAKE2B_BLOCKBYTES );
+    }
 }
 
 void digestif_blake2b_finalize( struct blake2b_ctx *ctx, uint8_t *out )
