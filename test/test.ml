@@ -197,7 +197,7 @@ let results_blake2s_by, results_blake2s_bi =
   ; "d7fe099d889ba98178a934de6bd36da084600d7831ff16b8deaeefa8f6c00af4"
   ; "88f53c94bf50819acd1d5db805c61fed44de72d58962802780b9972cf974274b"
   ; "af80be61a4103fc5daac2fe4b70125f146999850627d63a38aa416e59f237644"
-  ; "238e5dd72ac0ab3fb43899714123c0e194e6c3429a1727f093d80175010ba67b" ]
+  ; "e6a5a4794cd3421ad19f6e7621415bad773776859189c4d5173aed8677f93a31" ]
   |> List.map (fun x -> Bytes.unsafe_of_string x |> Digestif.Bytes.of_hex `BLAKE2S)
   |> List.map (fun s -> s, to_bigstring s)
   |> List.split
