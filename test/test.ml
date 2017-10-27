@@ -202,6 +202,81 @@ let results_blake2s_by, results_blake2s_bi =
   |> List.map (fun s -> s, to_bigstring s)
   |> List.split
 
+module BLAKE2 =
+struct
+  let input_blake2b_file = "./test/blake2b.test"
+  let input_blake2s_file = "./test/blake2s.test"
+
+  let fold_s f a s =
+    let r = ref a in
+    String.iter (fun x -> r := f !r x) s; !r
+
+  let of_hex len hex =
+    let code x = match x with
+      | '0' .. '9' -> Char.code x - 48
+      | 'A' .. 'F' -> Char.code x - 55
+      | 'a' .. 'z' -> Char.code x - 87
+      | _ -> raise (Invalid_argument "of_hex")
+    in
+
+    let wsp = function ' ' | '\t' | '\r' | '\n' -> true | _ -> false in
+
+    fold_s
+      (fun (res, i, acc) -> function
+         | chr when wsp chr -> (res, i, acc)
+         | chr ->
+           match acc, code chr with
+           | None, x -> (res, i, Some (x lsl 4))
+           | Some y, x -> Bytes.set res i (Char.unsafe_chr (x lor y)); (res, succ i, None))
+      (Bytes.create len, 0, None)
+      hex
+    |> function (_, _, Some _)  -> raise (Invalid_argument "of_hex")
+              | (res, i, _) ->
+                if i = len
+                then res
+                else (for i = i to len - 1 do Bytes.set res i '\000' done; res)
+
+  let parse (kind : [< `BLAKE2B | `BLAKE2S ]) ic =
+    ignore @@ input_line ic;
+    ignore @@ input_line ic;
+
+    let empty = Bytes.create 0 in
+
+    let rec loop state acc = match state, input_line ic with
+      | `In, line ->
+        let i = ref empty in
+        Scanf.sscanf line "in:\t%s" (fun v -> i := of_hex (String.length v / 2) v);
+        loop (`Key !i) acc
+      | `Key i, line ->
+        let k = ref empty in
+        Scanf.sscanf line "key:\t%s" (fun v -> k := of_hex (Digestif.digest_size (kind :> Digestif.hash)) v);
+        loop (`Hash (i, !k)) acc
+      | `Hash (i, k), line ->
+        let h = ref empty in
+        Scanf.sscanf line "hash:\t%s" (fun v -> h := of_hex (Digestif.digest_size (kind :> Digestif.hash)) v);
+        loop (`Res (i, k, !h)) acc
+      | `Res v, "" ->
+        loop `In (v :: acc)
+      | `Res v, _ -> (* avoid malformed line *)
+        loop (`Res v) acc
+      | exception End_of_file -> List.rev acc
+    in
+
+    loop `In []
+
+  let tests kind filename =
+    let ic = open_in filename in
+    let tests = parse kind ic in
+
+    close_in ic;
+    List.map
+      (fun (input, key, expect) -> make ~name:"blake2{b,s}" bytes (kind :> Digestif.hash) key input expect)
+      tests
+
+  let tests_blake2s = tests `BLAKE2S input_blake2s_file
+  let tests_blake2b = tests `BLAKE2B input_blake2b_file
+end
+
 let tests () =
   Alcotest.run "digestif"
     [ "md5",                 makes ~name:"md5"     bytes     `MD5     keys_by inputs_by results_md5_by
@@ -221,6 +296,8 @@ let tests () =
     ; "rmd160",              makes ~name:"rmd160"  bytes     `RMD160  keys_by inputs_by results_rmd160_by
     ; "rmd160 (bigstring)",  makes ~name:"rmd160"  bigstring `RMD160  keys_bi inputs_bi results_rmd160_bi
     ; "blake2s",             makes ~name:"blake2s" bytes     `BLAKE2S keys_by inputs_by results_blake2s_by
-    ; "blake2s (bigstring)", makes ~name:"blake2s" bigstring `BLAKE2S keys_bi inputs_bi results_blake2s_bi ]
+    ; "blake2s (bigstring)", makes ~name:"blake2s" bigstring `BLAKE2S keys_bi inputs_bi results_blake2s_bi
+    ; "blake2s (input file)", BLAKE2.tests_blake2s
+    ; "blake2b (input file)", BLAKE2.tests_blake2b ]
 
 let () = tests ()
