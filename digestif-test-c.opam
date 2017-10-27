@@ -10,7 +10,7 @@ dev-repo:     "https://github.com/mirage/digestif.git"
 doc:          "https://mirage.github.io/digestif/"
 license:      "MIT"
 
-build: [ "ocamlbuild" "-use-ocamlfind" "-package" "digesitf.c,cstruct" "test/test.native" ]
+build: [ "ocamlbuild" "-use-ocamlfind" "-package" "digestif.c,cstruct" "test/test.native" ]
 build-test: [ "./test.native" ]
 
 depends: [
@@ -19,6 +19,7 @@ depends: [
   "cstruct"
   "base-bytes"
   "digestif"
+  "alcotest"
 ]
 
 available: [ ocaml-version >= "4.03.0" ]
