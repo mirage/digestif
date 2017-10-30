@@ -4,4 +4,4 @@ true: safe_string, bin_annot
 <src-c/digestif.{cma,cmxa}>: record_digestif_rakia_stubs
 <src-c/digestif.cmxs>: link_digestif_rakia_stubs, use_bigarray
 <src-ocaml/digestif.cmxs>: use_bigarray
-<test/*.{ml,mli,byte,native}>: package(alcotest)
+<test/*.{ml,mli,byte,native}>: package(alcotest), package(cstruct)
