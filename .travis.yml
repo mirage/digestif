@@ -6,4 +6,10 @@ script: bash -ex .travis-opam.sh
 sudo: true
 env:
   matrix:
-  - PACKAGE="digestif" OCAML_VERSION=4.03 TESTS=true
+  - PACKAGE="digestif" OCAML_VERSION=4.03 TESTS=false
+
+  - PACKAGE="digestif-test-c" OCAML_VERSION=4.03 INSTALL=false TESTS=true
+    PINS=$(if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then echo -n "digestif:https://github.com/$TRAVIS_PULL_REQUEST_SLUG.git"; if [ ! -z $TRAVIS_PULL_REQUEST_BRANCH ]; then echo -n "#$TRAVIS_PULL_REQUEST_BRANCH"; fi else echo -n "digestif:https://github.com/$TRAVIS_REPO_SLUG.git"; if [ ! -z $TRAVIS_BRANCH ]; then echo -n "#$TRAVIS_BRANCH"; fi fi)
+
+  - PACKAGE="digestif-test-ocaml" OCAML_VERSION=4.03 INSTALL=false TESTS=true
+    PINS=$(if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then echo -n "digestif:https://github.com/$TRAVIS_PULL_REQUEST_SLUG.git"; if [ ! -z $TRAVIS_PULL_REQUEST_BRANCH ]; then echo -n "#$TRAVIS_PULL_REQUEST_BRANCH"; fi else echo -n "digestif:https://github.com/$TRAVIS_REPO_SLUG.git"; if [ ! -z $TRAVIS_BRANCH ]; then echo -n "#$TRAVIS_BRANCH"; fi fi)

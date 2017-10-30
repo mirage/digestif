@@ -364,7 +364,7 @@ module Make (B : Baijiu_buffer.S)
         blit buf !off ctx.b ctx.n t;
         rmd160_do_chunk ~le32_to_cpu:B.le32_to_cpu ctx ctx.b 0;
         off := !off + t;
-        len := !len + t;
+        len := !len - t;
       end;
 
       while !len >= 64

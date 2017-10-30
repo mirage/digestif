@@ -33,6 +33,12 @@ let atest (type buffer) (module Buffer : S with type t = buffer) hash hmac key (
 
   Alcotest.(check (Alcotest.testable Buffer.pp Buffer.eq)) title expect result
 
+let btest (type buffer) (module Buffer : S with type t = buffer) hash digest (input : buffer) (expect : buffer) =
+  let result = digest hash input in
+  let title  = title hash in
+
+  Alcotest.(check (Alcotest.testable Buffer.pp Buffer.eq)) title expect result
+
 module type HASH = sig type t = Digestif.hash val v : t end
 
 module By (Hash : HASH) =
@@ -62,10 +68,26 @@ let test
       let module Bi = Bi(struct type t = Digestif.hash let v = hash end) in
       atest (module Bi) hash Digestif.Bigstring.mac key input expect
 
+let test_digest
+  : type a. a buffer -> Digestif.hash -> a -> a -> unit
+  = fun buffer hash input expect ->
+    match buffer with
+    | Bytes ->
+      let module By = By(struct type t = Digestif.hash let v = hash end) in
+      btest (module By) hash Digestif.Bytes.digest input expect
+    | Bigstring ->
+      let module Bi = Bi(struct type t = Digestif.hash let v = hash end) in
+      btest (module Bi) hash Digestif.Bigstring.digest input expect
+
 let make
   : type a. name:string -> a buffer -> Digestif.hash -> a -> a -> a -> unit Alcotest.test_case
   = fun ~name buffer hash key input expect ->
     name, `Slow, (fun () -> test buffer hash key input expect)
+
+let make_digest
+  : type a. name:string -> a buffer -> Digestif.hash -> a -> a -> unit Alcotest.test_case
+  = fun ~name buffer hash input expect ->
+    name, `Slow, (fun () -> test_digest buffer hash input expect)
 
 let combine a b c =
   let rec aux r a b c = match a, b, c with
@@ -202,6 +224,146 @@ let results_blake2s_by, results_blake2s_bi =
   |> List.map (fun s -> s, to_bigstring s)
   |> List.split
 
+module BLAKE2 =
+struct
+  let input_blake2b_file = "./test/blake2b.test"
+  let input_blake2s_file = "./test/blake2s.test"
+
+  let fold_s f a s =
+    let r = ref a in
+    String.iter (fun x -> r := f !r x) s; !r
+
+  let of_hex len hex =
+    let code x = match x with
+      | '0' .. '9' -> Char.code x - 48
+      | 'A' .. 'F' -> Char.code x - 55
+      | 'a' .. 'z' -> Char.code x - 87
+      | _ -> raise (Invalid_argument "of_hex")
+    in
+
+    let wsp = function ' ' | '\t' | '\r' | '\n' -> true | _ -> false in
+
+    fold_s
+      (fun (res, i, acc) -> function
+         | chr when wsp chr -> (res, i, acc)
+         | chr ->
+           match acc, code chr with
+           | None, x -> (res, i, Some (x lsl 4))
+           | Some y, x -> Bytes.set res i (Char.unsafe_chr (x lor y)); (res, succ i, None))
+      (Bytes.create len, 0, None)
+      hex
+    |> function (_, _, Some _)  -> raise (Invalid_argument "of_hex")
+              | (res, i, _) ->
+                if i = len
+                then res
+                else (for i = i to len - 1 do Bytes.set res i '\000' done; res)
+
+  let parse (kind : [< `BLAKE2B | `BLAKE2S ]) ic =
+    ignore @@ input_line ic;
+    ignore @@ input_line ic;
+
+    let empty = Bytes.create 0 in
+
+    let rec loop state acc = match state, input_line ic with
+      | `In, line ->
+        let i = ref empty in
+        Scanf.sscanf line "in:\t%s" (fun v -> i := of_hex (String.length v / 2) v);
+        loop (`Key !i) acc
+      | `Key i, line ->
+        let k = ref empty in
+        Scanf.sscanf line "key:\t%s" (fun v -> k := of_hex (Digestif.digest_size (kind :> Digestif.hash)) v);
+        loop (`Hash (i, !k)) acc
+      | `Hash (i, k), line ->
+        let h = ref empty in
+        Scanf.sscanf line "hash:\t%s" (fun v -> h := of_hex (Digestif.digest_size (kind :> Digestif.hash)) v);
+        loop (`Res (i, k, !h)) acc
+      | `Res v, "" ->
+        loop `In (v :: acc)
+      | `Res v, _ -> (* avoid malformed line *)
+        loop (`Res v) acc
+      | exception End_of_file -> List.rev acc
+    in
+
+    loop `In []
+
+  let tests kind filename =
+    let ic = open_in filename in
+    let tests = parse kind ic in
+
+    close_in ic;
+    List.map
+      (fun (input, key, expect) -> make ~name:"blake2{b,s}" bytes (kind :> Digestif.hash) key input expect)
+      tests
+
+  let tests_blake2s = tests `BLAKE2S input_blake2s_file
+  let tests_blake2b = tests `BLAKE2B input_blake2b_file
+end
+
+module RMD160 =
+struct
+  let inputs =
+    [ ""
+    ; "a"
+    ; "abc"
+    ; "message digest"
+    ; "abcdefghijklmnopqrstuvwxyz"
+    ; "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"
+    ; "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+    ; "12345678901234567890123456789012345678901234567890123456789012345678901234567890" ]
+
+  let expects =
+    [ "9c1185a5c5e9fc54612808977ee8f548b2258d31"
+    ; "0bdc9d2d256b3ee9daae347be6f4dc835a467ffe"
+    ; "8eb208f7e05d987a9b044a8e98c6b087f15a0bfc"
+    ; "5d0689ef49d2fae572b881b123a85ffa21595f36"
+    ; "f71c27109c692c1b56bbdceb5b9d2865b3708dbc"
+    ; "12a053384a9c0c88e405a06c27dcf49ada62eb2b"
+    ; "b0e20b6e3116640286ed3a87a5713079b21f5189"
+    ; "9b752e45573d4b39f4dbd3323cab82bf63326bfb" ]
+
+  module type D =
+  sig
+    type ctx
+    type t
+
+    val init : unit -> ctx
+    val feed_bytes : ctx -> Bytes.t -> unit
+    val get : ctx -> t
+  end
+
+  let million : type t. string -> (module D with type t = t) -> (module S with type t = t) -> expect:t -> unit Alcotest.test_case
+    = fun title m b ~expect ->
+      let module D = (val m) in
+      let module B = (val b) in
+      let ctx = D.init () in
+
+      for i = 0 to 1_000_000 - 1
+      do D.feed_bytes ctx (Bytes.unsafe_of_string "a"); done;
+
+      let result = D.get ctx in
+
+      "give me a million", `Slow, (fun () -> Alcotest.(check (Alcotest.testable B.pp B.eq)) title expect result)
+
+  module By =
+  struct
+    type t = Bytes.t
+
+    let eq = Bytes.equal
+    let pp ppf x =
+      for i = 0 to Bytes.length x - 1
+      do Format.fprintf ppf "%02x" (Char.code (Bytes.unsafe_get x i)); done;
+  end
+
+  let tests =
+    let expect_million_y = BLAKE2.of_hex Digestif.RMD160.digest_size "52783243c1697bdbe16d37f97f68f08325dc1528" in
+    let expect_million_i = to_bigstring expect_million_y in
+
+    List.map (fun (input, expect) -> make_digest ~name:"rmd160" Bytes `RMD160 input expect)
+      (List.combine (List.map Bytes.unsafe_of_string inputs) (List.map (BLAKE2.of_hex Digestif.RMD160.digest_size) expects))
+    @ [ million "(bytes)" (module Digestif.RMD160.Bytes : D with type t = Bytes.t) (module By) ~expect:expect_million_y
+      ; million "(bigstring)" (module Digestif.RMD160.Bigstring : D with type t = bigstring) (module Digestif.Bi) ~expect:expect_million_i ]
+end
+
 let tests () =
   Alcotest.run "digestif"
     [ "md5",                 makes ~name:"md5"     bytes     `MD5     keys_by inputs_by results_md5_by
@@ -221,6 +383,9 @@ let tests () =
     ; "rmd160",              makes ~name:"rmd160"  bytes     `RMD160  keys_by inputs_by results_rmd160_by
     ; "rmd160 (bigstring)",  makes ~name:"rmd160"  bigstring `RMD160  keys_bi inputs_bi results_rmd160_bi
     ; "blake2s",             makes ~name:"blake2s" bytes     `BLAKE2S keys_by inputs_by results_blake2s_by
-    ; "blake2s (bigstring)", makes ~name:"blake2s" bigstring `BLAKE2S keys_bi inputs_bi results_blake2s_bi ]
+    ; "blake2s (bigstring)", makes ~name:"blake2s" bigstring `BLAKE2S keys_bi inputs_bi results_blake2s_bi
+    ; "blake2s (input file)", BLAKE2.tests_blake2s
+    ; "blake2b (input file)", BLAKE2.tests_blake2b
+    ; "ripemd160", RMD160.tests ]
 
 let () = tests ()
