@@ -1,3 +1,12 @@
+v0.4 2017-10-30 Mysorei / ಮೈಸೂರು (India)
+----------------------------------------
+
+- Add an automatised test suit
+- Add the RIPEMD160 hash algorithm
+- Add the BLAKE2S hash algorithm
+- Update authors
+- Add `feed_bytes` and `feed_bigstring` for `Bytes` and `Bigstring`
+
 v0.3 2017-07-21 Phnom Penh (Cambodia)
 -------------------------------------
 
