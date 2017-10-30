@@ -1,4 +1,4 @@
-v0.4 2017-10-30 Mysorei / ಮೈಸೂರು (India)
+v0.4 2017-10-30 Mysore / ಮೈಸೂರು (India)
 ----------------------------------------
 
 - Add an automatised test suit
