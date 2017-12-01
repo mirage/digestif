@@ -13,8 +13,7 @@ sig
   val digest_size : int
 end
 
-module Make (S : B) (D : D) =
-struct
+module Make (S : B) (D : D) = struct
   let to_hex hash =
     let res = S.create (D.digest_size * 2) in
 
@@ -69,4 +68,3 @@ struct
     for i = 0 to D.digest_size - 1
     do Format.fprintf fmt "%02x" (Char.code (S.get hash i)) done
 end
-
