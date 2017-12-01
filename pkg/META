@@ -1,6 +1,6 @@
-description = "Implementation of hash function in C and OCaml"
 version = "%%VERSION%%"
 requires = "bigarray"
+description = "Interface of the library"
 
 package "c" (
   directory = "c"
