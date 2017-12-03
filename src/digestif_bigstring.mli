@@ -23,6 +23,7 @@ val blit: t -> int -> t -> int -> int -> unit
 val blit_from_bytes: bytes -> int -> t -> int -> int -> unit
 val blit_from_bigstring: t -> int -> t -> int -> int -> unit
 val rpad: t -> int -> char -> t
+val pp: Format.formatter -> t -> unit
 val compare: t -> t -> int
 val eq: t -> t -> bool
 val neq: t -> t -> bool
