@@ -3,62 +3,8 @@ module By         = Digestif_bytes
 module Pp         = Digestif_pp
 module Xor        = Baijiu_xor
 
-module type S =
-sig
-  val digest_size : int
-
-  module Bigstring :
-  sig
-    type buffer = Bi.t
-    type ctx
-    type t = Bi.t
-
-    val init        : unit -> ctx
-    val feed        : ctx -> buffer -> unit
-    val feed_bytes     : ctx -> Bytes.t -> unit
-    val feed_bigstring : ctx -> Bi.t -> unit
-    val get         : ctx -> t
-
-    val digest      : buffer -> t
-    val digestv     : buffer list -> t
-    val hmac        : key:buffer -> buffer -> t
-    val hmacv       : key:buffer -> buffer list -> t
-
-    val compare     : t -> t -> int
-    val eq          : t -> t -> bool
-    val neq         : t -> t -> bool
-
-    val pp          : Format.formatter -> t -> unit
-    val of_hex      : buffer -> t
-    val to_hex      : t -> buffer
-  end
-
-  module Bytes :
-  sig
-    type buffer = By.t
-    type ctx
-    type t = By.t
-
-    val init        : unit -> ctx
-    val feed        : ctx -> buffer -> unit
-    val feed_bytes     : ctx -> Bytes.t -> unit
-    val feed_bigstring : ctx -> Bi.t -> unit
-    val get         : ctx -> t
-
-    val digest      : buffer -> t
-    val digestv     : buffer list -> t
-    val hmac        : key:buffer -> buffer -> t
-    val hmacv       : key:buffer -> buffer list -> t
-
-    val compare : t -> t -> int
-    val eq      : t -> t -> bool
-    val neq     : t -> t -> bool
-
-    val pp      : Format.formatter -> t -> unit
-    val of_hex  : buffer -> t
-    val to_hex  : t -> buffer
-  end
-end
+module type S = Digestif_sig.S
+module type T = Digestif_sig.T
 
 module type Desc =
 sig
@@ -321,6 +267,9 @@ let module_of = function
 
 module Bytes =
 struct
+  type t = Bytes.t
+  type buffer = Bytes.t
+
   let digest hash =
     let module H = (val (module_of hash)) in
     H.Bytes.digest
@@ -352,6 +301,9 @@ end
 
 module Bigstring =
 struct
+  type t = Bi.t
+  type buffer = Bi.t
+
   let digest hash =
     let module H = (val (module_of hash)) in
     H.Bigstring.digest

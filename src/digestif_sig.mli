@@ -1,4 +1,5 @@
 module Bigstring = Digestif_bigstring
+module Bytes = Digestif_bytes
 
 module type S = sig
 
@@ -65,3 +66,16 @@ type hash =
   | `BLAKE2B
   | `BLAKE2S
   | `RMD160 ]
+
+module type T = sig
+  type t
+  type buffer
+
+  val pp      : hash -> Format.formatter -> t -> unit
+  val digest  : hash -> buffer -> t
+  val digestv : hash -> buffer list -> t
+  val mac     : hash -> key:buffer -> buffer -> t
+  val macv    : hash -> key:buffer -> buffer list -> t
+  val of_hex  : hash -> buffer -> t
+  val to_hex  : hash -> t -> buffer
+end

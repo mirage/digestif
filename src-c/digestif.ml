@@ -1,4 +1,5 @@
 module type S = Digestif_sig.S
+module type T = Digestif_sig.T
 
 module Bi         = Digestif_bigstring
 module By         = Digestif_bytes
@@ -303,6 +304,9 @@ let module_of = function
   | `RMD160  -> (module RMD160  : S)
 
 module Bytes = struct
+  type t = Bytes.t
+  type buffer = Bytes.t
+
   let digest hash =
     let module H = (val (module_of hash)) in
     H.Bytes.digest
@@ -333,6 +337,9 @@ module Bytes = struct
 end
 
 module Bigstring = struct
+  type t = Bi.t
+  type buffer = Bi.t
+
   let digest hash =
     let module H = (val (module_of hash)) in
     H.Bigstring.digest
