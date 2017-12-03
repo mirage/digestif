@@ -10,6 +10,8 @@ env:
 
   - PACKAGE="digestif" OCAML_VERSION=4.03 INSTALL=false
     PINS="digestif-test-c:test"
+    EXTRA_DEPS="digestif-test-c"
 
-  - PACKAGE="test/digestif-test-ocaml" OCAML_VERSION=4.03 INSTALL=false
+  - PACKAGE="digestif" OCAML_VERSION=4.03 INSTALL=false
     PINS="digestif-test-ocaml:test"
+    EXTRA_DEPS="digestif-test-ocaml"
