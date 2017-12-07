@@ -1,3 +1,9 @@
+v0.5 2017-12-07 Phnom Penh (Cambodia)
+-------------------------------------
+
+- __Breaking change__: allow to compile a library wiht `digestif` only.
+  Then, compile the final binary with `digestif.c` or `digestif.ocaml` (implementation)
+
 v0.4 2017-10-30 Mysore / ಮೈಸೂರು (India)
 ----------------------------------------
 
