@@ -1,7 +1,7 @@
 true: safe_string, bin_annot
 
-# <common>: include (not needed to the binary test)
-<src-c/digestif.{cma,cmxa}>: record_digestif_rakia_stubs
+<src>: include
+<src-c/digestif-c.{cma,cmxa}>: record_digestif_rakia_stubs
 <src-c/digestif.cmxs>: link_digestif_rakia_stubs, use_bigarray
 <src-ocaml/digestif.cmxs>: use_bigarray
 <test/*.{ml,mli,byte,native}>: package(alcotest), package(cstruct)

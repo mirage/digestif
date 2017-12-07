@@ -1,67 +1,12 @@
+module type S = Digestif_sig.S
+module type T = Digestif_sig.T
+
 module Bi         = Digestif_bigstring
 module By         = Digestif_bytes
 module Pp         = Digestif_pp
 module Native     = Rakia_native
 
-module type S =
-sig
-  val digest_size : int
-
-  module Bigstring :
-  sig
-    type buffer = Native.ba
-    type ctx
-    type t = Native.ba
-
-    val init           : unit -> ctx
-    val feed           : ctx -> buffer -> unit
-    val feed_bytes     : ctx -> By.t -> unit
-    val feed_bigstring : ctx -> Bi.t -> unit
-    val get            : ctx -> t
-
-    val digest         : buffer -> t
-    val digestv        : buffer list -> t
-    val hmac           : key:buffer -> buffer -> t
-    val hmacv          : key:buffer -> buffer list -> t
-
-    val compare        : t -> t -> int
-    val eq             : t -> t -> bool
-    val neq            : t -> t -> bool
-
-    val pp             : Format.formatter -> t -> unit
-    val of_hex         : buffer -> t
-    val to_hex         : t -> buffer
-  end
-
-  module Bytes :
-  sig
-    type buffer = Native.st
-    type ctx
-    type t = Native.st
-
-    val init           : unit -> ctx
-    val feed           : ctx -> buffer -> unit
-    val feed_bytes     : ctx -> By.t -> unit
-    val feed_bigstring : ctx -> Bi.t -> unit
-    val get            : ctx -> t
-
-    val digest         : buffer -> t
-    val digestv        : buffer list -> t
-    val hmac           : key:buffer -> buffer -> t
-    val hmacv          : key:buffer -> buffer list -> t
-
-    val compare        : t -> t -> int
-    val eq             : t -> t -> bool
-    val neq            : t -> t -> bool
-
-    val pp             : Format.formatter -> t -> unit
-    val of_hex         : buffer -> t
-    val to_hex         : t -> buffer
-  end
-end
-
-module type Foreign =
-sig
+module type Foreign = sig
   open Native
 
   module Bigstring :
@@ -87,8 +32,7 @@ sig
   val digest_size : int
 end
 
-module type Convenience =
-sig
+module type Convenience = sig
   type t
 
   val compare : t -> t -> int
@@ -96,8 +40,7 @@ sig
   val neq     : t -> t -> bool
 end
 
-module Core (F : Foreign) (D : Desc) =
-struct
+module Core (F : Foreign) (D : Desc) = struct
   let block_size  = D.block_size
   and digest_size = D.digest_size
   and ctx_size    = F.ctx_size ()
@@ -134,8 +77,7 @@ struct
       let t = init () in ( List.iter (feed t) bufs; get t )
   end
 
-  module Bigstring =
-  struct
+  module Bigstring = struct
     type buffer = Native.ba
     type ctx = Native.ctx
 
@@ -167,8 +109,7 @@ struct
   end
 end
 
-module Make (F : Foreign) (D : Desc) =
-struct
+module Make (F : Foreign) (D : Desc) = struct
   type ctx = Native.ctx
 
   module C = Core (F) (D)
@@ -199,8 +140,7 @@ struct
     let hmac ~key msg = hmacv ~key [ msg ]
   end
 
-  module Bigstring =
-  struct
+  module Bigstring =  struct
     include C.Bigstring
 
     let opad = Bi.init C.block_size (fun _ -> '\x5c')
@@ -222,8 +162,7 @@ struct
   end
 end
 
-module type ForeignExt =
-sig
+module type ForeignExt = sig
   open Native
 
   module Bigstring :
@@ -246,8 +185,7 @@ sig
   val key_size   : unit -> int
 end
 
-module Make_BLAKE2 (F : ForeignExt) (D : Desc) : S =
-struct
+module Make_BLAKE2 (F : ForeignExt) (D : Desc) : Digestif_sig.S = struct
   let block_size  = D.block_size
   and digest_size = D.digest_size
   and ctx_size    = F.ctx_size ()
@@ -296,8 +234,7 @@ struct
       hmacv ~key [ msg ]
   end
 
-  module Bigstring =
-  struct
+  module Bigstring = struct
     type buffer = Native.ba
     type ctx = Native.ctx
 
@@ -353,16 +290,7 @@ module BLAKE2B = Make_BLAKE2(Native.BLAKE2B) (struct let (digest_size, block_siz
 module BLAKE2S = Make_BLAKE2(Native.BLAKE2S) (struct let (digest_size, block_size) = (32, 64) end)
 module RMD160  : S = Make (Native.RMD160) (struct let (digest_size, block_size) = (20, 64) end)
 
-type hash =
-  [ `MD5
-  | `SHA1
-  | `SHA224
-  | `SHA256
-  | `SHA384
-  | `SHA512
-  | `BLAKE2B
-  | `BLAKE2S
-  | `RMD160 ]
+type hash = Digestif_sig.hash
 
 let module_of = function
   | `MD5     -> (module MD5     : S)
@@ -375,8 +303,10 @@ let module_of = function
   | `BLAKE2S -> (module BLAKE2S : S)
   | `RMD160  -> (module RMD160  : S)
 
-module Bytes =
-struct
+module Bytes = struct
+  type t = Bytes.t
+  type buffer = Bytes.t
+
   let digest hash =
     let module H = (val (module_of hash)) in
     H.Bytes.digest
@@ -406,8 +336,10 @@ struct
     H.Bytes.pp
 end
 
-module Bigstring =
-struct
+module Bigstring = struct
+  type t = Bi.t
+  type buffer = Bi.t
+
   let digest hash =
     let module H = (val (module_of hash)) in
     H.Bigstring.digest

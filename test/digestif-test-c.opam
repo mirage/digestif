@@ -10,8 +10,9 @@ dev-repo:     "https://github.com/mirage/digestif.git"
 doc:          "https://mirage.github.io/digestif/"
 license:      "MIT"
 
-build: [ "ocamlbuild" "-use-ocamlfind" "-package" "digestif.ocaml" "test/test.native" ]
-build-test: [ "./test.native" ]
+build:
+  [ [ "ocamlbuild" "-use-ocamlfind" "-package" "digestif.c" "test.native" ]
+    [ "./test.native" ] ]
 
 depends: [
   "ocamlbuild"     {build}

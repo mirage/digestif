@@ -53,7 +53,7 @@ module Bi (Hash : HASH) =
 struct
   type t = bigstring
 
-  let eq = Digestif.Bi.eq
+  let eq = Digestif_bigstring.eq
   let pp = Digestif.Bigstring.pp Hash.v
 end
 
@@ -104,9 +104,9 @@ let makes ~name buffer hash keys inputs expects =
 
 let to_bigstring s =
   let ln = Bytes.length s in
-  let bi = Digestif.Bi.create ln in
+  let bi = Digestif_bigstring.create ln in
 
-  Digestif.Bi.blit_from_bytes s 0 bi 0 ln;
+  Digestif_bigstring.blit_from_bytes s 0 bi 0 ln;
   bi
 
 let keys_by, keys_bi =
@@ -226,8 +226,8 @@ let results_blake2s_by, results_blake2s_bi =
 
 module BLAKE2 =
 struct
-  let input_blake2b_file = "./test/blake2b.test"
-  let input_blake2s_file = "./test/blake2s.test"
+  let input_blake2b_file = "./blake2b.test"
+  let input_blake2s_file = "./blake2s.test"
 
   let fold_s f a s =
     let r = ref a in
@@ -361,7 +361,7 @@ struct
     List.map (fun (input, expect) -> make_digest ~name:"rmd160" Bytes `RMD160 input expect)
       (List.combine (List.map Bytes.unsafe_of_string inputs) (List.map (BLAKE2.of_hex Digestif.RMD160.digest_size) expects))
     @ [ million "(bytes)" (module Digestif.RMD160.Bytes : D with type t = Bytes.t) (module By) ~expect:expect_million_y
-      ; million "(bigstring)" (module Digestif.RMD160.Bigstring : D with type t = bigstring) (module Digestif.Bi) ~expect:expect_million_i ]
+      ; million "(bigstring)" (module Digestif.RMD160.Bigstring : D with type t = bigstring) (module Digestif_bigstring) ~expect:expect_million_i ]
 end
 
 let tests () =

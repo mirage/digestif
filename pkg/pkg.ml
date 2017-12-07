@@ -16,6 +16,7 @@ let () =
      ; Pkg.doc "CHANGES.md"
 
      ; Pkg.clib "src-c/librakia_stubs.clib" ~lib_dst_dir:"c"
-     ; Pkg.lib "common/digestif.cmi" ~dst:"digestif.cmi"
-     ; Pkg.mllib ~api:["Digestif"] "src-c/digestif.mllib" ~dst_dir:"c"
-     ; Pkg.mllib ~api:["Digestif"] "src-ocaml/digestif.mllib" ~dst_dir:"ocaml" ]
+     ; Pkg.lib "src/digestif_sig.cmi" ~dst:"digestif_sig.cmi"
+     ; Pkg.mllib "src/digestif.mllib"
+     ; Pkg.mllib ~api:["Digestif"] "src-c/digestif-c.mllib" ~dst_dir:"c"
+     ; Pkg.mllib ~api:["Digestif"] "src-ocaml/digestif-ocaml.mllib" ~dst_dir:"ocaml" ]
