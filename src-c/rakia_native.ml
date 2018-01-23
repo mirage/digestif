@@ -264,7 +264,7 @@ struct
   external digest_size : ctx -> int
                        = "caml_digestif_blake2b_digest_size"
                        [@@noalloc]
-                     end
+end
 
 module BLAKE2S =
 struct
