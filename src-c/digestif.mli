@@ -15,6 +15,9 @@ module BLAKE2B : S
 module BLAKE2S : S
 module RMD160  : S
 
+module MakeBLAKE2B(D : sig val digest_size : int end) : S
+module MakeBLAKE2S(D : sig val digest_size : int end) : S
+
 module Bytes : T
   with type t = Bytes.t
    and type buffer = Bytes.t

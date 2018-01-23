@@ -174,7 +174,7 @@ void digestif_blake2b_update( struct blake2b_ctx *ctx, uint8_t *data, uint32_t i
   }
 }
 
-void digestif_blake2b_abstract_init(struct blake2b_ctx *ctx, size_t outlen, const void *key, size_t keylen)
+void digestif_blake2b_init_with_outlen_and_key(struct blake2b_ctx *ctx, size_t outlen, const void *key, size_t keylen)
 {
   struct blake2b_param P[1];
   const unsigned char * p = ( const uint8_t * )( P );
