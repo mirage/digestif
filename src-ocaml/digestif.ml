@@ -137,21 +137,6 @@ struct
   end
 end
 
-module NI (B : BUFFER) =
-struct
-  let not_implemented () = raise (Failure "Not implemented")
-
-  type t = B.buffer
-  type buffer = B.buffer
-  type ctx = unit
-
-  let init = not_implemented
-  let feed ctx buf = not_implemented ()
-  let feed_bytes ctx buf = not_implemented ()
-  let feed_bigstring ctx buf = not_implemented ()
-  let get ctx = not_implemented ()
-end
-
 module type HashBLAKE2 =
   functor (Buffer : BUFFER) -> sig
     type ctx
@@ -234,13 +219,6 @@ struct
     let hmac ~key msg =
       hmacv ~key [ msg ]
   end
-end
-
-
-module DI =
-struct
-  let digest_size = 0
-  let block_size = 0
 end
 
 module MD5     : S = Make (Baijiu_md5.Make) (struct let (digest_size, block_size) = (16, 64) end)
