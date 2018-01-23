@@ -42,7 +42,7 @@ sig
   type buffer
 
   val init : unit -> ctx
-  val init': buffer -> int -> int -> ctx
+  val with_outlen_and_key : int -> buffer -> int -> int -> ctx
   val feed : ctx -> buffer -> int -> int -> unit
   val feed_bytes : ctx -> Bytes.t -> int -> int -> unit
   val feed_bigstring : ctx -> (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t -> int -> int -> unit
@@ -340,14 +340,14 @@ module Make (B : Baijiu_buffer.S)
   let feed_bigstring = feed ~blit:B.blit_from_bigstring ~le64_to_cpu:B.le64_from_bigstring_to_cpu
   let feed = feed ~blit:B.blit ~le64_to_cpu:B.le64_to_cpu
 
-  let init' key off len =
+  let with_outlen_and_key outlen key off len =
     let buf = B.create 128 in
 
     B.fill buf 0 128 '\x00';
 
     let ctx =
       { buflen = 0
-      ; outlen = default_param.digest_length
+      ; outlen
       ; last_node = 0
       ; buf
       ; h = Array.make 8 0L
@@ -355,7 +355,9 @@ module Make (B : Baijiu_buffer.S)
       ; f = Array.make 2 0L }
     in
 
-    let param_bytes = param_to_bytes { default_param with key_length = len } in
+    let param_bytes = param_to_bytes
+        { default_param with digest_length = outlen
+                           ; key_length = len } in
 
     for i = 0 to 7
     do ctx.h.(i) <- Int64.(iv.(i) lxor (B.le64_to_cpu param_bytes (i * 8))) done;
@@ -383,5 +385,5 @@ module Make (B : Baijiu_buffer.S)
     for i = 0 to 7
     do B.cpu_to_le64 res (i * 8) ctx.h.(i) done;
 
-    res
+    B.sub res 0 ctx.outlen
 end

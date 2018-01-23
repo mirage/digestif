@@ -152,20 +152,22 @@ struct
   let get ctx = not_implemented ()
 end
 
-module type Hash' =
+module type HashBLAKE2 =
   functor (Buffer : BUFFER) -> sig
     type ctx
     type buffer
 
-    val init : unit -> ctx
-    val init': buffer -> int -> int -> ctx
+    val with_outlen_and_key : int -> buffer -> int -> int -> ctx
     val feed : ctx -> buffer -> int -> int -> unit
     val feed_bytes : ctx -> By.t -> int -> int -> unit
     val feed_bigstring : ctx -> Bi.t -> int -> int -> unit
     val get  : ctx -> buffer
   end with type buffer = Buffer.buffer
 
-module Make_BLAKE2B (Hash : Hash') (D : Desc) : S =
+let empty_bytes = By.create 0
+let empty_bigstring = Bi.create 0
+
+module Make_BLAKE2 (Hash : HashBLAKE2) (D : Desc) : S =
 struct
   let digest_size = D.digest_size
 
@@ -175,6 +177,8 @@ struct
     include Hash (struct include By type buffer = t end)
     include Pp.Make (By) (D)
 
+    let init () =
+      with_outlen_and_key digest_size empty_bytes 0 0
     let feed ctx buf =
       feed ctx buf 0 (By.length buf)
     let feed_bytes ctx buf =
@@ -183,13 +187,15 @@ struct
       feed_bigstring ctx buf 0 (Bi.length buf)
 
     let digest buf =
-      let t = init () in ( feed t buf; get t)
+      let t = with_outlen_and_key digest_size empty_bytes 0 0 in
+      ( feed t buf; get t)
 
     let digestv bufs =
-      let t = init () in ( List.iter (feed t) bufs; get t )
+      let t = with_outlen_and_key digest_size empty_bytes 0 0 in
+      ( List.iter (feed t) bufs; get t )
 
     let hmacv ~key msg =
-      let ctx = init' key 0 (By.length key) in
+      let ctx = with_outlen_and_key digest_size key 0 (By.length key) in
       List.iter (fun x -> feed ctx x) msg;
       get ctx
 
@@ -203,6 +209,8 @@ struct
     include Hash (struct include Bi type buffer = t end)
     include Pp.Make (Bi) (D)
 
+    let init () =
+      with_outlen_and_key digest_size empty_bigstring 0 0
     let feed ctx buf =
       feed ctx buf 0 (Bi.length buf)
     let feed_bytes ctx buf =
@@ -211,13 +219,15 @@ struct
       feed_bigstring ctx buf 0 (Bi.length buf)
 
     let digest buf =
-      let t = init () in ( feed t buf; get t)
+      let t = with_outlen_and_key digest_size empty_bigstring 0 0 in
+      ( feed t buf; get t)
 
     let digestv bufs =
-      let t = init () in ( List.iter (feed t) bufs; get t )
+      let t = with_outlen_and_key digest_size empty_bigstring 0 0 in
+      ( List.iter (feed t) bufs; get t )
 
     let hmacv ~key msg =
-      let ctx = init' key 0 (Bi.length key) in
+      let ctx = with_outlen_and_key digest_size key 0 (Bi.length key) in
       List.iter (fun x -> feed ctx x) msg;
       get ctx
 
@@ -239,9 +249,19 @@ module SHA224  : S = Make (Baijiu_sha224.Make) (struct let (digest_size, block_s
 module SHA256  : S = Make (Baijiu_sha256.Make) (struct let (digest_size, block_size) = (32, 64) end)
 module SHA384  : S = Make (Baijiu_sha384.Make) (struct let (digest_size, block_size) = (48, 128) end)
 module SHA512  : S = Make (Baijiu_sha512.Make) (struct let (digest_size, block_size) = (64, 128) end)
-module BLAKE2B = Make_BLAKE2B(Baijiu_blake2b.Make) (struct let (digest_size, block_size) = (64, 128) end)
-module BLAKE2S = Make_BLAKE2B(Baijiu_blake2s.Make) (struct let (digest_size, block_size) = (32, 64) end)
+module BLAKE2B = Make_BLAKE2(Baijiu_blake2b.Make) (struct let (digest_size, block_size) = (64, 128) end)
+module BLAKE2S = Make_BLAKE2(Baijiu_blake2s.Make) (struct let (digest_size, block_size) = (32, 64) end)
 module RMD160  : S = Make (Baijiu_rmd160.Make) (struct let (digest_size, block_size) = (20, 64) end)
+
+module MakeBLAKE2B (D : sig val digest_size : int end) : S =
+struct
+  include Make_BLAKE2(Baijiu_blake2b.Make)(struct let (digest_size, block_size) = (D.digest_size, 128) end)
+end
+
+module MakeBLAKE2S (D : sig val digest_size : int end) : S =
+struct
+  include Make_BLAKE2(Baijiu_blake2s.Make)(struct let (digest_size, block_size) = (D.digest_size, 64) end)
+end
 
 type hash =
   [ `MD5
