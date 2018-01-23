@@ -226,14 +226,14 @@ struct
     external init     : ctx -> unit
                       = "caml_digestif_blake2b_ba_init"
                       [@@noalloc]
-    external init'    : ctx -> size -> ba -> off -> size -> unit
-                      = "caml_digestif_blake2b_ba_abstract_init"
-                      [@@noalloc]
     external update   : ctx -> ba -> off -> size -> unit
                       = "caml_digestif_blake2b_ba_update"
                       [@@noalloc]
     external finalize : ctx -> ba -> off -> unit
                       = "caml_digestif_blake2b_ba_finalize"
+                      [@@noalloc]
+    external with_outlen_and_key : ctx -> size -> ba -> off -> size -> unit
+                      = "caml_digestif_blake2b_ba_init_with_outlen_and_key"
                       [@@noalloc]
   end
 
@@ -242,14 +242,14 @@ struct
     external init     : ctx -> unit
                       = "caml_digestif_blake2b_st_init"
                       [@@noalloc]
-    external init'    : ctx -> size -> st -> off -> size -> unit
-                      = "caml_digestif_blake2b_st_abstract_init"
-                      [@@noalloc]
     external update   : ctx -> st -> off -> size -> unit
                       = "caml_digestif_blake2b_st_update"
                       [@@noalloc]
     external finalize : ctx -> st -> off -> unit
                       = "caml_digestif_blake2b_st_finalize"
+                      [@@noalloc]
+    external with_outlen_and_key : ctx -> size -> st -> off -> size -> unit
+                      = "caml_digestif_blake2b_st_init_with_outlen_and_key"
                       [@@noalloc]
   end
 
@@ -273,14 +273,14 @@ struct
     external init     : ctx -> unit
                       = "caml_digestif_blake2s_ba_init"
                       [@@noalloc]
-    external init'    : ctx -> size -> ba -> off -> size -> unit
-                      = "caml_digestif_blake2s_ba_abstract_init"
-                      [@@noalloc]
     external update   : ctx -> ba -> off -> size -> unit
                       = "caml_digestif_blake2s_ba_update"
                       [@@noalloc]
     external finalize : ctx -> ba -> off -> unit
                       = "caml_digestif_blake2s_ba_finalize"
+                      [@@noalloc]
+    external with_outlen_and_key : ctx -> size -> ba -> off -> size -> unit
+                      = "caml_digestif_blake2s_ba_init_with_outlen_and_key"
                       [@@noalloc]
   end
 
@@ -289,14 +289,14 @@ struct
     external init     : ctx -> unit
                       = "caml_digestif_blake2s_st_init"
                       [@@noalloc]
-    external init'    : ctx -> size -> st -> off -> size -> unit
-                      = "caml_digestif_blake2s_st_abstract_init"
-                      [@@noalloc]
     external update   : ctx -> st -> off -> size -> unit
                       = "caml_digestif_blake2s_st_update"
                       [@@noalloc]
     external finalize : ctx -> st -> off -> unit
                       = "caml_digestif_blake2s_st_finalize"
+                      [@@noalloc]
+    external with_outlen_and_key : ctx -> size -> st -> off -> size -> unit
+                      = "caml_digestif_blake2s_st_init_with_outlen_and_key"
                       [@@noalloc]
   end
 

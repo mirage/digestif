@@ -70,9 +70,9 @@ __define_hash (blake2s, BLAKE2S)
 __define_hash (rmd160, RMD160)
 
 CAMLprim value
-caml_digestif_blake2b_ba_abstract_init(value ctx, value outlen, value key, value off, value len)
+caml_digestif_blake2b_ba_init_with_outlen_and_key(value ctx, value outlen, value key, value off, value len)
 {
-  digestif_blake2b_abstract_init(
+  digestif_blake2b_init_with_outlen_and_key(
     (struct blake2b_ctx *) Caml_ba_data_val (ctx), Int_val (outlen),
     _ba_uint8_off(key, off), Int_val (len));
 
@@ -80,9 +80,9 @@ caml_digestif_blake2b_ba_abstract_init(value ctx, value outlen, value key, value
 }
 
 CAMLprim value
-caml_digestif_blake2b_st_abstract_init(value ctx, value outlen, value key, value off, value len)
+caml_digestif_blake2b_st_init_with_outlen_and_key(value ctx, value outlen, value key, value off, value len)
 {
-  digestif_blake2b_abstract_init(
+  digestif_blake2b_init_with_outlen_and_key(
     (struct blake2b_ctx *) Caml_ba_data_val (ctx), Int_val (outlen),
     _st_uint8_off(key, off), Int_val (len));
 
@@ -100,9 +100,9 @@ caml_digestif_blake2b_digest_size(value ctx) {
 }
 
 CAMLprim value
-caml_digestif_blake2s_ba_abstract_init(value ctx, value outlen, value key, value off, value len)
+caml_digestif_blake2s_ba_init_with_outlen_and_key(value ctx, value outlen, value key, value off, value len)
 {
-  digestif_blake2s_abstract_init(
+  digestif_blake2s_init_with_outlen_and_key(
     (struct blake2s_ctx *) Caml_ba_data_val (ctx), Int_val (outlen),
     _ba_uint8_off(key, off), Int_val (len));
 
@@ -110,9 +110,9 @@ caml_digestif_blake2s_ba_abstract_init(value ctx, value outlen, value key, value
 }
 
 CAMLprim value
-caml_digestif_blake2s_st_abstract_init(value ctx, value outlen, value key, value off, value len)
+caml_digestif_blake2s_st_init_with_outlen_and_key(value ctx, value outlen, value key, value off, value len)
 {
-  digestif_blake2s_abstract_init(
+  digestif_blake2s_init_with_outlen_and_key(
     (struct blake2s_ctx *) Caml_ba_data_val (ctx), Int_val (outlen),
     _st_uint8_off(key, off), Int_val (len));
 
