@@ -67,7 +67,7 @@ module Make (B : Baijiu_buffer.S)
 
   type ctx =
     { mutable buflen    : int
-    ; mutable outlen    : int
+    ; outlen            : int
     ; mutable last_node : int
     ; buf               : buffer
     ; h                 : int32 array
