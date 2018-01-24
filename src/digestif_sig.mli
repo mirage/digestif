@@ -56,26 +56,26 @@ module type S = sig
   end
 end
 
-type hash =
-  [ `MD5
-  | `SHA1
-  | `SHA224
-  | `SHA256
-  | `SHA384
-  | `SHA512
-  | `BLAKE2B
-  | `BLAKE2S
-  | `RMD160 ]
+type _ hash =
+  | MD5 : unit hash
+  | SHA1 : unit hash
+  | RMD160 : unit hash
+  | SHA224 : unit hash
+  | SHA256 : unit hash
+  | SHA384 : unit hash
+  | SHA512 : unit hash
+  | BLAKE2B : int -> int hash
+  | BLAKE2S : int -> int hash
 
 module type T = sig
   type t
   type buffer
 
-  val pp      : hash -> Format.formatter -> t -> unit
-  val digest  : hash -> buffer -> t
-  val digestv : hash -> buffer list -> t
-  val mac     : hash -> key:buffer -> buffer -> t
-  val macv    : hash -> key:buffer -> buffer list -> t
-  val of_hex  : hash -> buffer -> t
-  val to_hex  : hash -> t -> buffer
+  val pp      : _ hash -> Format.formatter -> t -> unit
+  val digest  : _ hash -> buffer -> t
+  val digestv : _ hash -> buffer list -> t
+  val mac     : _ hash -> key:buffer -> buffer -> t
+  val macv    : _ hash -> key:buffer -> buffer list -> t
+  val of_hex  : _ hash -> buffer -> t
+  val to_hex  : _ hash -> t -> buffer
 end

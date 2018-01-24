@@ -308,18 +308,36 @@ struct
   include Make_common_BLAKE2(Native.BLAKE2B)(struct let (digest_size, block_size) = (D.digest_size, 64) end)
 end
 
-type hash = Digestif_sig.hash
+type 'a hash = 'a Digestif_sig.hash
 
-let module_of = function
-  | `MD5     -> (module MD5     : S)
-  | `SHA1    -> (module SHA1    : S)
-  | `SHA224  -> (module SHA224  : S)
-  | `SHA256  -> (module SHA256  : S)
-  | `SHA384  -> (module SHA384  : S)
-  | `SHA512  -> (module SHA512  : S)
-  | `BLAKE2B -> (module BLAKE2B : S)
-  | `BLAKE2S -> (module BLAKE2S : S)
-  | `RMD160  -> (module RMD160  : S)
+let module_of :
+  type a. a hash -> (module S) = fun hash ->
+  let b2b = Hashtbl.create 13 in
+  let b2s = Hashtbl.create 13 in
+  match hash with
+  | Digestif_sig.MD5     -> (module MD5     : S)
+  | Digestif_sig.SHA1    -> (module SHA1    : S)
+  | Digestif_sig.RMD160  -> (module RMD160  : S)
+  | Digestif_sig.SHA224  -> (module SHA224  : S)
+  | Digestif_sig.SHA256  -> (module SHA256  : S)
+  | Digestif_sig.SHA384  -> (module SHA384  : S)
+  | Digestif_sig.SHA512  -> (module SHA512  : S)
+  | Digestif_sig.BLAKE2B digest_size -> begin
+      match Hashtbl.find b2b digest_size with
+      | exception Not_found ->
+        let m = (module MakeBLAKE2B(struct let digest_size = digest_size end) : S) in
+        Hashtbl.replace b2b digest_size m ;
+        m
+      | m -> m
+    end
+  | Digestif_sig.BLAKE2S digest_size -> begin
+      match Hashtbl.find b2s digest_size with
+      | exception Not_found ->
+        let m = (module MakeBLAKE2S(struct let digest_size = digest_size end) : S) in
+        Hashtbl.replace b2s digest_size m ;
+        m
+      | m -> m
+    end
 
 module Bytes = struct
   type t = Bytes.t
