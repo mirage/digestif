@@ -1,11 +1,11 @@
 module type S = Digestif_sig.S
 module type T = Digestif_sig.T
 
-type 'a hash = 'a Digestif_sig.hash
+type hash = Digestif_sig.hash
 
 include Digestif_sig.C
 
-val digest_size : _ hash -> int
+val digest_size : hash -> int
 
 module MD5     : S
 module SHA1    : S

@@ -1,7 +1,6 @@
 open Digestif_sig
 
-type nonrec 'a hash = 'a hash
-and nothing = nothing
+type nonrec hash = hash
 
 let md5 = MD5
 let sha1 = SHA1

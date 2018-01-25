@@ -56,39 +56,38 @@ module type S = sig
   end
 end
 
-type _ hash =
-  | MD5     : nothing hash
-  | SHA1    : nothing hash
-  | RMD160  : nothing hash
-  | SHA224  : nothing hash
-  | SHA256  : nothing hash
-  | SHA384  : nothing hash
-  | SHA512  : nothing hash
-  | BLAKE2B : int -> int hash
-  | BLAKE2S : int -> int hash
-and nothing = unit
+type hash =
+  | MD5
+  | SHA1
+  | RMD160
+  | SHA224
+  | SHA256
+  | SHA384
+  | SHA512
+  | BLAKE2B of int
+  | BLAKE2S of int
 
 module type C = sig
-  val md5     : nothing hash
-  val sha1    : nothing hash
-  val rmd160  : nothing hash
-  val sha224  : nothing hash
-  val sha256  : nothing hash
-  val sha384  : nothing hash
-  val sha512  : nothing hash
-  val blake2b : int -> int hash
-  val blake2s : int -> int hash
+  val md5     : hash
+  val sha1    : hash
+  val rmd160  : hash
+  val sha224  : hash
+  val sha256  : hash
+  val sha384  : hash
+  val sha512  : hash
+  val blake2b : int -> hash
+  val blake2s : int -> hash
 end
 
 module type T = sig
   type t
   type buffer
 
-  val pp      : _ hash -> Format.formatter -> t -> unit
-  val digest  : _ hash -> buffer -> t
-  val digestv : _ hash -> buffer list -> t
-  val mac     : _ hash -> key:buffer -> buffer -> t
-  val macv    : _ hash -> key:buffer -> buffer list -> t
-  val of_hex  : _ hash -> buffer -> t
-  val to_hex  : _ hash -> t -> buffer
+  val pp      : hash -> Format.formatter -> t -> unit
+  val digest  : hash -> buffer -> t
+  val digestv : hash -> buffer list -> t
+  val mac     : hash -> key:buffer -> buffer -> t
+  val macv    : hash -> key:buffer -> buffer list -> t
+  val of_hex  : hash -> buffer -> t
+  val to_hex  : hash -> t -> buffer
 end
