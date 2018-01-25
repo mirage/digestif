@@ -241,7 +241,7 @@ struct
   include Make_BLAKE2(Baijiu_blake2s.Make)(struct let (digest_size, block_size) = (D.digest_size, 64) end)
 end
 
-type 'a hash = 'a Digestif_sig.hash
+include Digestif_hash
 
 let module_of :
   type a. a hash -> (module S) = fun hash ->

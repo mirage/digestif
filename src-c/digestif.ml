@@ -308,7 +308,7 @@ struct
   include Make_common_BLAKE2(Native.BLAKE2S)(struct let (digest_size, block_size) = (D.digest_size, 64) end)
 end
 
-type 'a hash = 'a Digestif_sig.hash
+include Digestif_hash
 
 let module_of :
   type a. a hash -> (module S) = fun hash ->

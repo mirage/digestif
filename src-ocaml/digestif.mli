@@ -3,6 +3,8 @@ module type T = Digestif_sig.T
 
 type 'a hash = 'a Digestif_sig.hash
 
+include Digestif_sig.C
+
 val digest_size : 'a hash -> int
 
 module MD5     : S
