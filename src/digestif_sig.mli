@@ -57,15 +57,28 @@ module type S = sig
 end
 
 type _ hash =
-  | MD5 : unit hash
-  | SHA1 : unit hash
-  | RMD160 : unit hash
-  | SHA224 : unit hash
-  | SHA256 : unit hash
-  | SHA384 : unit hash
-  | SHA512 : unit hash
+  | MD5     : nothing hash
+  | SHA1    : nothing hash
+  | RMD160  : nothing hash
+  | SHA224  : nothing hash
+  | SHA256  : nothing hash
+  | SHA384  : nothing hash
+  | SHA512  : nothing hash
   | BLAKE2B : int -> int hash
   | BLAKE2S : int -> int hash
+and nothing = unit
+
+module type C = sig
+  val md5     : nothing hash
+  val sha1    : nothing hash
+  val rmd160  : nothing hash
+  val sha224  : nothing hash
+  val sha256  : nothing hash
+  val sha384  : nothing hash
+  val sha512  : nothing hash
+  val blake2b : int -> int hash
+  val blake2s : int -> int hash
+end
 
 module type T = sig
   type t
