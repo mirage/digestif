@@ -1,5 +1,4 @@
-type 'a hash = 'a Digestif_sig.hash
-and nothing = Digestif_sig.nothing
+type hash = Digestif_sig.hash
 
 include Digestif_sig.C
 

@@ -310,8 +310,7 @@ end
 
 include Digestif_hash
 
-let module_of :
-  type a. a hash -> (module S) = fun hash ->
+let module_of hash =
   let b2b = Hashtbl.create 13 in
   let b2s = Hashtbl.create 13 in
   match hash with
