@@ -305,7 +305,7 @@ end
 
 module MakeBLAKE2S (D : sig val digest_size : int end) : S =
 struct
-  include Make_common_BLAKE2(Native.BLAKE2B)(struct let (digest_size, block_size) = (D.digest_size, 64) end)
+  include Make_common_BLAKE2(Native.BLAKE2S)(struct let (digest_size, block_size) = (D.digest_size, 64) end)
 end
 
 type 'a hash = 'a Digestif_sig.hash
