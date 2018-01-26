@@ -30,7 +30,7 @@ let btest (type buffer) (module Buffer : S with type t = buffer) hash digest (in
 
   Alcotest.(check (Alcotest.testable Buffer.pp Buffer.eq)) title expect result
 
-module type HASH = sig type 'a t = 'a Digestif.hash type hash val v : hash t end
+module type HASH = sig type t = Digestif.hash val v : t end
 
 module By (Hash : HASH) =
 struct
@@ -49,34 +49,34 @@ struct
 end
 
 let test
-  : type a h. a buffer -> h Digestif.hash -> a -> a -> a -> unit
+  : type a. a buffer -> Digestif.hash -> a -> a -> a -> unit
   = fun buffer hash key input expect ->
     match buffer with
     | Bytes ->
-      let module By = By(struct type 'hash t = 'hash Digestif.hash type hash = h let v = hash end) in
+      let module By = By(struct type t = Digestif.hash let v = hash end) in
       atest (module By) hash Digestif.Bytes.mac key input expect
     | Bigstring ->
-      let module Bi = Bi(struct type 'hash t = 'hash Digestif.hash type hash = h let v = hash end) in
+      let module Bi = Bi(struct type t = Digestif.hash let v = hash end) in
       atest (module Bi) hash Digestif.Bigstring.mac key input expect
 
 let test_digest
-  : type a h. a buffer -> h Digestif.hash -> a -> a -> unit
+  : type a. a buffer -> Digestif.hash -> a -> a -> unit
   = fun buffer hash input expect ->
     match buffer with
     | Bytes ->
-      let module By = By(struct type 'hash t = 'hash Digestif.hash type hash = h let v = hash end) in
+      let module By = By(struct type t = Digestif.hash let v = hash end) in
       btest (module By) hash Digestif.Bytes.digest input expect
     | Bigstring ->
-      let module Bi = Bi(struct type 'hash t = 'hash Digestif.hash type hash = h let v = hash end) in
+      let module Bi = Bi(struct type t = Digestif.hash let v = hash end) in
       btest (module Bi) hash Digestif.Bigstring.digest input expect
 
 let make
-  : type a. name:string -> a buffer -> 'hash Digestif.hash -> a -> a -> a -> unit Alcotest.test_case
+  : type a. name:string -> a buffer -> Digestif.hash -> a -> a -> a -> unit Alcotest.test_case
   = fun ~name buffer hash key input expect ->
     name, `Slow, (fun () -> test buffer hash key input expect)
 
 let make_digest
-  : type a. name:string -> a buffer -> 'hash Digestif.hash -> a -> a -> unit Alcotest.test_case
+  : type a. name:string -> a buffer -> Digestif.hash -> a -> a -> unit Alcotest.test_case
   = fun ~name buffer hash input expect ->
     name, `Slow, (fun () -> test_digest buffer hash input expect)
 
