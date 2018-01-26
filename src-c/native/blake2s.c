@@ -26,7 +26,7 @@ static const uint8_t sigma[10][16] =
 #include <inttypes.h>
 
 static const struct blake2s_param P[] =
-  { { BLAKE2S_BLOCKBYTES /* digest_length */
+  { { BLAKE2S_OUTBYTES /* digest_length */
     , 0 /* key_length */
     , 1 /* fanout */
     , 1 /* depth */
@@ -64,7 +64,7 @@ void digestif_blake2s_init(struct blake2s_ctx *ctx)
   memset( ctx, 0, sizeof( struct blake2s_ctx ) );
 
   for( i = 0; i < 8; ++i ) {
-    ctx->h[i] = IV[i] ^ load32( &p[i * 4] );
+    ctx->h[i] = IV[i] ^ load32(p + sizeof(uint32_t) * i);
   }
 
   ctx->outlen = P->digest_length;
@@ -128,9 +128,8 @@ static void blake2s_compress(struct blake2s_ctx *ctx, const uint8_t block[BLAKE2
   ROUND( 8 );
   ROUND( 9 );
 
-  for( i = 0; i < 8; ++i ) {
+  for( i = 0; i < 8; ++i )
     ctx->h[i] = ctx->h[i] ^ v[i] ^ v[i + 8];
-  }
 }
 
 #undef G
@@ -148,13 +147,14 @@ void digestif_blake2s_update( struct blake2s_ctx *ctx, uint8_t *data, uint32_t i
     if( inlen > fill )
     {
       ctx->buflen = 0;
-      memcpy( ctx->buf + left, in, fill ); /* Fill buffer */
+      memcpy( ctx->buf + left, in, fill );
       blake2s_increment_counter( ctx, BLAKE2S_BLOCKBYTES );
-      blake2s_compress( ctx, ctx->buf ); /* Compress */
+      blake2s_compress( ctx, ctx->buf );
       in += fill;
       inlen -= fill;
 
-      while(inlen > BLAKE2S_BLOCKBYTES) {
+      while (inlen > BLAKE2S_BLOCKBYTES)
+      {
         blake2s_increment_counter( ctx, BLAKE2S_BLOCKBYTES );
         blake2s_compress( ctx, in );
         in += BLAKE2S_BLOCKBYTES;
@@ -189,7 +189,7 @@ void digestif_blake2s_init_with_outlen_and_key(struct blake2s_ctx *ctx, size_t o
   memset( P->personal, 0, sizeof( P->personal ) );
 
   for( i = 0; i < 8; ++i )
-    ctx->h[i] = IV[i] ^ load32( &p[i * 4] );
+    ctx->h[i] = IV[i] ^ load32(p + sizeof(uint32_t) * i);
 
   ctx->outlen = P->digest_length;
 
@@ -208,15 +208,15 @@ void digestif_blake2s_finalize( struct blake2s_ctx *ctx, uint8_t *out )
   uint8_t buffer[BLAKE2S_OUTBYTES] = { 0 };
   size_t i;
 
-  blake2s_increment_counter( ctx, ( uint32_t )ctx->buflen );
+  blake2s_increment_counter( ctx, ctx->buflen );
   blake2s_set_lastblock( ctx );
-  memset( ctx->buf + ctx->buflen, 0, BLAKE2S_BLOCKBYTES - ctx->buflen ); /* Padding */
+  memset( ctx->buf + ctx->buflen, 0, BLAKE2S_BLOCKBYTES - ctx->buflen );
   blake2s_compress( ctx, ctx->buf );
 
-  for( i = 0; i < 8; ++i ) /* Output full hash to temp buffer */
-    store32( buffer + sizeof( ctx->h[i] ) * i, ctx->h[i] );
+  for( i = 0; i < 8; ++i )
+    store32(buffer + sizeof( ctx->h[i] ) * i, ctx->h[i]);
 
   memcpy( out, buffer, ctx->outlen );
-  secure_zero_memory(buffer, sizeof(buffer));
+  secure_zero_memory( buffer, sizeof(buffer) );
 }
 
