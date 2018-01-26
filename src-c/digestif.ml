@@ -162,32 +162,37 @@ module Make (F : Foreign) (D : Desc) = struct
   end
 end
 
-module type ForeignExt = sig
+(* XXX(dinosaure): this interface provide a new function to set digest size and
+   key. See #20. *)
+module type ForeignBLAKE2 = sig
   open Native
 
   module Bigstring :
   sig
-    val init     : ctx -> unit
-    val init'    : ctx -> int -> ba -> int -> int -> unit
-    val update   : ctx -> ba -> int -> int -> unit
-    val finalize : ctx -> ba -> int -> unit
+    val init      : ctx -> unit
+    val update    : ctx -> ba -> int -> int -> unit
+    val finalize  : ctx -> ba -> int -> unit
+    val with_outlen_and_key : ctx -> int -> ba -> int -> int -> unit
   end
 
   module Bytes :
   sig
-    val init     : ctx -> unit
-    val init'    : ctx -> int -> st -> int -> int -> unit
-    val update   : ctx -> st -> int -> int -> unit
-    val finalize : ctx -> st -> int -> unit
+    val init      : ctx -> unit
+    val update    : ctx -> st -> int -> int -> unit
+    val finalize  : ctx -> st -> int -> unit
+    val with_outlen_and_key : ctx -> int -> st -> int -> int -> unit
   end
 
-  val ctx_size   : unit -> int
-  val key_size   : unit -> int
+  val ctx_size    : unit -> int
+  val key_size    : unit -> int
+  val digest_size : ctx -> int
 end
 
-module Make_BLAKE2 (F : ForeignExt) (D : Desc) : Digestif_sig.S = struct
+module Make_common_BLAKE2 (F : ForeignBLAKE2) (D : Desc) : Digestif_sig.S = struct
   let block_size  = D.block_size
-  and digest_size = D.digest_size
+  and digest_size = D.digest_size (* XXX(dinosaure): short-cut [digest_size], we
+                                     use [D.digest_size] when we call
+                                     [F.with_outlen_and_key]. *)
   and ctx_size    = F.ctx_size ()
   and key_size    = F.key_size ()
 
@@ -201,7 +206,7 @@ module Make_BLAKE2 (F : ForeignExt) (D : Desc) : Digestif_sig.S = struct
 
     let init () =
       let t = Bi.create ctx_size in
-      ( F.Bytes.init' t digest_size By.empty 0 0; t )
+      ( F.Bytes.with_outlen_and_key t digest_size By.empty 0 0; t )
 
     let feed t buf =
       F.Bytes.update t buf 0 (By.length buf)
@@ -223,9 +228,12 @@ module Make_BLAKE2 (F : ForeignExt) (D : Desc) : Digestif_sig.S = struct
       let t = init () in ( List.iter (feed t) bufs; get t )
 
     let hmacv ~key msg =
+      if By.length key > key_size
+      then raise (Invalid_argument "BLAKE2{B,S}.hmac{v}: invalid key");
+
       let ctx = Bi.create ctx_size in
       let res = By.create digest_size in
-      F.Bytes.init' ctx digest_size key 0 (By.length key);
+      F.Bytes.with_outlen_and_key ctx digest_size key 0 (By.length key);
       List.iter (fun x -> F.Bytes.update ctx x 0 (By.length x)) msg;
       F.Bytes.finalize ctx res 0;
       res
@@ -243,7 +251,7 @@ module Make_BLAKE2 (F : ForeignExt) (D : Desc) : Digestif_sig.S = struct
 
     let init () =
       let t = Bi.create ctx_size in
-      ( F.Bigstring.init' t digest_size Bi.empty 0 0; t )
+      ( F.Bigstring.with_outlen_and_key t digest_size Bi.empty 0 0; t )
 
     let feed t buf =
       F.Bigstring.update t buf 0 (Bi.length buf)
@@ -266,11 +274,11 @@ module Make_BLAKE2 (F : ForeignExt) (D : Desc) : Digestif_sig.S = struct
 
     let hmacv ~key msg =
       if Bi.length key > key_size
-      then raise (Invalid_argument "BLAKE2B.hmac{v}: invalid key");
+      then raise (Invalid_argument "BLAKE2{B,S}.hmac{v}: invalid key");
 
       let ctx = Bi.create ctx_size in
       let res = Bi.create digest_size in
-      F.Bigstring.init' ctx digest_size key 0 (Bi.length key);
+      F.Bigstring.with_outlen_and_key ctx digest_size key 0 (Bi.length key);
       List.iter (fun x -> F.Bigstring.update ctx x 0 (Bi.length x)) msg;
       F.Bigstring.finalize ctx res 0;
       res
@@ -286,22 +294,49 @@ module SHA224  : S = Make (Native.SHA224) (struct let (digest_size, block_size) 
 module SHA256  : S = Make (Native.SHA256) (struct let (digest_size, block_size) = (32, 64) end)
 module SHA384  : S = Make (Native.SHA384) (struct let (digest_size, block_size) = (48, 128) end)
 module SHA512  : S = Make (Native.SHA512) (struct let (digest_size, block_size) = (64, 128) end)
-module BLAKE2B = Make_BLAKE2(Native.BLAKE2B) (struct let (digest_size, block_size) = (64, 128) end)
-module BLAKE2S = Make_BLAKE2(Native.BLAKE2S) (struct let (digest_size, block_size) = (32, 64) end)
+module BLAKE2B = Make_common_BLAKE2(Native.BLAKE2B) (struct let (digest_size, block_size) = (64, 128) end)
+module BLAKE2S = Make_common_BLAKE2(Native.BLAKE2S) (struct let (digest_size, block_size) = (32, 64) end)
 module RMD160  : S = Make (Native.RMD160) (struct let (digest_size, block_size) = (20, 64) end)
 
-type hash = Digestif_sig.hash
+module MakeBLAKE2B (D : sig val digest_size : int end) : S =
+struct
+  include Make_common_BLAKE2(Native.BLAKE2B)(struct let (digest_size, block_size) = (D.digest_size, 128) end)
+end
 
-let module_of = function
-  | `MD5     -> (module MD5     : S)
-  | `SHA1    -> (module SHA1    : S)
-  | `SHA224  -> (module SHA224  : S)
-  | `SHA256  -> (module SHA256  : S)
-  | `SHA384  -> (module SHA384  : S)
-  | `SHA512  -> (module SHA512  : S)
-  | `BLAKE2B -> (module BLAKE2B : S)
-  | `BLAKE2S -> (module BLAKE2S : S)
-  | `RMD160  -> (module RMD160  : S)
+module MakeBLAKE2S (D : sig val digest_size : int end) : S =
+struct
+  include Make_common_BLAKE2(Native.BLAKE2S)(struct let (digest_size, block_size) = (D.digest_size, 64) end)
+end
+
+include Digestif_hash
+
+let module_of hash =
+  let b2b = Hashtbl.create 13 in
+  let b2s = Hashtbl.create 13 in
+  match hash with
+  | Digestif_sig.MD5     -> (module MD5     : S)
+  | Digestif_sig.SHA1    -> (module SHA1    : S)
+  | Digestif_sig.RMD160  -> (module RMD160  : S)
+  | Digestif_sig.SHA224  -> (module SHA224  : S)
+  | Digestif_sig.SHA256  -> (module SHA256  : S)
+  | Digestif_sig.SHA384  -> (module SHA384  : S)
+  | Digestif_sig.SHA512  -> (module SHA512  : S)
+  | Digestif_sig.BLAKE2B digest_size -> begin
+      match Hashtbl.find b2b digest_size with
+      | exception Not_found ->
+        let m = (module MakeBLAKE2B(struct let digest_size = digest_size end) : S) in
+        Hashtbl.replace b2b digest_size m ;
+        m
+      | m -> m
+    end
+  | Digestif_sig.BLAKE2S digest_size -> begin
+      match Hashtbl.find b2s digest_size with
+      | exception Not_found ->
+        let m = (module MakeBLAKE2S(struct let digest_size = digest_size end) : S) in
+        Hashtbl.replace b2s digest_size m ;
+        m
+      | m -> m
+    end
 
 module Bytes = struct
   type t = Bytes.t

@@ -48,7 +48,7 @@ PACKED(struct blake2s_param
 #define BLAKE2S_CTX_SIZE    (sizeof(struct blake2s_ctx))
 
 void digestif_blake2s_init(struct blake2s_ctx *ctx);
-void digestif_blake2s_abstract_init(struct blake2s_ctx *ctx, size_t outlen, const void *key, size_t keylen);
+void digestif_blake2s_init_with_outlen_and_key(struct blake2s_ctx *ctx, size_t outlen, const void *key, size_t keylen);
 void digestif_blake2s_update(struct blake2s_ctx *ctx, uint8_t *data, uint32_t len);
 void digestif_blake2s_finalize(struct blake2s_ctx *ctx, uint8_t *out);
 

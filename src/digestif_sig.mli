@@ -57,15 +57,27 @@ module type S = sig
 end
 
 type hash =
-  [ `MD5
-  | `SHA1
-  | `SHA224
-  | `SHA256
-  | `SHA384
-  | `SHA512
-  | `BLAKE2B
-  | `BLAKE2S
-  | `RMD160 ]
+  | MD5
+  | SHA1
+  | RMD160
+  | SHA224
+  | SHA256
+  | SHA384
+  | SHA512
+  | BLAKE2B of int
+  | BLAKE2S of int
+
+module type C = sig
+  val md5     : hash
+  val sha1    : hash
+  val rmd160  : hash
+  val sha224  : hash
+  val sha256  : hash
+  val sha384  : hash
+  val sha512  : hash
+  val blake2b : int -> hash
+  val blake2s : int -> hash
+end
 
 module type T = sig
   type t
