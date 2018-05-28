@@ -1,6 +1,8 @@
 module Bigstring = Digestif_bigstring
 module Bytes = Digestif_bytes
 
+type 'a iter = ('a -> unit) -> unit
+
 module type S = sig
 
   val digest_size : int
@@ -19,13 +21,13 @@ module type S = sig
     val init: unit -> ctx
     (** [init ()] initializes a new context to be feeded. *)
 
-    val feed: ctx -> buffer -> unit
+    val feed: ctx -> buffer -> ctx
     (** [feed ctx input] feeds [ctx] with input. *)
 
-    val feed_bytes: ctx -> Bytes.t -> unit
+    val feed_bytes: ctx -> Bytes.t -> ctx
     (** [feed_bytes ctx input] is same as {!feed} but it specialized with {Bytes.t}. *)
 
-    val feed_bigstring: ctx -> Bigstring.t -> unit
+    val feed_bigstring: ctx -> Bigstring.t -> ctx
     (** [feed_bigstring ctx input] is an alias of {!feed}. *)
 
     val get: ctx -> t
@@ -50,6 +52,16 @@ module type S = sig
     val hmacv: key:buffer -> buffer list -> t
     (** [hmacv ~key inputs] has the same behavior of {digestv} but we return a
        keyed-hash instead a hash (as {!hmac}). *)
+
+    val feedi: ctx -> buffer iter -> ctx
+    val feedi_bytes: ctx -> Bytes.t iter -> ctx
+    val feedi_bigstring: ctx -> Bigstring.t iter -> ctx
+
+    val digesti: buffer iter -> t
+    val digesti_bytes: Bytes.t iter -> t
+    val digesti_bigstring: Bigstring.t iter -> t
+
+    val hmaci: key:buffer -> buffer iter -> t
 
     val compare: t -> t -> int
     (** [compare a b] compares [a] and [b] and return [0] if they are equal or
@@ -91,13 +103,13 @@ module type S = sig
     val init: unit -> ctx
     (** [init ()] initializes a new context to be feeded. *)
 
-    val feed: ctx -> buffer -> unit
+    val feed: ctx -> buffer -> ctx
     (** [feed ctx input] feeds [ctx] with input. *)
 
-    val feed_bytes: ctx -> Bytes.t -> unit
+    val feed_bytes: ctx -> Bytes.t -> ctx
     (** [feed_bytes ctx input] is an alias of {!feed}. *)
 
-    val feed_bigstring: ctx -> Bigstring.t -> unit
+    val feed_bigstring: ctx -> Bigstring.t -> ctx
     (** [feed_bigstring ctx input] is same as {!feed} but it specialized with {!Bigstring.t}. *)
 
     val get: ctx -> t
@@ -122,6 +134,16 @@ module type S = sig
     val hmacv: key:buffer -> buffer list -> t
     (** [hmacv ~key inputs] has the same behavior of {digestv} but we return a
        keyed-hash instead a hash (as {!hmac}). *)
+
+    val feedi: ctx -> buffer iter -> ctx
+    val feedi_bytes: ctx -> Bytes.t iter -> ctx
+    val feedi_bigstring: ctx -> Bigstring.t iter -> ctx
+
+    val digesti: buffer iter -> t
+    val digesti_bytes: Bytes.t iter -> t
+    val digesti_bigstring: Bigstring.t iter -> t
+
+    val hmaci: key:buffer -> buffer iter -> t
 
     val compare: t -> t -> int
     (** [compare a b] compares [a] and [b] and return [0] if they are equal or

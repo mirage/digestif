@@ -19,7 +19,9 @@ type off    = int
 type size   = int
 type ba     = Bigstring.t
 type st     = Bytes.t
-type ctx    = Bigstring.t
+type ctx    = Bytes.t
+
+let dup     : ctx -> ctx = Bytes.copy
 
 module MD5 =
 struct

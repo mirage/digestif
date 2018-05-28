@@ -12,20 +12,20 @@
                                                                              \
   CAMLprim value                                                             \
   caml_digestif_ ## name ## _ba_init (value ctx) {                           \
-    digestif_ ## name ## _init ((struct name ## _ctx *) Caml_ba_data_val (ctx)); \
+    digestif_ ## name ## _init ((struct name ## _ctx *) String_val (ctx));   \
     return Val_unit;                                                         \
   }                                                                          \
                                                                              \
   CAMLprim value                                                             \
   caml_digestif_ ## name ## _st_init (value ctx) {                           \
-    digestif_ ## name ## _init ((struct name ## _ctx *) Caml_ba_data_val (ctx)); \
+    digestif_ ## name ## _init ((struct name ## _ctx *) String_val (ctx));   \
     return Val_unit;                                                         \
   }                                                                          \
                                                                              \
   CAMLprim value                                                             \
   caml_digestif_ ## name ## _ba_update (value ctx, value src, value off, value len) { \
     digestif_ ## name ## _update (                                           \
-      (struct name ## _ctx *) Caml_ba_data_val (ctx),                        \
+      (struct name ## _ctx *) String_val (ctx),                              \
       _ba_uint8_off (src, off), Int_val (len));                              \
     return Val_unit;                                                         \
   }                                                                          \
@@ -33,7 +33,7 @@
   CAMLprim value                                                             \
   caml_digestif_ ## name ## _st_update (value ctx, value src, value off, value len) { \
     digestif_ ## name ## _update (                                           \
-      (struct name ## _ctx *) Caml_ba_data_val (ctx),                        \
+      (struct name ## _ctx *) String_val (ctx),                              \
       _st_uint8_off (src, off), Int_val (len));                              \
     return Val_unit;                                                         \
   }                                                                          \
@@ -41,7 +41,7 @@
   CAMLprim value                                                             \
   caml_digestif_ ## name ## _ba_finalize (value ctx, value dst, value off) { \
     digestif_ ## name ## _finalize (                                         \
-      (struct name ## _ctx *) Caml_ba_data_val (ctx),                        \
+      (struct name ## _ctx *) String_val (ctx),                              \
       _ba_uint8_off (dst, off));                                             \
     return Val_unit;                                                         \
   }                                                                          \
@@ -49,7 +49,7 @@
   CAMLprim value                                                             \
   caml_digestif_ ## name ## _st_finalize (value ctx, value dst, value off) { \
     digestif_ ## name ## _finalize(                                          \
-      (struct name ## _ctx *) Caml_ba_data_val (ctx),                        \
+      (struct name ## _ctx *) String_val (ctx),                              \
       _st_uint8_off (dst, off));                                             \
     return Val_unit;                                                         \
   }                                                                          \
@@ -73,7 +73,7 @@ CAMLprim value
 caml_digestif_blake2b_ba_init_with_outlen_and_key(value ctx, value outlen, value key, value off, value len)
 {
   digestif_blake2b_init_with_outlen_and_key(
-    (struct blake2b_ctx *) Caml_ba_data_val (ctx), Int_val (outlen),
+    (struct blake2b_ctx *) String_val (ctx), Int_val (outlen),
     _ba_uint8_off(key, off), Int_val (len));
 
   return Val_unit;
@@ -83,7 +83,7 @@ CAMLprim value
 caml_digestif_blake2b_st_init_with_outlen_and_key(value ctx, value outlen, value key, value off, value len)
 {
   digestif_blake2b_init_with_outlen_and_key(
-    (struct blake2b_ctx *) Caml_ba_data_val (ctx), Int_val (outlen),
+    (struct blake2b_ctx *) String_val (ctx), Int_val (outlen),
     _st_uint8_off(key, off), Int_val (len));
 
   return Val_unit;
@@ -96,14 +96,14 @@ caml_digestif_blake2b_key_size(__unit ()) {
 
 CAMLprim value
 caml_digestif_blake2b_digest_size(value ctx) {
-  return Val_int(((struct blake2b_ctx *) Caml_ba_data_val (ctx))->outlen);
+  return Val_int(((struct blake2b_ctx *) String_val (ctx))->outlen);
 }
 
 CAMLprim value
 caml_digestif_blake2s_ba_init_with_outlen_and_key(value ctx, value outlen, value key, value off, value len)
 {
   digestif_blake2s_init_with_outlen_and_key(
-    (struct blake2s_ctx *) Caml_ba_data_val (ctx), Int_val (outlen),
+    (struct blake2s_ctx *) String_val (ctx), Int_val (outlen),
     _ba_uint8_off(key, off), Int_val (len));
 
   return Val_unit;
@@ -113,7 +113,7 @@ CAMLprim value
 caml_digestif_blake2s_st_init_with_outlen_and_key(value ctx, value outlen, value key, value off, value len)
 {
   digestif_blake2s_init_with_outlen_and_key(
-    (struct blake2s_ctx *) Caml_ba_data_val (ctx), Int_val (outlen),
+    (struct blake2s_ctx *) String_val (ctx), Int_val (outlen),
     _st_uint8_off(key, off), Int_val (len));
 
   return Val_unit;
@@ -126,5 +126,5 @@ caml_digestif_blake2s_key_size(__unit ()) {
 
 CAMLprim value
 caml_digestif_blake2s_digest_size(value ctx) {
-  return Val_int(((struct blake2s_ctx *) Caml_ba_data_val (ctx))->outlen);
+  return Val_int(((struct blake2s_ctx *) String_val (ctx))->outlen);
 }
