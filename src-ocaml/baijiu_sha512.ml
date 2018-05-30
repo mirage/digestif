@@ -42,7 +42,7 @@ module Make (B : Baijiu_buffer.S)
   and t = B.buffer
 
   let dup ctx =
-    { size = ctx.size
+    { size = Array.copy ctx.size
     ; b    = B.copy ctx.b
     ; h    = Array.copy ctx.h }
 
