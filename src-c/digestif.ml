@@ -54,27 +54,54 @@ module Core (F : Foreign) (D : Desc) = struct
     include Pp.Make (By) (D)
 
     let init () =
-      let t = Bi.create ctx_size in
+      let t = By.create ctx_size in
       ( F.Bytes.init t; t )
 
-    let feed t buf =
+    let empty = By.create ctx_size
+    let () = F.Bytes.init empty
+
+    let unsafe_feed_bytes t buf =
       F.Bytes.update t buf 0 (By.length buf)
 
-    let feed_bytes = feed
-
-    let feed_bigstring t buf =
+    let unsafe_feed_bigstring t buf =
       F.Bigstring.update t buf 0 (Bi.length buf)
 
-    let get t =
+    let feed_bytes t buf =
+      let t = Native.dup t in
+      ( unsafe_feed_bytes t buf; t )
+
+    let feed_bigstring t buf =
+      let t = Native.dup t in
+      ( unsafe_feed_bigstring t buf; t )
+
+    let feed = feed_bytes
+
+    let feedi_bytes t iter =
+      let t = Native.dup t in
+      ( iter (unsafe_feed_bytes t); t )
+
+    let feedi_bigstring t iter =
+      let t = Native.dup t in
+      ( iter (unsafe_feed_bigstring t); t )
+
+    let feedi = feedi_bytes
+
+    let unsafe_get t =
       let res = By.create digest_size in
       F.Bytes.finalize t res 0;
       res
 
-    let digest buf =
-      let t = init () in ( feed t buf; get t )
+    let get t = let t = Native.dup t in unsafe_get t
 
-    let digestv bufs =
-      let t = init () in ( List.iter (feed t) bufs; get t )
+    let digest_bytes buf = feed_bytes empty buf |> get
+    let digest_bigstring buf = feed_bigstring empty buf |> get
+    let digest = digest_bytes
+
+    let digesti_bytes iter = feedi_bytes empty iter |> get
+    let digesti_bigstring iter = feedi_bigstring empty iter |> get
+    let digesti = digesti_bytes
+
+    let digestv bufs = digesti (fun f -> List.iter f bufs)
   end
 
   module Bigstring = struct
@@ -85,27 +112,54 @@ module Core (F : Foreign) (D : Desc) = struct
     include Pp.Make (Bi) (D)
 
     let init () =
-      let t = Bi.create ctx_size in
+      let t = By.create ctx_size in
       ( F.Bigstring.init t; t )
 
-    let feed t buf =
+    let empty = By.create ctx_size
+    let () = F.Bigstring.init empty
+
+    let unsafe_feed_bigstring t buf =
       F.Bigstring.update t buf 0 (Bi.length buf)
 
-    let feed_bigstring = feed
-
-    let feed_bytes t buf =
+    let unsafe_feed_bytes t buf =
       F.Bytes.update t buf 0 (By.length buf)
 
-    let get t =
+    let feed_bigstring t buf =
+      let t = Native.dup t in
+      ( unsafe_feed_bigstring t buf; t )
+
+    let feed_bytes t buf =
+      let t = Native.dup t in
+      ( unsafe_feed_bytes t buf; t )
+
+    let feed = feed_bigstring
+
+    let feedi_bigstring t iter =
+      let t = Native.dup t in
+      ( iter (unsafe_feed_bigstring t); t )
+
+    let feedi_bytes t iter =
+      let t = Native.dup t in
+      ( iter (unsafe_feed_bytes t); t )
+
+    let feedi = feedi_bigstring
+
+    let unsafe_get t =
       let res = Bi.create digest_size in
       F.Bigstring.finalize t res 0;
       res
 
-    let digest buf =
-      let t = init () in ( feed t buf; get t )
+    let get t = let t = Native.dup t in unsafe_get t
 
-    let digestv bufs =
-      let t = init () in ( List.iter (feed t) bufs; get t )
+    let digest_bigstring buf = feed_bigstring empty buf |> get
+    let digest_bytes buf = feed_bytes empty buf |> get
+    let digest = digest_bigstring
+
+    let digesti_bigstring iter = feedi_bigstring empty iter |> get
+    let digesti_bytes iter = feedi_bytes empty iter |> get
+    let digesti = digesti_bigstring
+
+    let digestv bufs = digesti (fun f -> List.iter f bufs)
   end
 end
 
@@ -131,13 +185,15 @@ module Make (F : Foreign) (D : Desc) = struct
       | -1 -> By.rpad key C.block_size '\000'
       | _  -> key
 
-    let hmacv ~key msg =
+    let hmaci ~key iter =
       let key = norm key in
       let outer = Native.XOR.Bytes.xor key opad in
       let inner = Native.XOR.Bytes.xor key ipad in
-      C.Bytes.digestv [ outer; C.Bytes.digestv (inner :: msg) ]
+      let res = C.Bytes.digesti (fun f -> f inner; iter f) in
+      C.Bytes.digesti (fun f -> f outer; f res)
 
-    let hmac ~key msg = hmacv ~key [ msg ]
+    let hmac ~key msg = hmaci ~key (fun f -> f msg)
+    let hmacv ~key bufs = hmaci ~key (fun f -> List.iter f bufs)
   end
 
   module Bigstring =  struct
@@ -152,13 +208,15 @@ module Make (F : Foreign) (D : Desc) = struct
       | -1 -> Bi.rpad key C.block_size '\000'
       | _  -> key
 
-    let hmacv ~key msg =
+    let hmaci ~key iter =
       let key = norm key in
       let outer = Native.XOR.Bigstring.xor key opad in
       let inner = Native.XOR.Bigstring.xor key ipad in
-      C.Bigstring.digestv [ outer; C.Bigstring.digestv (inner :: msg) ]
+      let res = C.Bigstring.digesti (fun f -> f inner; iter f) in
+      C.Bigstring.digesti (fun f -> f outer; f res)
 
-    let hmac ~key msg = hmacv ~key [ msg ]
+    let hmac ~key msg = hmaci ~key (fun f -> f msg)
+    let hmacv ~key bufs = hmaci ~key (fun f -> List.iter f bufs)
   end
 end
 
@@ -205,44 +263,69 @@ module Make_common_BLAKE2 (F : ForeignBLAKE2) (D : Desc) : Digestif_sig.S = stru
     include Pp.Make (By) (D)
 
     let init () =
-      let t = Bi.create ctx_size in
+      let t = By.create ctx_size in
       ( F.Bytes.with_outlen_and_key t digest_size By.empty 0 0; t )
 
-    let feed t buf =
+    let empty = By.create ctx_size
+    let () = F.Bytes.with_outlen_and_key empty digest_size By.empty 0 0
+
+    let unsafe_feed_bytes t buf =
       F.Bytes.update t buf 0 (By.length buf)
 
-    let feed_bytes = feed
-
-    let feed_bigstring t buf =
+    let unsafe_feed_bigstring t buf =
       F.Bigstring.update t buf 0 (Bi.length buf)
 
-    let get t =
+    let feed_bytes t buf =
+      let t = Native.dup t in
+      ( unsafe_feed_bytes t buf; t )
+
+    let feed_bigstring t buf =
+      let t = Native.dup t in
+      ( unsafe_feed_bigstring t buf; t )
+
+    let feed = feed_bytes
+
+    let feedi_bytes t iter =
+      let t = Native.dup t in
+      ( iter (unsafe_feed_bytes t); t )
+
+    let feedi_bigstring t iter =
+      let t = Native.dup t in
+      ( iter (unsafe_feed_bigstring t); t )
+
+    let feedi = feedi_bytes
+
+    let unsafe_get t =
       let res = Bytes.create digest_size in
       F.Bytes.finalize t res 0;
       res
 
-    let digest buf =
-      let t = init () in ( feed t buf; get t )
+    let get t = let t = Native.dup t in unsafe_get t
 
-    let digestv bufs =
-      let t = init () in ( List.iter (feed t) bufs; get t )
+    let digest_bytes buf = feed_bytes empty buf |> get
+    let digest_bigstring buf = feed_bigstring empty buf |> get
+    let digest = digest_bytes
 
-    let hmacv ~key msg =
+    let digesti_bytes iter = feedi_bytes empty iter |> get
+    let digesti_bigstring iter = feedi_bigstring empty iter |> get
+    let digesti = digesti_bytes
+
+    let digestv bufs = digesti (fun f -> List.iter f bufs)
+
+    let hmaci ~key iter =
       if By.length key > key_size
       then raise (Invalid_argument "BLAKE2{B,S}.hmac{v}: invalid key");
 
-      let ctx = Bi.create ctx_size in
-      let res = By.create digest_size in
+      let ctx = By.create ctx_size in
       F.Bytes.with_outlen_and_key ctx digest_size key 0 (By.length key);
-      List.iter (fun x -> F.Bytes.update ctx x 0 (By.length x)) msg;
-      F.Bytes.finalize ctx res 0;
-      res
+      feedi ctx iter |> get
 
-    let hmac ~key msg =
-      hmacv ~key [ msg ]
+    let hmacv ~key bufs = hmaci ~key (fun f -> List.iter f bufs)
+    let hmac ~key msg = hmaci ~key (fun f -> f msg)
   end
 
-  module Bigstring = struct
+  module Bigstring =
+  struct
     type buffer = Native.ba
     type ctx = Native.ctx
 
@@ -250,41 +333,65 @@ module Make_common_BLAKE2 (F : ForeignBLAKE2) (D : Desc) : Digestif_sig.S = stru
     include Pp.Make (Bi) (D)
 
     let init () =
-      let t = Bi.create ctx_size in
+      let t = By.create ctx_size in
       ( F.Bigstring.with_outlen_and_key t digest_size Bi.empty 0 0; t )
 
-    let feed t buf =
-      F.Bigstring.update t buf 0 (Bi.length buf)
+    let empty = By.create ctx_size
+    let () = F.Bigstring.with_outlen_and_key empty digest_size Bi.empty 0 0
 
-    let feed_bigstring = feed
-
-    let feed_bytes t buf =
+    let unsafe_feed_bytes t buf =
       F.Bytes.update t buf 0 (By.length buf)
 
-    let get t =
+    let unsafe_feed_bigstring t buf =
+      F.Bigstring.update t buf 0 (Bi.length buf)
+
+    let feed_bigstring t buf =
+      let t = Native.dup t in
+      ( unsafe_feed_bigstring t buf; t )
+
+    let feed_bytes t buf =
+      let t = Native.dup t in
+      ( unsafe_feed_bytes t buf; t )
+
+    let feed = feed_bigstring
+
+    let feedi_bigstring t iter =
+      let t = Native.dup t in
+      ( iter (unsafe_feed_bigstring t); t )
+
+    let feedi_bytes t iter =
+      let t = Native.dup t in
+      ( iter (unsafe_feed_bytes t); t )
+
+    let feedi = feedi_bigstring
+
+    let unsafe_get t =
       let res = Bi.create digest_size in
       F.Bigstring.finalize t res 0;
       res
 
-    let digest buf =
-      let t = init () in ( feed t buf; get t )
+    let get t = let t = Native.dup t in unsafe_get t
 
-    let digestv bufs =
-      let t = init () in ( List.iter (feed t) bufs; get t )
+    let digest_bigstring buf = feed_bigstring empty buf |> get
+    let digest_bytes buf = feed_bytes empty buf |> get
+    let digest = digest_bigstring
 
-    let hmacv ~key msg =
+    let digesti_bigstring iter = feedi_bigstring empty iter |> get
+    let digesti_bytes iter = feedi_bytes empty iter |> get
+    let digesti = digesti_bigstring
+
+    let digestv bufs = digesti (fun f -> List.iter f bufs)
+
+    let hmaci ~key iter =
       if Bi.length key > key_size
       then raise (Invalid_argument "BLAKE2{B,S}.hmac{v}: invalid key");
 
-      let ctx = Bi.create ctx_size in
-      let res = Bi.create digest_size in
+      let ctx = By.create ctx_size in
       F.Bigstring.with_outlen_and_key ctx digest_size key 0 (Bi.length key);
-      List.iter (fun x -> F.Bigstring.update ctx x 0 (Bi.length x)) msg;
-      F.Bigstring.finalize ctx res 0;
-      res
+      feedi ctx iter |> get
 
-    let hmac ~key msg =
-      hmacv ~key [ msg ]
+    let hmacv ~key bufs = hmaci ~key (fun f -> List.iter f bufs)
+    let hmac ~key msg = hmaci ~key (fun f -> f msg)
   end
 end
 

@@ -33,6 +33,7 @@ module type Hash =
     val feed_bytes : ctx -> By.t -> int -> int -> unit
     val feed_bigstring : ctx -> Bi.t -> int -> int -> unit
     val get  : ctx -> buffer
+    val dup  : ctx -> ctx
   end with type buffer = Buffer.buffer
 
 module Core (Hash : Hash) (D : Desc) =
@@ -46,18 +47,46 @@ struct
     include Hash (struct include Bi type buffer = t end)
     include Pp.Make (Bi) (D)
 
-    let feed ctx buf =
-      feed ctx buf 0 (Bi.length buf)
-    let feed_bytes ctx buf =
-      feed_bytes ctx buf 0 (By.length buf)
-    let feed_bigstring ctx buf =
+    let empty = init ()
+
+    let unsafe_feed_bigstring ctx buf =
       feed_bigstring ctx buf 0 (Bi.length buf)
 
-    let digest buf =
-      let t = init () in ( feed t buf; get t)
+    let unsafe_feed_bytes ctx buf =
+      feed_bytes ctx buf 0 (By.length buf)
 
-    let digestv bufs =
-      let t = init () in ( List.iter (feed t) bufs; get t )
+    let feed_bigstring t buf =
+      let t = dup t in
+      ( unsafe_feed_bigstring t buf; t )
+
+    let feed_bytes t buf =
+      let t = dup t in
+      ( unsafe_feed_bytes t buf; t )
+
+    let feed = feed_bigstring
+
+    let feedi_bigstring t iter =
+      let t = dup t in
+      ( iter (unsafe_feed_bigstring t); t )
+
+    let feedi_bytes t iter =
+      let t = dup t in
+      ( iter (unsafe_feed_bytes t); t )
+
+    let feedi = feedi_bigstring
+
+    let unsafe_get = get
+    let get t = let t = dup t in unsafe_get t
+
+    let digest_bigstring buf = feed_bigstring empty buf |> get
+    let digest_bytes buf = feed_bytes empty buf |> get
+    let digest = digest_bigstring
+
+    let digesti_bigstring iter = feedi_bigstring empty iter |> get
+    let digesti_bytes iter = feedi_bytes empty iter |> get
+    let digesti = digesti_bigstring
+
+    let digestv bufs = digesti (fun f -> List.iter f bufs)
   end
 
   module Bytes =
@@ -66,18 +95,46 @@ struct
     include Hash (struct include By type buffer = t end)
     include Pp.Make (By) (D)
 
-    let feed ctx buf =
-      feed ctx buf 0 (By.length buf)
-    let feed_bytes ctx buf =
-      feed_bytes ctx buf 0 (By.length buf)
-    let feed_bigstring ctx buf =
+    let empty : ctx = init ()
+
+    let unsafe_feed_bigstring ctx buf =
       feed_bigstring ctx buf 0 (Bi.length buf)
 
-    let digest buf =
-      let t = init () in ( feed t buf; get t)
+    let unsafe_feed_bytes ctx buf =
+      feed_bytes ctx buf 0 (By.length buf)
 
-    let digestv bufs =
-      let t = init () in ( List.iter (feed t) bufs; get t )
+    let feed_bytes t buf =
+      let t = dup t in
+      ( unsafe_feed_bytes t buf; t )
+
+    let feed_bigstring t buf =
+      let t = dup t in
+      ( unsafe_feed_bigstring t buf; t )
+
+    let feed = feed_bytes
+
+    let feedi_bytes t iter =
+      let t = dup t in
+      ( iter (unsafe_feed_bytes t); t )
+
+    let feedi_bigstring t iter =
+      let t = dup t in
+      ( iter (unsafe_feed_bigstring t); t )
+
+    let feedi = feedi_bytes
+
+    let unsafe_get = get
+    let get t = let t = dup t in unsafe_get t
+
+    let digest_bytes buf = feed_bytes empty buf |> get
+    let digest_bigstring buf = feed_bigstring empty buf |> get
+    let digest = digest_bytes
+
+    let digesti_bytes iter = feedi_bytes empty iter |> get
+    let digesti_bigstring iter = feedi_bigstring empty iter |> get
+    let digesti = digesti_bytes
+
+    let digestv bufs = digesti (fun f -> List.iter f bufs)
   end
 end
 
@@ -104,13 +161,15 @@ struct
       | -1 -> By.rpad key C.block_size '\000'
       | _  -> key
 
-    let hmacv ~key msg =
+    let hmaci ~key iter =
       let key = norm key in
       let outer = Xor.xor key opad in
       let inner = Xor.xor key ipad in
-      C.Bytes.digestv [ outer; C.Bytes.digestv (inner :: msg) ]
+      let res = C.Bytes.digesti (fun f -> f inner; iter f) in
+      C.Bytes.digesti (fun f -> f outer; f res)
 
-    let hmac ~key msg = hmacv ~key [ msg ]
+    let hmac ~key msg = hmaci ~key (fun f -> f msg)
+    let hmacv ~key bufs = hmaci ~key (fun f -> List.iter f bufs)
   end
 
   module Bigstring =
@@ -127,13 +186,15 @@ struct
       | -1 -> Bi.rpad key C.block_size '\000'
       | _  -> key
 
-    let hmacv ~key msg =
+    let hmaci ~key iter =
       let key = norm key in
       let outer = Xor.xor key opad in
       let inner = Xor.xor key ipad in
-      C.Bigstring.digestv [ outer; C.Bigstring.digestv (inner :: msg) ]
+      let res = C.Bigstring.digesti (fun f -> f inner; iter f) in
+      C.Bigstring.digesti (fun f -> f outer; f res)
 
-    let hmac ~key msg = hmacv ~key [ msg ]
+    let hmac ~key msg = hmaci ~key (fun f -> f msg)
+    let hmacv ~key bufs = hmaci ~key (fun f -> List.iter f bufs)
   end
 end
 
@@ -147,6 +208,7 @@ module type HashBLAKE2 =
     val feed_bytes : ctx -> By.t -> int -> int -> unit
     val feed_bigstring : ctx -> Bi.t -> int -> int -> unit
     val get  : ctx -> buffer
+    val dup  : ctx -> ctx
   end with type buffer = Buffer.buffer
 
 let empty_bytes = By.create 0
@@ -164,28 +226,52 @@ struct
 
     let init () =
       with_outlen_and_key digest_size empty_bytes 0 0
-    let feed ctx buf =
-      feed ctx buf 0 (By.length buf)
-    let feed_bytes ctx buf =
+    let unsafe_feed_bytes ctx buf =
       feed_bytes ctx buf 0 (By.length buf)
-    let feed_bigstring ctx buf =
+    let unsafe_feed_bigstring ctx buf =
       feed_bigstring ctx buf 0 (Bi.length buf)
 
-    let digest buf =
-      let t = with_outlen_and_key digest_size empty_bytes 0 0 in
-      ( feed t buf; get t)
+    let empty = init ()
 
-    let digestv bufs =
-      let t = with_outlen_and_key digest_size empty_bytes 0 0 in
-      ( List.iter (feed t) bufs; get t )
+    let feed_bytes t buf =
+      let t = dup t in
+      ( unsafe_feed_bytes t buf; t )
 
-    let hmacv ~key msg =
+    let feed_bigstring t buf =
+      let t = dup t in
+      ( unsafe_feed_bigstring t buf; t )
+
+    let feed = feed_bytes
+
+    let feedi_bytes t iter =
+      let t = dup t in
+      ( iter (unsafe_feed_bytes t); t )
+
+    let feedi_bigstring t iter =
+      let t = dup t in
+      ( iter (unsafe_feed_bigstring t); t )
+
+    let feedi = feedi_bytes
+
+    let unsafe_get = get
+    let get t = let t = dup t in unsafe_get t
+
+    let digest_bytes buf = feed_bytes empty buf |> get
+    let digest_bigstring buf = feed_bigstring empty buf |> get
+    let digest = digest_bytes
+
+    let digesti_bytes iter = feedi_bytes empty iter |> get
+    let digesti_bigstring iter = feedi_bigstring empty iter |> get
+    let digesti = digesti_bytes
+
+    let digestv bufs = digesti (fun f -> List.iter f bufs)
+
+    let hmaci ~key iter =
       let ctx = with_outlen_and_key digest_size key 0 (By.length key) in
-      List.iter (fun x -> feed ctx x) msg;
-      get ctx
+      feedi_bytes ctx iter |> get
 
-    let hmac ~key msg =
-      hmacv ~key [ msg ]
+    let hmac ~key msg = hmaci ~key (fun f -> f msg)
+    let hmacv ~key bufs = hmaci ~key (fun f -> List.iter f bufs)
   end
 
   module Bigstring =
@@ -196,28 +282,52 @@ struct
 
     let init () =
       with_outlen_and_key digest_size empty_bigstring 0 0
-    let feed ctx buf =
-      feed ctx buf 0 (Bi.length buf)
-    let feed_bytes ctx buf =
+    let unsafe_feed_bytes ctx buf =
       feed_bytes ctx buf 0 (By.length buf)
-    let feed_bigstring ctx buf =
+    let unsafe_feed_bigstring ctx buf =
       feed_bigstring ctx buf 0 (Bi.length buf)
 
-    let digest buf =
-      let t = with_outlen_and_key digest_size empty_bigstring 0 0 in
-      ( feed t buf; get t)
+    let empty = init ()
 
-    let digestv bufs =
-      let t = with_outlen_and_key digest_size empty_bigstring 0 0 in
-      ( List.iter (feed t) bufs; get t )
+    let feed_bytes t buf =
+      let t = dup t in
+      ( unsafe_feed_bytes t buf; t )
 
-    let hmacv ~key msg =
+    let feed_bigstring t buf =
+      let t = dup t in
+      ( unsafe_feed_bigstring t buf; t )
+
+    let feed = feed_bigstring
+
+    let feedi_bytes t iter =
+      let t = dup t in
+      ( iter (unsafe_feed_bytes t); t )
+
+    let feedi_bigstring t iter =
+      let t = dup t in
+      ( iter (unsafe_feed_bigstring t); t )
+
+    let feedi = feedi_bigstring
+
+    let unsafe_get = get
+    let get t = let t = dup t in unsafe_get t
+
+    let digest_bytes buf = feed_bytes empty buf |> get
+    let digest_bigstring buf = feed_bigstring empty buf |> get
+    let digest = digest_bigstring
+
+    let digesti_bytes iter = feedi_bytes empty iter |> get
+    let digesti_bigstring iter = feedi_bigstring empty iter |> get
+    let digesti = digesti_bigstring
+
+    let digestv bufs = digesti (fun f -> List.iter f bufs)
+
+    let hmaci ~key iter =
       let ctx = with_outlen_and_key digest_size key 0 (Bi.length key) in
-      List.iter (fun x -> feed ctx x) msg;
-      get ctx
+      feedi_bigstring ctx iter |> get
 
-    let hmac ~key msg =
-      hmacv ~key [ msg ]
+    let hmac ~key msg = hmaci ~key (fun f -> f msg)
+    let hmacv ~key bufs = hmaci ~key (fun f -> List.iter f bufs)
   end
 end
 

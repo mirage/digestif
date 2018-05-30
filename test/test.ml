@@ -318,7 +318,7 @@ struct
     type t
 
     val init : unit -> ctx
-    val feed_bytes : ctx -> Bytes.t -> unit
+    val feed_bytes : ctx -> Bytes.t -> ctx
     val get : ctx -> t
   end
 
@@ -328,9 +328,10 @@ struct
       let module B = (val b) in
       let ctx = D.init () in
 
-      for i = 0 to 1_000_000 - 1
-      do D.feed_bytes ctx (Bytes.unsafe_of_string "a"); done;
-
+      let rec go ctx = function
+        | 0 -> ctx
+        | n -> go (D.feed_bytes ctx (Bytes.unsafe_of_string "a")) (n - 1) in
+      let ctx = go ctx 1_000_000 in
       let result = D.get ctx in
 
       "give me a million", `Slow, (fun () -> Alcotest.(check (Alcotest.testable B.pp B.eq)) title expect result)

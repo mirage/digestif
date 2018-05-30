@@ -9,6 +9,7 @@ sig
   val feed_bytes : ctx -> Bytes.t -> int -> int -> unit
   val feed_bigstring : ctx -> (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t -> int -> int -> unit
   val get  : ctx -> t
+  val dup  : ctx -> ctx
 end
 
 module Int32 =
@@ -47,6 +48,12 @@ module Make (B : Baijiu_buffer.S)
     ; b : buffer }
   and buffer = B.buffer
   and t = B.buffer
+
+  let dup ctx =
+    { s = Array.copy ctx.s
+    ; n = ctx.n
+    ; h = Array.copy ctx.h
+    ; b = B.copy ctx.b }
 
   let init () =
     let b = B.create 64 in

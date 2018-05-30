@@ -47,6 +47,7 @@ sig
   val feed_bytes : ctx -> Bytes.t -> int -> int -> unit
   val feed_bigstring : ctx -> (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t -> int -> int -> unit
   val get  : ctx -> t
+  val dup  : ctx -> ctx
 end
 
 module Make (B : Baijiu_buffer.S)
@@ -75,6 +76,15 @@ module Make (B : Baijiu_buffer.S)
     ; f                 : int32 array }
   and buffer = B.buffer
   and t = B.buffer
+
+  let dup ctx =
+    { buflen    = ctx.buflen
+    ; outlen    = ctx.outlen
+    ; last_node = ctx.last_node
+    ; buf       = B.copy ctx.buf
+    ; h         = Array.copy ctx.h
+    ; t         = Array.copy ctx.t
+    ; f         = Array.copy ctx.f }
 
   let param_to_bytes param =
     let arr =
