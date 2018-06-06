@@ -5,9 +5,21 @@ struct
   let ( lxor ) = Nativeint.logxor
 end
 
+module type BUFFER =
+sig
+  type t
+
+  val length: t -> int
+  val sub: t -> int -> int -> t
+  val copy: t -> t
+
+  val benat_to_cpu: t -> int -> nativeint
+  val cpu_to_benat: t -> int -> nativeint -> unit
+end
+
 let imin (a : int) (b : int) = if a < b then a else b
 
-module Make (B : Baijiu_buffer.S) =
+module Make (B : BUFFER) =
 struct
   let size_of_long = Sys.word_size / 8
 
@@ -46,3 +58,6 @@ struct
     let r = B.copy (B.sub b 0 l) in
     ( xor_into a r l; r )
 end
+
+module Bytes = Make(Digestif_bytes)
+module Bigstring = Make(Digestif_bigstring)
