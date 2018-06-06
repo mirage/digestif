@@ -24,41 +24,43 @@ struct
   let ( lsl ) = Int64.shift_left
 end
 
+module By = Digestif_bytes
+module Bi = Digestif_bigstring
+
 module type S =
 sig
-  type t
-  type ctx = { mutable size : int64
-             ; b : buffer
-             ; h : int32 array }
-  and buffer
+  type kind = [ `MD5 ]
 
-  val init : unit -> ctx
-  val feed : ctx -> buffer -> int -> int -> unit
-  val feed_bytes : ctx -> Bytes.t -> int -> int -> unit
-  val feed_bigstring : ctx -> (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t -> int -> int -> unit
-  val get  : ctx -> t
-  val dup  : ctx -> ctx
-end
-
-module Make (B : Baijiu_buffer.S)
-  : S with type buffer = B.buffer and type t = B.buffer
-= struct
   type ctx =
     { mutable size : int64
-    ; b : buffer
+    ; b : Bytes.t
     ; h : int32 array }
-  and buffer = B.buffer
-  and t = B.buffer
+
+  val init: unit -> ctx
+  val unsafe_feed_bytes: ctx -> By.t -> int -> int -> unit
+  val unsafe_feed_bigstring: ctx -> Bi.t -> int -> int -> unit
+  val unsafe_get: ctx -> By.t
+  val dup: ctx -> ctx
+end
+
+module Unsafe : S
+= struct
+  type kind = [ `MD5 ]
+
+  type ctx =
+    { mutable size : int64
+    ; b : Bytes.t
+    ; h : int32 array }
 
   let dup ctx =
     { size = ctx.size
-    ; b    = B.copy ctx.b
+    ; b    = Bytes.copy ctx.b
     ; h    = Array.copy ctx.h }
 
   let init () =
-    let b = B.create 64 in
+    let b = By.create 64 in
 
-    B.fill b 0 64 '\x00';
+    By.fill b 0 64 '\x00';
 
     { size = 0L
     ; b
@@ -78,8 +80,7 @@ module Make (B : Baijiu_buffer.S)
       ref ctx.h.(0),
       ref ctx.h.(1),
       ref ctx.h.(2),
-      ref ctx.h.(3)
-    in
+      ref ctx.h.(3) in
 
     let w = Array.make 16 0l in
 
@@ -90,8 +91,7 @@ module Make (B : Baijiu_buffer.S)
       let open Int32 in
       a := !a + (f !b !c !d) + w.(i) + k;
       a := (rol32 !a s);
-      a := !a + !b
-    in
+      a := !a + !b in
 
     round f1 a b c d 0 0xd76aa478l 7;
     round f1 d a b c 1 0xe8c7b756l 12;
@@ -170,7 +170,7 @@ module Make (B : Baijiu_buffer.S)
     ()
 
   let feed : type a.
-       blit:(a -> int -> buffer -> int -> int -> unit)
+       blit:(a -> int -> By.t -> int -> int -> unit)
     -> le32_to_cpu:(a -> int -> int32)
     -> ctx -> a -> int -> int -> unit
     = fun ~blit ~le32_to_cpu ctx buf off len ->
@@ -185,7 +185,7 @@ module Make (B : Baijiu_buffer.S)
     if !idx <> 0 && !len >= to_fill
     then begin
       blit buf !off ctx.b !idx to_fill;
-      md5_do_chunk ~le32_to_cpu:B.le32_to_cpu ctx ctx.b 0;
+      md5_do_chunk ~le32_to_cpu:By.le32_to_cpu ctx ctx.b 0;
       len := !len - to_fill;
       off := !off + to_fill;
       idx := 0;
@@ -202,27 +202,26 @@ module Make (B : Baijiu_buffer.S)
 
     ()
 
-  let feed_bytes = feed ~blit:B.blit_from_bytes ~le32_to_cpu:B.le32_from_bytes_to_cpu
-  let feed_bigstring = feed ~blit:B.blit_from_bigstring ~le32_to_cpu:B.le32_from_bigstring_to_cpu
-  let feed = feed ~blit:B.blit ~le32_to_cpu:B.le32_to_cpu
+  let unsafe_feed_bytes = feed ~blit:By.blit ~le32_to_cpu:By.le32_to_cpu
+  let unsafe_feed_bigstring = feed ~blit:By.blit_from_bigstring ~le32_to_cpu:Bi.le32_to_cpu
 
-  let get ctx =
-    let padding = B.create 64 in
-    let bits = B.create 8 in
-    let res = B.create (4 * 4) in
+  let unsafe_get ctx =
+    let padding = By.create 64 in
+    let bits = By.create 8 in
+    let res = By.create (4 * 4) in
 
-    B.set padding 0 '\x80';
-    B.fill padding 1 63 '\x00';
-    B.cpu_to_le64 bits 0 Int64.(ctx.size lsl 3);
+    By.set padding 0 '\x80';
+    By.fill padding 1 63 '\x00';
+    By.cpu_to_le64 bits 0 Int64.(ctx.size lsl 3);
 
     let index = Int64.(to_int (ctx.size land 0x3FL)) in
     let padlen = if index < 56 then 56 - index else (64 + 56) - index in
 
-    feed ctx padding 0 padlen;
-    feed ctx bits 0 8;
+    unsafe_feed_bytes ctx padding 0 padlen;
+    unsafe_feed_bytes ctx bits 0 8;
 
     for i = 0 to 3
-    do B.cpu_to_le32 res (i * 4) ctx.h.(i) done;
+    do By.cpu_to_le32 res (i * 4) ctx.h.(i) done;
 
     res
 end

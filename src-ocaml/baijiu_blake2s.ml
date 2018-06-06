@@ -16,7 +16,6 @@ struct
     (a asr n) lor (a lsl (32 - n))
 end
 
-
 module Int64 =
 struct
   include Int64
@@ -35,24 +34,27 @@ struct
     (a asr n) lor (a lsl (64 - n))
 end
 
+module By = Digestif_bytes
+module Bi = Digestif_bigstring
+
 module type S =
 sig
-  type t
   type ctx
-  type buffer
+  type kind = [ `BLAKE2S ]
 
-  val init : unit -> ctx
-  val with_outlen_and_key : int -> buffer -> int -> int -> ctx
-  val feed : ctx -> buffer -> int -> int -> unit
-  val feed_bytes : ctx -> Bytes.t -> int -> int -> unit
-  val feed_bigstring : ctx -> (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t -> int -> int -> unit
-  val get  : ctx -> t
-  val dup  : ctx -> ctx
+  val init: unit -> ctx
+  val with_outlen_and_bytes_key: int -> By.t -> int -> int -> ctx
+  val with_outlen_and_bigstring_key: int -> Bi.t -> int -> int -> ctx
+  val unsafe_feed_bytes: ctx -> By.t -> int -> int -> unit
+  val unsafe_feed_bigstring: ctx -> Bi.t -> int -> int -> unit
+  val unsafe_get: ctx -> By.t
+  val dup: ctx -> ctx
 end
 
-module Make (B : Baijiu_buffer.S)
-  : S with type buffer = B.buffer and type t = B.buffer
+module Unsafe : S
 = struct
+  type kind = [ `BLAKE2S ]
+
   type param =
     { digest_length : int
     ; key_length    : int
@@ -70,18 +72,16 @@ module Make (B : Baijiu_buffer.S)
     { mutable buflen    : int
     ; outlen            : int
     ; mutable last_node : int
-    ; buf               : buffer
+    ; buf               : Bytes.t
     ; h                 : int32 array
     ; t                 : int32 array
     ; f                 : int32 array }
-  and buffer = B.buffer
-  and t = B.buffer
 
   let dup ctx =
     { buflen    = ctx.buflen
     ; outlen    = ctx.outlen
     ; last_node = ctx.last_node
-    ; buf       = B.copy ctx.buf
+    ; buf       = Bytes.copy ctx.buf
     ; h         = Array.copy ctx.h
     ; t         = Array.copy ctx.t
     ; f         = Array.copy ctx.f }
@@ -128,14 +128,12 @@ module Make (B : Baijiu_buffer.S)
        ; param.personal.(4) land 0xFF
        ; param.personal.(5) land 0xFF
        ; param.personal.(6) land 0xFF
-       ; param.personal.(7) land 0xFF |]
-    in
-    let res = B.create 32 in
+       ; param.personal.(7) land 0xFF |] in
+
+    let res = Bytes.create 32 in
 
     for i = 0 to 31
-    do B.set res i (Char.unsafe_chr (Array.get arr i)) done;
-
-    res
+    do Bytes.unsafe_set res i (Char.unsafe_chr (Array.get arr i)) done; res
 
   let default_param =
     { digest_length = 32
@@ -170,9 +168,9 @@ module Make (B : Baijiu_buffer.S)
     ctx.f.(0) <- Int32.minus_one
 
   let init () =
-    let buf = B.create 64 in
+    let buf = By.create 64 in
 
-    B.fill buf 0 64 '\x00';
+    By.fill buf 0 64 '\x00';
 
     let ctx =
       { buflen = 0
@@ -181,13 +179,12 @@ module Make (B : Baijiu_buffer.S)
       ; buf
       ; h = Array.make 8 0l
       ; t = Array.make 2 0l
-      ; f = Array.make 2 0l }
-    in
+      ; f = Array.make 2 0l } in
 
     let param_bytes = param_to_bytes default_param in
 
     for i = 0 to 7
-    do ctx.h.(i) <- Int32.(iv.(i) lxor (B.le32_to_cpu param_bytes (i * 4))) done;
+    do ctx.h.(i) <- Int32.(iv.(i) lxor (By.le32_to_cpu param_bytes (i * 4))) done;
 
     ctx
 
@@ -269,7 +266,7 @@ module Make (B : Baijiu_buffer.S)
     ()
 
   let feed : type a.
-       blit:(a -> int -> B.buffer -> int -> int -> unit)
+       blit:(a -> int -> By.t -> int -> int -> unit)
     -> le32_to_cpu:(a -> int -> int32)
     -> ctx -> a -> int -> int -> unit =
     fun ~blit ~le32_to_cpu ctx buf off len ->
@@ -286,7 +283,7 @@ module Make (B : Baijiu_buffer.S)
         ctx.buflen <- 0;
         blit buf !in_off ctx.buf left fill;
         increment_counter ctx 64l;
-        compress ~le32_to_cpu:B.le32_to_cpu ctx ctx.buf 0;
+        compress ~le32_to_cpu:By.le32_to_cpu ctx ctx.buf 0;
         in_off := !in_off + fill;
         in_len := !in_len - fill;
 
@@ -305,14 +302,13 @@ module Make (B : Baijiu_buffer.S)
 
     ()
 
-  let feed_bytes = feed ~blit:B.blit_from_bytes ~le32_to_cpu:B.le32_from_bytes_to_cpu
-  let feed_bigstring = feed ~blit:B.blit_from_bigstring ~le32_to_cpu:B.le32_from_bigstring_to_cpu
-  let feed = feed ~blit:B.blit ~le32_to_cpu:B.le32_to_cpu
+  let unsafe_feed_bytes = feed ~blit:By.blit ~le32_to_cpu:By.le32_to_cpu
+  let unsafe_feed_bigstring = feed ~blit:By.blit_from_bigstring ~le32_to_cpu:Bi.le32_to_cpu
 
-  let with_outlen_and_key outlen key off len =
-    let buf = B.create 64 in
+  let with_outlen_and_key ~blit outlen key off len =
+    let buf = By.create 64 in
 
-    B.fill buf 0 64 '\x00';
+    By.fill buf 0 64 '\x00';
 
     let ctx =
       { buflen = 0
@@ -321,38 +317,43 @@ module Make (B : Baijiu_buffer.S)
       ; buf
       ; h = Array.make 8 0l
       ; t = Array.make 2 0l
-      ; f = Array.make 2 0l }
-    in
+      ; f = Array.make 2 0l } in
 
     let param_bytes = param_to_bytes
         { default_param with key_length = len
                            ; digest_length = outlen } in
 
     for i = 0 to 7
-    do ctx.h.(i) <- Int32.(iv.(i) lxor (B.le32_to_cpu param_bytes (i * 4))) done;
+    do ctx.h.(i) <- Int32.(iv.(i) lxor (By.le32_to_cpu param_bytes (i * 4))) done;
 
     if len > 0
     then begin
-      let block = B.create 64 in
+      let block = By.create 64 in
 
-      B.fill block 0 64 '\x00';
-      B.blit key off block 0 len;
+      By.fill block 0 64 '\x00';
+      blit key off block 0 len;
 
-      feed ctx block 0 64;
+      unsafe_feed_bytes ctx block 0 64;
     end;
 
     ctx
 
-  let get ctx =
-    let res = B.create 32 in
+  let with_outlen_and_bytes_key outlen key off len =
+    with_outlen_and_key ~blit:By.blit outlen key off len
+
+  let with_outlen_and_bigstring_key outlen key off len =
+    with_outlen_and_key ~blit:By.blit_from_bigstring outlen key off len
+
+  let unsafe_get ctx =
+    let res = By.create 32 in
 
     increment_counter ctx (Int32.of_int ctx.buflen);
     set_lastblock ctx;
-    B.fill ctx.buf ctx.buflen (64 - ctx.buflen) '\x00';
-    compress ~le32_to_cpu:B.le32_to_cpu ctx ctx.buf 0;
+    By.fill ctx.buf ctx.buflen (64 - ctx.buflen) '\x00';
+    compress ~le32_to_cpu:By.le32_to_cpu ctx ctx.buf 0;
 
     for i = 0 to 7
-    do B.cpu_to_le32 res (i * 4) ctx.h.(i) done;
+    do By.cpu_to_le32 res (i * 4) ctx.h.(i) done;
 
-    B.sub res 0 ctx.outlen
+    By.sub res 0 ctx.outlen
 end

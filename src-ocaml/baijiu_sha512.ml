@@ -1,3 +1,6 @@
+module By = Digestif_bytes
+module Bi = Digestif_bigstring
+
 module Int64 =
 struct
   include Int64
@@ -17,39 +20,38 @@ end
 
 module type S =
 sig
-  type t
-  type ctx = { mutable size : int64 array
-             ; b : buffer
-             ; h : int64 array }
-  and buffer
+  type kind = [ `SHA512 ]
 
-  val init : unit -> ctx
-  val feed : ctx -> buffer -> int -> int -> unit
-  val feed_bytes : ctx -> Bytes.t -> int -> int -> unit
-  val feed_bigstring : ctx -> (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t -> int -> int -> unit
-  val get  : ctx -> t
-  val dup  : ctx -> ctx
-end
-
-module Make (B : Baijiu_buffer.S)
-  : S with type buffer = B.buffer and type t = B.buffer
-= struct
   type ctx =
     { mutable size : int64 array
-    ; b : buffer
+    ; b : Bytes.t
     ; h : int64 array }
-  and buffer = B.buffer
-  and t = B.buffer
+
+  val init: unit -> ctx
+  val unsafe_feed_bytes: ctx -> By.t -> int -> int -> unit
+  val unsafe_feed_bigstring: ctx -> Bi.t -> int -> int -> unit
+  val unsafe_get: ctx -> By.t
+  val dup: ctx -> ctx
+end
+
+module Unsafe : S
+= struct
+  type kind = [ `SHA512 ]
+
+  type ctx =
+    { mutable size : int64 array
+    ; b : Bytes.t
+    ; h : int64 array }
 
   let dup ctx =
     { size = Array.copy ctx.size
-    ; b    = B.copy ctx.b
+    ; b    = Bytes.copy ctx.b
     ; h    = Array.copy ctx.h }
 
   let init () =
-    let b = B.create 128 in
+    let b = By.create 128 in
 
-    B.fill b 0 128 '\x00';
+    By.fill b 0 128 '\x00';
 
     { size = [| 0L; 0L |]
     ; b
@@ -108,8 +110,7 @@ module Make (B : Baijiu_buffer.S)
       ref ctx.h.(5),
       ref ctx.h.(6),
       ref ctx.h.(7),
-      ref 0L, ref 0L
-    in
+      ref 0L, ref 0L in
 
     let w = Array.make 80 0L in
 
@@ -128,7 +129,6 @@ module Make (B : Baijiu_buffer.S)
       d := !d + !t1;
       h := !t1 + !t2
     in
-
 
     for i = 0 to 9
     do
@@ -151,10 +151,11 @@ module Make (B : Baijiu_buffer.S)
     ctx.h.(5) <- ctx.h.(5) + !f;
     ctx.h.(6) <- ctx.h.(6) + !g;
     ctx.h.(7) <- ctx.h.(7) + !h;
+
     ()
 
   let feed : type a.
-       blit:(a -> int -> B.buffer -> int -> int -> unit)
+       blit:(a -> int -> By.t -> int -> int -> unit)
     -> be64_to_cpu:(a -> int -> int64)
     -> ctx -> a -> int -> int -> unit
     = fun ~blit ~be64_to_cpu ctx buf off len ->
@@ -172,7 +173,7 @@ module Make (B : Baijiu_buffer.S)
     if !idx <> 0 && !len >= to_fill
     then begin
       blit buf !off ctx.b !idx to_fill;
-      sha512_do_chunk ~be64_to_cpu:B.be64_to_cpu ctx ctx.b 0;
+      sha512_do_chunk ~be64_to_cpu:By.be64_to_cpu ctx ctx.b 0;
       len := !len - to_fill;
       off := !off + to_fill;
       idx := 0;
@@ -190,28 +191,27 @@ module Make (B : Baijiu_buffer.S)
 
     ()
 
-  let feed_bytes = feed ~blit:B.blit_from_bytes ~be64_to_cpu:B.be64_from_bytes_to_cpu
-  let feed_bigstring = feed ~blit:B.blit_from_bigstring ~be64_to_cpu:B.be64_from_bigstring_to_cpu
-  let feed = feed ~blit:B.blit ~be64_to_cpu:B.be64_to_cpu
+  let unsafe_feed_bytes = feed ~blit:By.blit ~be64_to_cpu:By.be64_to_cpu
+  let unsafe_feed_bigstring = feed ~blit:By.blit_from_bigstring ~be64_to_cpu:Bi.be64_to_cpu
 
-  let get ctx =
-    let padding = B.create 128 in
-    let bits = B.create 16 in
-    let res = B.create (8 * 8) in
+  let unsafe_get ctx =
+    let padding = By.create 128 in
+    let bits = By.create 16 in
+    let res = By.create (8 * 8) in
 
-    B.set padding 0 '\x80';
-    B.fill padding 1 127 '\x00';
-    B.cpu_to_be64 bits 0 Int64.((ctx.size.(1) lsl 3) lor (ctx.size.(0) lsr 61));
-    B.cpu_to_be64 bits 8 Int64.((ctx.size.(0) lsl 3));
+    By.set padding 0 '\x80';
+    By.fill padding 1 127 '\x00';
+    By.cpu_to_be64 bits 0 Int64.((ctx.size.(1) lsl 3) lor (ctx.size.(0) lsr 61));
+    By.cpu_to_be64 bits 8 Int64.((ctx.size.(0) lsl 3));
 
     let index = Int64.(to_int (ctx.size.(0) land 0x7FL)) in
     let padlen = if index < 112 then 112 - index else (128 + 112) - index in
 
-    feed ctx padding 0 padlen;
-    feed ctx bits 0 16;
+    unsafe_feed_bytes ctx padding 0 padlen;
+    unsafe_feed_bytes ctx bits 0 16;
 
     for i = 0 to 7
-    do B.cpu_to_be64 res (i * 8) ctx.h.(i) done;
+    do By.cpu_to_be64 res (i * 8) ctx.h.(i) done;
 
     res
 end
