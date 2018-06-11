@@ -164,10 +164,7 @@ module Unsafe : S
        ; param.personal.(14) land 0xFF
        ; param.personal.(15) land 0xFF |] in
 
-    let res = Bytes.create 64 in
-
-    for i = 0 to 63
-    do Bytes.unsafe_set res i (Char.unsafe_chr (Array.get arr i)) done; res
+    Bytes.init 64 (fun i -> Char.unsafe_chr (Array.get arr i))
 
   let default_param =
     { digest_length = 64
@@ -205,7 +202,7 @@ module Unsafe : S
     ctx.f.(0) <- Int64.minus_one
 
   let init () =
-    let buf = By.create 128 in
+    let buf = Bytes.make 128 '\x00' in
 
     By.fill buf 0 128 '\x00';
 
@@ -345,9 +342,7 @@ module Unsafe : S
   let unsafe_feed_bigstring = feed ~blit:By.blit_from_bigstring ~le64_to_cpu:Bi.le64_to_cpu
 
   let with_outlen_and_key ~blit outlen key off len =
-    let buf = By.create 128 in
-
-    By.fill buf 0 128 '\x00';
+    let buf = Bytes.make 128 '\x00' in
 
     let ctx =
       { buflen = 0
@@ -367,11 +362,9 @@ module Unsafe : S
 
     if len > 0
     then begin
-      let block = By.create 128 in
+      let block = Bytes.make 128 '\x00' in
 
-      By.fill block 0 128 '\x00';
       blit key off block 0 len;
-
       unsafe_feed_bytes ctx block 0 128;
     end;
 
@@ -384,7 +377,7 @@ module Unsafe : S
     with_outlen_and_key ~blit:By.blit_from_bigstring outlen key off len
 
   let unsafe_get ctx =
-    let res = By.create 64 in
+    let res = Bytes.make 64 '\x00' in
 
     increment_counter ctx (Int64.of_int ctx.buflen);
     set_lastblock ctx;

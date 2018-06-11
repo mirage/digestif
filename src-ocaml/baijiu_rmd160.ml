@@ -56,9 +56,7 @@ module Unsafe : S
     ; b = Bytes.copy ctx.b }
 
   let init () =
-    let b = By.create 64 in
-
-    By.fill b 0 64 '\x00';
+    let b = Bytes.make 64 '\x00' in
 
     { s = [| 0l; 0l; |]
     ; n = 0
@@ -388,10 +386,9 @@ module Unsafe : S
   let unsafe_feed_bigstring ctx buf off len = feed ~blit:By.blit_from_bigstring ~le32_to_cpu:Bi.le32_to_cpu ctx buf off len
 
   let unsafe_get ctx =
-    let i = ref ctx.n in
+    let i = ref (ctx.n + 1) in
     let res = By.create (5 * 4) in
-    By.set ctx.b !i '\x80';
-    incr i;
+    By.set ctx.b ctx.n '\x80';
 
     if !i > 56
     then begin

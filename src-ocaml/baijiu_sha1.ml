@@ -51,9 +51,7 @@ module Unsafe : S
     ; h    = Array.copy ctx.h }
 
   let init () =
-    let b = By.create 64 in
-
-    By.fill b 0 64 '\x00';
+    let b = Bytes.make 64 '\x00' in
 
     { size   = 0L
     ; b
@@ -232,19 +230,18 @@ module Unsafe : S
   let unsafe_feed_bigstring = feed ~blit:By.blit_from_bigstring ~be32_to_cpu:Bi.be32_to_cpu
 
   let unsafe_get ctx =
-    let padding = By.create 64 in
-    let bits = By.create 8 in
-    let res = By.create (5 * 4) in
-
-    By.set padding 0 '\x80';
-    By.fill padding 1 63 '\x00';
-    By.cpu_to_be64 bits 0 Int64.(ctx.size lsl 3);
-
     let index = Int64.(to_int (ctx.size land 0x3FL)) in
     let padlen = if index < 56 then 56 - index else (64 + 56) - index in
 
+    let padding = By.init padlen (function 0 -> '\x80' | _ -> '\x00') in
+
+    let bits = By.create 8 in
+    By.cpu_to_be64 bits 0 Int64.(ctx.size lsl 3);
+
     unsafe_feed_bytes ctx padding 0 padlen;
     unsafe_feed_bytes ctx bits 0 8;
+
+    let res = By.create (5 * 4) in
 
     for i = 0 to 4
     do By.cpu_to_be32 res (i * 4) ctx.h.(i) done;

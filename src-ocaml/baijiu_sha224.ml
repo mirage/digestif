@@ -22,9 +22,7 @@ module Unsafe : S
   type nonrec ctx = ctx
 
   let init () =
-    let b = By.create 128 in
-
-    By.fill b 0 128 '\x00';
+    let b = Bytes.make 128 '\x00' in
 
     { size = 0L
     ; b
