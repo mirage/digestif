@@ -128,33 +128,33 @@ end
 module Make (F : Foreign) (D : Desc) = struct
   include Core (F) (D)
 
-  let bytes_opad = By.init block_size (fun _ -> '\x5c')
-  let bytes_ipad = By.init block_size (fun _ -> '\x36')
+  let bytes_opad = Bytes.make block_size '\x5c'
+  let bytes_ipad = Bytes.make block_size '\x36'
 
   let rec norm_bytes key =
-    match Pervasives.compare (By.length key) block_size with
-    | 1  -> norm_bytes (Bytes.unsafe_of_string (digest_bytes key))
-    | -1 -> By.rpad key block_size '\000'
-    | _  -> key
+    match Pervasives.compare (String.length key) block_size with
+    | 1  -> norm_bytes (digest_string key)
+    | -1 -> By.rpad (Bytes.unsafe_of_string key) block_size '\000'
+    | _  -> Bytes.of_string key
 
   let bigstring_opad = Bi.init block_size (fun _ -> '\x5c')
   let bigstring_ipad = Bi.init block_size (fun _ -> '\x36')
 
   let norm_bigstring key =
     let key = Bi.to_string key in
-    let res0 = norm_bytes (Bytes.unsafe_of_string key) in
+    let res0 = norm_bytes key in
     let res1 = Bi.create (By.length res0) in
     Bi.blit_from_bytes res0 0 res1 0 (By.length res0); res1
 
   let hmaci_bytes ~key iter =
-    let key = norm_bytes key in
+    let key = norm_bytes (Bytes.unsafe_to_string key) in
     let outer = Native.XOR.Bytes.xor key bytes_opad in
     let inner = Native.XOR.Bytes.xor key bytes_ipad in
     let res = digesti_bytes (fun f -> f inner; iter f) in
     digesti_bytes (fun f -> f outer; f (Bytes.unsafe_of_string res))
 
   let hmaci_string ~key iter =
-    let key = norm_bytes (Bytes.unsafe_of_string key) in
+    let key = norm_bytes key in
     (* XXX(dinosaure): safe, [rpad] and [digest] have a read-only access. *)
     let outer = Native.XOR.Bytes.xor key bytes_opad in
     let inner = Native.XOR.Bytes.xor key bytes_ipad in

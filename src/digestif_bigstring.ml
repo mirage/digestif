@@ -7,10 +7,8 @@ let length = Array1.dim
 let sub = Array1.sub
 let empty = Array1.create Char c_layout 0
 let copy t =
-  let l = Array1.dim t in
-  let r = Array1.create Char c_layout l in
-  for i = 0 to l - 1
-  do Array1.set r i (Array1.get t i) done; r
+  let r = create (length t) in
+  Array1.blit t r; r
 
 let init l f =
   let v = Array1.create Char c_layout l in
@@ -33,10 +31,7 @@ let unsafe_set_nat : t -> int -> nativeint -> unit = fun s i v ->
   else unsafe_set_64 s i (Int64.of_nativeint v)
 
 let to_string v =
-  let buf = Bytes.create (length v) in
-  for i = 0 to length v - 1
-  do Bytes.set buf i (Array1.get v i) done;
-  Bytes.unsafe_to_string buf
+  String.init (length v) (Array1.get v)
 
 let blit_from_bytes src src_off dst dst_off len =
   for i = 0 to len - 1
