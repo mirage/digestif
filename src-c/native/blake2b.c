@@ -61,20 +61,6 @@ static void blake2b_set_lastblock( struct blake2b_ctx *ctx )
   ctx->f[0] = (uint64_t)-1;
 }
 
-void digestif_blake2b_init(struct blake2b_ctx *ctx)
-{
-  const unsigned char * p = ( const uint8_t * )( P );
-  size_t i;
-
-  memset( ctx, 0, sizeof( struct blake2b_ctx ) );
-
-  for( i = 0; i < 8; ++i ) {
-    ctx->h[i] = IV[i] ^ load64(p + sizeof(uint64_t) * i);
-  }
-
-  ctx->outlen = P->digest_length;
-}
-
 #define G(r,i,a,b,c,d)                      \
   do {                                      \
     a = a + b + m[sigma[r][2*i+0]];         \
@@ -209,6 +195,11 @@ void digestif_blake2b_init_with_outlen_and_key(struct blake2b_ctx *ctx, size_t o
       digestif_blake2b_update( ctx, block, BLAKE2B_BLOCKBYTES );
       secure_zero_memory( block, BLAKE2B_BLOCKBYTES );
     }
+}
+
+void digestif_blake2b_init(struct blake2b_ctx *ctx)
+{
+  digestif_blake2b_init_with_outlen_and_key(ctx, BLAKE2B_OUTBYTES, NULL, 0);
 }
 
 void digestif_blake2b_finalize( struct blake2b_ctx *ctx, uint8_t *out )

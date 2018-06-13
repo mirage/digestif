@@ -16,7 +16,6 @@ struct
     (a asr n) lor (a lsl (32 - n))
 end
 
-
 module Int64 =
 struct
   include Int64
@@ -35,24 +34,27 @@ struct
     (a asr n) lor (a lsl (64 - n))
 end
 
+module By = Digestif_bytes
+module Bi = Digestif_bigstring
+
 module type S =
 sig
-  type t
   type ctx
-  type buffer
+  type kind = [ `BLAKE2B ]
 
-  val init : unit -> ctx
-  val with_outlen_and_key : int -> buffer -> int -> int -> ctx
-  val feed : ctx -> buffer -> int -> int -> unit
-  val feed_bytes : ctx -> Bytes.t -> int -> int -> unit
-  val feed_bigstring : ctx -> (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t -> int -> int -> unit
-  val get  : ctx -> t
-  val dup  : ctx -> ctx
+  val init: unit -> ctx
+  val with_outlen_and_bytes_key : int -> By.t -> int -> int -> ctx
+  val with_outlen_and_bigstring_key : int -> Bi.t -> int -> int -> ctx
+  val unsafe_feed_bytes: ctx -> By.t -> int -> int -> unit
+  val unsafe_feed_bigstring: ctx -> Bi.t -> int -> int -> unit
+  val unsafe_get: ctx -> By.t
+  val dup: ctx -> ctx
 end
 
-module Make (B : Baijiu_buffer.S)
-  : S with type buffer = B.buffer and type t = B.buffer
+module Unsafe : S
 = struct
+  type kind = [ `BLAKE2B ]
+
   type param =
     { digest_length : int
     ; key_length    : int
@@ -71,18 +73,16 @@ module Make (B : Baijiu_buffer.S)
     { mutable buflen    : int
     ; outlen            : int
     ; mutable last_node : int
-    ; buf               : buffer
+    ; buf               : Bytes.t
     ; h                 : int64 array
     ; t                 : int64 array
     ; f                 : int64 array }
-  and buffer = B.buffer
-  and t = B.buffer
 
   let dup ctx =
     { buflen    = ctx.buflen
     ; outlen    = ctx.outlen
     ; last_node = ctx.last_node
-    ; buf       = B.copy ctx.buf
+    ; buf       = Bytes.copy ctx.buf
     ; h         = Array.copy ctx.h
     ; t         = Array.copy ctx.t
     ; f         = Array.copy ctx.f }
@@ -162,14 +162,9 @@ module Make (B : Baijiu_buffer.S)
        ; param.personal.(12) land 0xFF
        ; param.personal.(13) land 0xFF
        ; param.personal.(14) land 0xFF
-       ; param.personal.(15) land 0xFF |]
-    in
-    let res = B.create 64 in
+       ; param.personal.(15) land 0xFF |] in
 
-    for i = 0 to 63
-    do B.set res i (Char.unsafe_chr (Array.get arr i)) done;
-
-    res
+    Bytes.init 64 (fun i -> Char.unsafe_chr (Array.get arr i))
 
   let default_param =
     { digest_length = 64
@@ -207,9 +202,9 @@ module Make (B : Baijiu_buffer.S)
     ctx.f.(0) <- Int64.minus_one
 
   let init () =
-    let buf = B.create 128 in
+    let buf = Bytes.make 128 '\x00' in
 
-    B.fill buf 0 128 '\x00';
+    By.fill buf 0 128 '\x00';
 
     let ctx =
       { buflen = 0
@@ -218,29 +213,28 @@ module Make (B : Baijiu_buffer.S)
       ; buf
       ; h = Array.make 8 0L
       ; t = Array.make 2 0L
-      ; f = Array.make 2 0L }
-    in
+      ; f = Array.make 2 0L } in
 
     let param_bytes = param_to_bytes default_param in
 
     for i = 0 to 7
-    do ctx.h.(i) <- Int64.(iv.(i) lxor (B.le64_to_cpu param_bytes (i * 8))) done;
+    do ctx.h.(i) <- Int64.(iv.(i) lxor (By.le64_to_cpu param_bytes (i * 8))) done;
 
     ctx
 
   let sigma =
-  [| [|  0;  1;  2;  3;  4;  5;  6;  7;  8;  9; 10; 11; 12; 13; 14; 15 |]
-   ; [| 14; 10;  4;  8;  9; 15; 13;  6;  1; 12;  0;  2; 11;  7;  5;  3 |]
-   ; [| 11;  8; 12;  0;  5;  2; 15; 13; 10; 14;  3;  6;  7;  1;  9;  4 |]
-   ; [|  7;  9;  3;  1; 13; 12; 11; 14;  2;  6;  5; 10;  4;  0; 15;  8 |]
-   ; [|  9;  0;  5;  7;  2;  4; 10; 15; 14;  1; 11; 12;  6;  8;  3; 13 |]
-   ; [|  2; 12;  6; 10;  0; 11;  8;  3;  4; 13;  7;  5; 15; 14;  1;  9 |]
-   ; [| 12;  5;  1; 15; 14; 13;  4; 10;  0;  7;  6;  3;  9;  2;  8; 11 |]
-   ; [| 13; 11;  7; 14; 12;  1;  3;  9;  5;  0; 15;  4;  8;  6;  2; 10 |]
-   ; [|  6; 15; 14;  9; 11;  3;  0;  8; 12;  2; 13;  7;  1;  4; 10;  5 |]
-   ; [| 10;  2;  8;  4;  7;  6;  1;  5; 15; 11;  9; 14;  3; 12; 13 ; 0 |]
-   ; [|  0;  1;  2;  3;  4;  5;  6;  7;  8;  9; 10; 11; 12; 13; 14; 15 |]
-   ; [| 14; 10;  4;  8;  9; 15; 13;  6;  1; 12;  0;  2; 11;  7;  5;  3 |] |]
+    [| [|  0;  1;  2;  3;  4;  5;  6;  7;  8;  9; 10; 11; 12; 13; 14; 15 |]
+     ; [| 14; 10;  4;  8;  9; 15; 13;  6;  1; 12;  0;  2; 11;  7;  5;  3 |]
+     ; [| 11;  8; 12;  0;  5;  2; 15; 13; 10; 14;  3;  6;  7;  1;  9;  4 |]
+     ; [|  7;  9;  3;  1; 13; 12; 11; 14;  2;  6;  5; 10;  4;  0; 15;  8 |]
+     ; [|  9;  0;  5;  7;  2;  4; 10; 15; 14;  1; 11; 12;  6;  8;  3; 13 |]
+     ; [|  2; 12;  6; 10;  0; 11;  8;  3;  4; 13;  7;  5; 15; 14;  1;  9 |]
+     ; [| 12;  5;  1; 15; 14; 13;  4; 10;  0;  7;  6;  3;  9;  2;  8; 11 |]
+     ; [| 13; 11;  7; 14; 12;  1;  3;  9;  5;  0; 15;  4;  8;  6;  2; 10 |]
+     ; [|  6; 15; 14;  9; 11;  3;  0;  8; 12;  2; 13;  7;  1;  4; 10;  5 |]
+     ; [| 10;  2;  8;  4;  7;  6;  1;  5; 15; 11;  9; 14;  3; 12; 13 ; 0 |]
+     ; [|  0;  1;  2;  3;  4;  5;  6;  7;  8;  9; 10; 11; 12; 13; 14; 15 |]
+     ; [| 14; 10;  4;  8;  9; 15; 13;  6;  1; 12;  0;  2; 11;  7;  5;  3 |] |]
 
   let compress : type a. le64_to_cpu:(a -> int -> int64) -> ctx -> a -> int -> unit =
     fun ~le64_to_cpu ctx block off ->
@@ -258,8 +252,7 @@ module Make (B : Baijiu_buffer.S)
       v.(a_idx) <- v.(a_idx) + v.(b_idx) + m.(sigma.(r).(2 * i ++ 1));
       v.(d_idx) <- ror64 (v.(d_idx) lxor v.(a_idx)) 16;
       v.(c_idx) <- v.(c_idx) + v.(d_idx);
-      v.(b_idx) <- ror64 (v.(b_idx) lxor v.(c_idx)) 63;
-    in
+      v.(b_idx) <- ror64 (v.(b_idx) lxor v.(c_idx)) 63; in
 
     let r r =
       g r 0 0 4  8 12;
@@ -269,8 +262,7 @@ module Make (B : Baijiu_buffer.S)
       g r 4 0 5 10 15;
       g r 5 1 6 11 12;
       g r 6 2 7  8 13;
-      g r 7 3 4  9 14;
-    in
+      g r 7 3 4  9 14; in
 
     for i = 0 to 15
     do m.(i) <- le64_to_cpu block (off + i * 8);
@@ -310,7 +302,7 @@ module Make (B : Baijiu_buffer.S)
     ()
 
   let feed : type a.
-       blit:(a -> int -> B.buffer -> int -> int -> unit)
+       blit:(a -> int -> By.t -> int -> int -> unit)
     -> le64_to_cpu:(a -> int -> int64)
     -> ctx -> a -> int -> int -> unit =
     fun ~blit ~le64_to_cpu ctx buf off len ->
@@ -327,7 +319,7 @@ module Make (B : Baijiu_buffer.S)
         ctx.buflen <- 0;
         blit buf !in_off ctx.buf left fill;
         increment_counter ctx 128L;
-        compress ~le64_to_cpu:B.le64_to_cpu ctx ctx.buf 0;
+        compress ~le64_to_cpu:By.le64_to_cpu ctx ctx.buf 0;
         in_off := !in_off + fill;
         in_len := !in_len - fill;
 
@@ -346,14 +338,11 @@ module Make (B : Baijiu_buffer.S)
 
     ()
 
-  let feed_bytes = feed ~blit:B.blit_from_bytes ~le64_to_cpu:B.le64_from_bytes_to_cpu
-  let feed_bigstring = feed ~blit:B.blit_from_bigstring ~le64_to_cpu:B.le64_from_bigstring_to_cpu
-  let feed = feed ~blit:B.blit ~le64_to_cpu:B.le64_to_cpu
+  let unsafe_feed_bytes = feed ~blit:By.blit ~le64_to_cpu:By.le64_to_cpu
+  let unsafe_feed_bigstring = feed ~blit:By.blit_from_bigstring ~le64_to_cpu:Bi.le64_to_cpu
 
-  let with_outlen_and_key outlen key off len =
-    let buf = B.create 128 in
-
-    B.fill buf 0 128 '\x00';
+  let with_outlen_and_key ~blit outlen key off len =
+    let buf = Bytes.make 128 '\x00' in
 
     let ctx =
       { buflen = 0
@@ -362,38 +351,41 @@ module Make (B : Baijiu_buffer.S)
       ; buf
       ; h = Array.make 8 0L
       ; t = Array.make 2 0L
-      ; f = Array.make 2 0L }
-    in
+      ; f = Array.make 2 0L } in
 
     let param_bytes = param_to_bytes
         { default_param with digest_length = outlen
                            ; key_length = len } in
 
     for i = 0 to 7
-    do ctx.h.(i) <- Int64.(iv.(i) lxor (B.le64_to_cpu param_bytes (i * 8))) done;
+    do ctx.h.(i) <- Int64.(iv.(i) lxor (By.le64_to_cpu param_bytes (i * 8))) done;
 
     if len > 0
     then begin
-      let block = B.create 128 in
+      let block = Bytes.make 128 '\x00' in
 
-      B.fill block 0 128 '\x00';
-      B.blit key off block 0 len;
-
-      feed ctx block 0 128;
+      blit key off block 0 len;
+      unsafe_feed_bytes ctx block 0 128;
     end;
 
     ctx
 
-  let get ctx =
-    let res = B.create 64 in
+  let with_outlen_and_bytes_key outlen key off len =
+    with_outlen_and_key ~blit:By.blit outlen key off len
+
+  let with_outlen_and_bigstring_key outlen key off len =
+    with_outlen_and_key ~blit:By.blit_from_bigstring outlen key off len
+
+  let unsafe_get ctx =
+    let res = Bytes.make 64 '\x00' in
 
     increment_counter ctx (Int64.of_int ctx.buflen);
     set_lastblock ctx;
-    B.fill ctx.buf ctx.buflen (128 - ctx.buflen) '\x00';
-    compress ~le64_to_cpu:B.le64_to_cpu ctx ctx.buf 0;
+    By.fill ctx.buf ctx.buflen (128 - ctx.buflen) '\x00';
+    compress ~le64_to_cpu:By.le64_to_cpu ctx ctx.buf 0;
 
     for i = 0 to 7
-    do B.cpu_to_le64 res (i * 8) ctx.h.(i) done;
+    do By.cpu_to_le64 res (i * 8) ctx.h.(i) done;
 
-    B.sub res 0 ctx.outlen
+    By.sub res 0 ctx.outlen
 end

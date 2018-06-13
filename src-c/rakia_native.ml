@@ -15,16 +15,18 @@
 
 module Bigstring = Digestif_bigstring
 
-type off    = int
-type size   = int
-type ba     = Bigstring.t
-type st     = Bytes.t
-type ctx    = Bytes.t
+type off = int
+type size = int
+type ba = Bigstring.t
+type st = Bytes.t
+type ctx = Bytes.t
 
 let dup     : ctx -> ctx = Bytes.copy
 
 module MD5 =
 struct
+  type kind = [ `MD5 ]
+
   module Bigstring =
   struct
     external init     : ctx -> unit
@@ -58,6 +60,8 @@ end
 
 module SHA1 =
 struct
+  type kind = [ `SHA1 ]
+
   module Bigstring =
   struct
     external init     : ctx -> unit
@@ -91,6 +95,8 @@ end
 
 module SHA224 =
 struct
+  type kind = [ `SHA224 ]
+
   module Bigstring =
   struct
     external init     : ctx -> unit
@@ -124,6 +130,8 @@ end
 
 module SHA256 =
 struct
+  type kind = [ `SHA256 ]
+
   module Bigstring =
   struct
     external init     : ctx -> unit
@@ -157,6 +165,8 @@ end
 
 module SHA384 =
 struct
+  type kind = [ `SHA384 ]
+
   module Bigstring =
   struct
     external init     : ctx -> unit
@@ -190,6 +200,8 @@ end
 
 module SHA512 =
 struct
+  type kind = [ `SHA512 ]
+
   module Bigstring =
   struct
     external init     : ctx -> unit
@@ -223,6 +235,8 @@ end
 
 module BLAKE2B =
 struct
+  type kind = [ `BLAKE2B ]
+
   module Bigstring =
   struct
     external init     : ctx -> unit
@@ -270,6 +284,8 @@ end
 
 module BLAKE2S =
 struct
+  type kind = [ `BLAKE2S ]
+
   module Bigstring =
   struct
     external init     : ctx -> unit
@@ -317,6 +333,8 @@ end
 
 module RMD160 =
 struct
+  type kind = [ `RMD160 ]
+
   module Bigstring =
   struct
     external init     : ctx -> unit

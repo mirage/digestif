@@ -1,3 +1,6 @@
+module By = Digestif_bytes
+module Bi = Digestif_bigstring
+
 module Int32 =
 struct
   include Int32
@@ -25,39 +28,36 @@ end
 
 module type S =
 sig
-  type t
-  type ctx = { mutable size : int64
-             ; b : buffer
-             ; h : int32 array }
-  and buffer
+  type kind = [ `SHA256 ]
 
-  val init : unit -> ctx
-  val feed : ctx -> buffer -> int -> int -> unit
-  val feed_bytes : ctx -> Bytes.t -> int -> int -> unit
-  val feed_bigstring : ctx -> (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t -> int -> int -> unit
-  val get  : ctx -> t
-  val dup  : ctx -> ctx
-end
-
-module Make (B : Baijiu_buffer.S)
-  : S with type buffer = B.buffer and type t = B.buffer
-= struct
   type ctx =
     { mutable size : int64
-    ; b            : buffer
+    ; b : Bytes.t
+    ; h : int32 array }
+
+  val init: unit -> ctx
+  val unsafe_feed_bytes: ctx -> By.t -> int -> int -> unit
+  val unsafe_feed_bigstring: ctx -> Bi.t -> int -> int -> unit
+  val unsafe_get: ctx -> By.t
+  val dup: ctx -> ctx
+end
+
+module Unsafe : S
+= struct
+  type kind = [ `SHA256 ]
+
+  type ctx =
+    { mutable size : int64
+    ; b            : Bytes.t
     ; h            : int32 array }
-  and buffer = B.buffer
-  and t = B.buffer
 
   let dup ctx =
     { size = ctx.size
-    ; b    = B.copy ctx.b
+    ; b    = By.copy ctx.b
     ; h    = Array.copy ctx.h }
 
   let init () =
-    let b = B.create 128 in
-
-    B.fill b 0 128 '\x00';
+    let b = Bytes.make 128 '\x00' in
 
     { size = 0L
     ; b
@@ -146,7 +146,7 @@ module Make (B : Baijiu_buffer.S)
     ()
 
   let feed : type a.
-       blit:(a -> int -> B.buffer -> int -> int -> unit)
+       blit:(a -> int -> By.t -> int -> int -> unit)
     -> be32_to_cpu:(a -> int -> int32)
     -> ctx -> a -> int -> int -> unit
     = fun ~blit ~be32_to_cpu ctx buf off len ->
@@ -161,7 +161,7 @@ module Make (B : Baijiu_buffer.S)
     if !idx <> 0 && !len >= to_fill
     then begin
       blit buf !off ctx.b !idx to_fill;
-      sha256_do_chunk ~be32_to_cpu:B.be32_to_cpu ctx ctx.b 0;
+      sha256_do_chunk ~be32_to_cpu:By.be32_to_cpu ctx ctx.b 0;
       len := !len - to_fill;
       off := !off + to_fill;
       idx := 0;
@@ -178,27 +178,25 @@ module Make (B : Baijiu_buffer.S)
 
     ()
 
-  let feed_bytes = feed ~blit:B.blit_from_bytes ~be32_to_cpu:B.be32_from_bytes_to_cpu
-  let feed_bigstring = feed ~blit:B.blit_from_bigstring ~be32_to_cpu:B.be32_from_bigstring_to_cpu
-  let feed = feed ~blit:B.blit ~be32_to_cpu:B.be32_to_cpu
+  let unsafe_feed_bytes = feed ~blit:By.blit ~be32_to_cpu:By.be32_to_cpu
+  let unsafe_feed_bigstring = feed ~blit:By.blit_from_bigstring ~be32_to_cpu:Bi.be32_to_cpu
 
-  let get ctx =
-    let padding = B.create 64 in
-    let bits = B.create 8 in
-    let res = B.create (8 * 4) in
-
-    B.set padding 0 '\x80';
-    B.fill padding 1 63 '\x00';
-    B.cpu_to_be64 bits 0 Int64.(ctx.size lsl 3);
-
+  let unsafe_get ctx =
     let index = Int64.(to_int (ctx.size land 0x3FL)) in
     let padlen = if index < 56 then 56 - index else (64 + 56) - index in
 
-    feed ctx padding 0 padlen;
-    feed ctx bits 0 8;
+    let padding = Bytes.init padlen (function 0 -> '\x80' | _ -> '\x00') in
+
+    let bits = By.create 8 in
+    By.cpu_to_be64 bits 0 Int64.(ctx.size lsl 3);
+
+    unsafe_feed_bytes ctx padding 0 padlen;
+    unsafe_feed_bytes ctx bits 0 8;
+
+    let res = By.create (8 * 4) in
 
     for i = 0 to 7
-    do B.cpu_to_be32 res (i * 4) ctx.h.(i) done;
+    do By.cpu_to_be32 res (i * 4) ctx.h.(i) done;
 
     res
 end
