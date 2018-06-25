@@ -15,37 +15,30 @@ module Make (D : sig val digest_size : int end) = struct
 
     Bytes.unsafe_to_string res
 
-  let fold f a s =
-    let r = ref a in
-    String.iter (fun x -> r := f !r x) s; !r
-
   let of_hex hex =
     let code x = match x with
       | '0' .. '9' -> Char.code x - 48
       | 'A' .. 'F' -> Char.code x - 55
       | 'a' .. 'z' -> Char.code x - 87
       | _ -> invalid_arg "of_hex" in
+    let decode chr1 chr2 = Char.chr ((code chr1 lsl 4) lor (code chr2)) in
+    let offset = ref 0 in
 
-    let wsp = function ' ' | '\t' | '\r' | '\n' -> true | _ -> false in
-
-    fold
-      (fun (res, i, acc) -> function
-         | chr when wsp chr -> (res, i, acc)
-         | chr ->
-           match acc, code chr with
-           | None, x -> (res, i, Some (x lsl 4))
-           | Some y, x -> Bytes.unsafe_set res i (Char.unsafe_chr (x lor y)); (res, succ i, None))
-      (Bytes.create D.digest_size, 0, None)
-      hex
-    |> (function
-        | (_, _, Some _)  -> invalid_arg "of_hex"
-        | (res, i, _) ->
-           if i = D.digest_size
-           then res
-           else (for i = i to D.digest_size - 1
-                 do Bytes.unsafe_set res i '\000' done;
-                 res))
-    |> Bytes.unsafe_to_string
+    let rec go have_first idx =
+      if !offset + idx >= String.length hex
+      then '\x00'
+      else match String.get hex (!offset + idx) with
+        | ' ' | '\t' | '\r' ->
+          incr offset;
+          go have_first idx
+        | chr2 when have_first -> chr2
+        | chr1 ->
+          incr offset;
+          let chr2 = go true idx in
+          if chr2 <> '\x00'
+          then decode chr1 chr2
+          else invalid_arg "of_hex: odd number of hex characters" in
+    String.init D.digest_size (go false)
 
   let pp ppf hash =
     for i = 0 to D.digest_size - 1
