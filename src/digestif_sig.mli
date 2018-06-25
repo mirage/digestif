@@ -49,7 +49,7 @@ module type S = sig
   val hmacv_string: key:String.t -> String.t list -> t
   val hmacv_bigstring: key:bigstring -> bigstring list -> t
 
-  val compare: t compare
+  val unsafe_compare: t compare
   val eq: t equal
   val neq: t equal
 
@@ -111,7 +111,7 @@ sig
   val pp: 'k hash -> 'k t pp
   val eq: 'k hash -> 'k t equal
   val neq: 'k hash -> 'k t equal
-  val compare: 'k hash -> 'k t compare
+  val unsafe_compare: 'k hash -> 'k t compare
 
   val to_hex: 'k hash -> 'k t -> string
   val of_hex: 'k hash -> string -> 'k t

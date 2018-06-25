@@ -79,7 +79,7 @@ module Core (F : Foreign) (D : Desc) = struct
 
   let eq = String.equal
   let neq a b = not (eq a b)
-  let compare = String.compare
+  let unsafe_compare = String.compare
 
   let get t =
     let t = Native.dup t in
@@ -389,12 +389,12 @@ let hmaci_bigstring
 
 (* XXX(dinosaure): unsafe part to avoid overhead. *)
 
-let compare
+let unsafe_compare
   : type k. k hash -> k t -> k t -> int
   = fun hash a b ->
     let module H = (val (module_of hash)) in
     let unsafe : 'k t -> H.t = Obj.magic in
-    H.compare (unsafe a) (unsafe b)
+    H.unsafe_compare (unsafe a) (unsafe b)
 
 let eq
   : type k. k hash -> k t equal
