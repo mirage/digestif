@@ -28,7 +28,7 @@ module Make (D : sig val digest_size : int end) = struct
       if !offset + idx >= String.length hex
       then '\x00'
       else match String.get hex (!offset + idx) with
-        | ' ' | '\t' | '\r' ->
+        | ' ' | '\t' | '\r' | '\n' ->
           incr offset;
           go have_first idx
         | chr2 when have_first -> chr2
