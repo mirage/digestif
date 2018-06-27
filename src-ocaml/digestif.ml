@@ -4,6 +4,7 @@ module Bi = Digestif_bigstring
 module By = Digestif_bytes
 module Xor = Baijiu_xor
 module Conv = Digestif_conv
+module Eq = Digestif_eq
 
 module type Desc =
 sig
@@ -63,6 +64,7 @@ struct
 
   include Unsafe (Hash) (D)
   include Conv.Make (D)
+  include Eq.Make (D)
 
   let eq = String.equal
   let neq a b = not (eq a b)

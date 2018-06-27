@@ -3,6 +3,7 @@ module type S = Digestif_sig.S
 module Bi = Digestif_bigstring
 module By = Digestif_bytes
 module Conv = Digestif_conv
+module Eq = Digestif_eq
 module Native = Rakia_native
 
 module type Foreign = sig
@@ -76,6 +77,7 @@ module Core (F : Foreign) (D : Desc) = struct
 
   include Unsafe (F) (D)
   include Conv.Make (D)
+  include Eq.Make (D)
 
   let eq = String.equal
   let neq a b = not (eq a b)
