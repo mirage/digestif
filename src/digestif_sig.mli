@@ -1,6 +1,14 @@
 type bigstring = (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
 
 type 'a iter = ('a -> unit) -> unit
+(** A general (inner) iterator. It applies the provided function to a collection
+   of elements. For instance:
+
+   {ul
+    {- [let iter_k : 'a -> 'a iter = fun x f -> f x]}
+    {- [let iter_pair : 'a * 'a -> 'a iter = fun (x, y) -> f x; f y]}
+    {- [let iter_list : 'a list -> 'a iter = fun l f -> List.iter f l]}} *)
+
 type 'a compare = 'a -> 'a -> int
 type 'a equal = 'a -> 'a -> bool
 type 'a pp = Format.formatter -> 'a -> unit
@@ -8,55 +16,127 @@ type 'a pp = Format.formatter -> 'a -> unit
 module type S = sig
 
   val digest_size : int
+  (** Size of hash results, in bytes. *)
 
   type ctx
   type kind
   type t = private string
 
   val init: unit -> ctx
+  (** Create a new hash state. *)
 
   val feed_bytes: ctx -> ?off:int -> ?len:int -> Bytes.t -> ctx
+  (** [feed_bytes msg t] adds informations in [msg] to [t]. [feed] is analogous to appending:
+      [feed (feed t msg1) msg2 = feed t (append msg1 msg2)] *)
+
   val feed_string: ctx -> ?off:int -> ?len:int -> String.t -> ctx
+  (** Same as {!feed_bytes} but for {!String.t}. *)
+
   val feed_bigstring: ctx -> ?off:int -> ?len:int -> bigstring -> ctx
+  (** Same as {!feed_bytes} but for {!bigstring}. *)
 
   val feedi_bytes: ctx -> Bytes.t iter -> ctx
+  (** [feedi_bytes t iter = let r = ref t in iter (fun msg -> r := feed !r msg); !r] *)
+
   val feedi_string: ctx -> String.t iter -> ctx
+  (** Same as {!feed_bytes} but for {!String.t}. *)
+
   val feedi_bigstring: ctx -> bigstring iter -> ctx
+  (** Same as {!feed_bytes} but for {!bigstring}. *)
 
   val get: ctx -> t
+  (** [get t] is the digest corresponding to [t]. *)
 
   val digest_bytes: ?off:int -> ?len:int -> Bytes.t -> t
+  (** [digest_bytes msg] is the digest of [msg].
+
+      [digest_bytes msg = get (feed_bytes empty msg)]. *)
+
   val digest_string: ?off:int -> ?len:int -> String.t -> t
+  (** Same as {!digest_bytes} but for a {String.t}. *)
+
   val digest_bigstring: ?off:int -> ?len:int -> bigstring -> t
+  (** Same as {!digest_bytes} but for a {!bigstring}. *)
 
   val digesti_bytes: Bytes.t iter -> t
+  (** [digesti_bytes iter = feedi_bytes empty iter |> get]. *)
+
   val digesti_string: String.t iter -> t
+  (** Same as {!digesti_bytes} but for {!String.t}. *)
+
   val digesti_bigstring: bigstring iter -> t
+  (** Same as {!digesti_bigstring} but for {!bigstring}. *)
 
   val digestv_bytes: Bytes.t list -> t
+  (** Specialization of {!digesti_bytes} with a list of {!Bytes.t} (see {!iter}). *)
+
   val digestv_string: String.t list -> t
+  (** Same as {!digestv_bytes} but for {!String.t}. *)
+
   val digestv_bigstring: bigstring list -> t
+  (** Same as {!digestv_bytes} but for {!bigstring}. *)
 
   val hmac_bytes: key:Bytes.t -> ?off:int -> ?len:int -> Bytes.t -> t
+  (** [hmac_bytes ~key bytes] is the authentication code for {!Bytes.t} under
+     the secret [key], generated using the standard HMAC construction over this
+     hash algorithm. *)
+
   val hmac_string: key:String.t -> ?off:int -> ?len:int -> String.t -> t
+  (** Same as {!hmac_bytes} but for {!String.t}. *)
+
   val hmac_bigstring: key:bigstring -> ?off:int -> ?len:int -> bigstring -> t
+  (** Same as {!hmac_bytes} but for {!bigstring}. *)
 
   val hmaci_bytes: key:Bytes.t -> Bytes.t iter -> t
+  (** Authentication code under the secret [key] over a collection of
+     {!Bytes.t}. *)
+
   val hmaci_string: key:String.t -> String.t iter -> t
+  (** Same as {!hmaci_bytes} but for {!String.t}. *)
+
   val hmaci_bigstring: key:bigstring -> bigstring iter -> t
+  (** Same as {!hmaci_bytes} but for {!bigstring}. *)
 
   val hmacv_bytes: key:Bytes.t -> Bytes.t list -> t
+  (** Specialization of {!hmaci_bytes} with a list of {!Bytes.t} (see {!iter}). *)
+
   val hmacv_string: key:String.t -> String.t list -> t
+  (** Same as {!hmacv_bytes} but for {!String.t}. *)
+
   val hmacv_bigstring: key:bigstring -> bigstring list -> t
+  (** Same as {!hmacv_bigstring} but for {!bigstring}. *)
 
   val unsafe_compare: t compare
+  (** [unsafe_compare] function returns [0] on equality and a negative/positive
+     [int] depending on the difference (like {!String.compare}). However, this
+     behavior is dangerous since sorting by these hashes can allow attackers to
+     infer information about them. *)
+
+  val compare: t compare
+  (** [compare a b] uses [caml_hash] (murmur3) to get an unique integer of [a]
+     and [b] a do a substraction on them. Order is not lexicographical. The
+     safety relies on the assumption that the murmur3 seed cannot be
+     reconstructed by an attacker.
+
+     About safety, [t] is private string and let the user to define its own
+     [compare] function. *)
+
   val eq: t equal
+  (** The equal function for {!t}. *)
+
   val neq: t equal
+  (** [neq a b = not (eq a b)]. *)
 
   val pp: t pp
+  (** Pretty-printer of {!t}. *)
 
   val of_hex: string -> t
+  (** [of_hex] tries to parse an hexa-decimal representation of {!t}. [of_hex]
+     raises an [invalid_argument] when input is malformed. We take only firsts
+     [digest_size] hexadecimal values and ignore rest of input. *)
+
   val to_hex: t -> string
+  (** [to_hex] makes a hex-decimal representation of {!t}. *)
 end
 
 type kind =
