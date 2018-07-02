@@ -22,6 +22,9 @@ module type S = sig
   type kind
   type t = private string
 
+  val empty: ctx
+  (** An empty hash context. *)
+
   val init: unit -> ctx
   (** Create a new hash state. *)
 
