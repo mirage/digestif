@@ -131,9 +131,17 @@ module type S = sig
   (** Pretty-printer of {!t}. *)
 
   val of_hex: string -> t
-  (** [of_hex] tries to parse an hexa-decimal representation of {!t}. [of_hex]
+  (** [of_hex] tries to parse an hexadecimal representation of {!t}. [of_hex]
      raises an [invalid_argument] when input is malformed. We take only firsts
-     [digest_size] hexadecimal values and ignore rest of input. *)
+     {!digest_size} hexadecimal values and ignore rest of input. If it has not
+     enough hexadecimal values, trailing values of the output hash are zero
+     ([\x00]), *)
+
+  val consistent_of_hex: string -> t
+  (** [consistent_of_hex] tries to parse an hexadecimal representation of {!t}.
+     [consistent_of_hex] raises an [invalid_argument] when input is malformed.
+     However, instead {!of_hex}, [consistent_of_hex] expects exactly
+     {!digest_size} hexadecimal values (but continues to ignore whitespaces). *)
 
   val to_hex: t -> string
   (** [to_hex] makes a hex-decimal representation of {!t}. *)
