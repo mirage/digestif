@@ -1,3 +1,19 @@
+v0.6 2018-07-05 Paris (France)
+------------------------------
+
+- *breaking change* API:
+  From a consensus between people who use `digestif`, we decide to delete `*.Bytes.*` and `*.Bigstring.*` sub-modules.
+  We replace it by `feed_{bytes,string,bigstring}` (`digest_`, and `hmac_` too)
+- *breaking change* semantic: streaming and referentially transparent
+  Add `feedi_{bytes,string,bigstring}`, `digesti_{bytes,string,bigstring}` and `hmaci_{bytes,string,bigstring}`
+  (@hannesm, @cfcs)
+- Constant time for `eq`/`neq` functions
+  (@cfcs)
+- *breaking change* semantic on `compare` and `unsafe_compare`:
+  `compare` is not a lexicographical comparison function (rename to `unsafe_compare`)
+  (@cfcs)
+- Add `consistent_of_hex` (@hannesm, @cfcs)
+
 v0.4 2017-10-30 Mysore / ಮೈಸೂರು (India)
 ----------------------------------------
 
