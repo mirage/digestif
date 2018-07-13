@@ -172,38 +172,45 @@ type 'k hash =
   | BLAKE2B : int -> [ `BLAKE2B ] hash
   | BLAKE2S : int-> [ `BLAKE2S ] hash
 
-module type Ctor =
-sig
-  val md5: [ `MD5 ] hash
-  val sha1: [ `SHA1 ] hash
-  val rmd160: [ `RMD160 ] hash
-  val sha224: [ `SHA224 ] hash
-  val sha256: [ `SHA256 ] hash
-  val sha384: [ `SHA384 ] hash
-  val sha512: [ `SHA512 ] hash
-  val blake2b: int -> [ `BLAKE2B ] hash
-  val blake2s: int -> [ `BLAKE2S ] hash
-end
+module MD5: S with type kind = [  `MD5 ]
+module SHA1: S with type kind = [ `SHA1 ]
+module SHA224: S with type kind = [ `SHA224 ]
+module SHA256: S with type kind = [ `SHA256 ]
+module SHA384: S with type kind = [ `SHA384 ]
+module SHA512: S with type kind = [ `SHA512 ]
+module BLAKE2B: S with type kind = [ `BLAKE2B ]
+module BLAKE2S: S with type kind = [ `BLAKE2S ]
+module RMD160: S with type kind = [ `RMD160 ]
 
-module type Top =
-sig
-  type 'kind t = private string
+module Make_BLAKE2B(D : sig val digest_size : int end): S with type kind = [ `BLAKE2B ]
+module Make_BLAKE2S(D : sig val digest_size : int end): S with type kind = [ `BLAKE2S ]
 
-  val module_of: 'k hash -> (module S with type kind = 'k)
+val md5: [ `MD5 ] hash
+val sha1: [ `SHA1 ] hash
+val rmd160: [ `RMD160 ] hash
+val sha224: [ `SHA224 ] hash
+val sha256: [ `SHA256 ] hash
+val sha384: [ `SHA384 ] hash
+val sha512: [ `SHA512 ] hash
+val blake2b: int -> [ `BLAKE2B ] hash
+val blake2s: int -> [ `BLAKE2S ] hash
 
-  val digesti_bytes: 'k hash -> Bytes.t iter -> 'k t
-  val digesti_string: 'k hash -> String.t iter -> 'k t
-  val digesti_bigstring: 'k hash -> bigstring iter -> 'k t
+type 'kind t = private string
 
-  val hmaci_bytes: 'k hash -> key:Bytes.t -> Bytes.t iter -> 'k t
-  val hmaci_string: 'k hash -> key:String.t -> String.t iter -> 'k t
-  val hmaci_bigstring: 'k hash -> key:bigstring -> bigstring iter -> 'k t
+val module_of: 'k hash -> (module S with type kind = 'k)
 
-  val pp: 'k hash -> 'k t pp
-  val eq: 'k hash -> 'k t equal
-  val neq: 'k hash -> 'k t equal
-  val unsafe_compare: 'k hash -> 'k t compare
+val digesti_bytes: 'k hash -> Bytes.t iter -> 'k t
+val digesti_string: 'k hash -> String.t iter -> 'k t
+val digesti_bigstring: 'k hash -> bigstring iter -> 'k t
 
-  val to_hex: 'k hash -> 'k t -> string
-  val of_hex: 'k hash -> string -> 'k t
-end
+val hmaci_bytes: 'k hash -> key:Bytes.t -> Bytes.t iter -> 'k t
+val hmaci_string: 'k hash -> key:String.t -> String.t iter -> 'k t
+val hmaci_bigstring: 'k hash -> key:bigstring -> bigstring iter -> 'k t
+
+val pp: 'k hash -> 'k t pp
+val eq: 'k hash -> 'k t equal
+val neq: 'k hash -> 'k t equal
+val unsafe_compare: 'k hash -> 'k t compare
+
+val to_hex: 'k hash -> 'k t -> string
+val of_hex: 'k hash -> string -> 'k t

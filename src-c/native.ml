@@ -13,15 +13,13 @@
    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 *)
 
-module Bigstring = Digestif_bigstring
-
 type off = int
 type size = int
-type ba = Bigstring.t
-type st = Bytes.t
-type ctx = Bytes.t
+type ba = Bi.t
+type st = By.t
+type ctx = By.t
 
-let dup     : ctx -> ctx = Bytes.copy
+let dup : ctx -> ctx = By.copy
 
 module MD5 =
 struct
@@ -377,13 +375,13 @@ struct
                         [@@noalloc]
 
     let xor_into a b n =
-      if n > imin (Bigstring.length a) (Bigstring.length b)
+      if n > imin (Bi.length a) (Bi.length b)
       then raise (Invalid_argument "Native.Bigstring.xor_into: buffers to small")
       else xor_into a 0 b 0 n
 
     let xor a b =
-      let l = imin (Bigstring.length a) (Bigstring.length b) in
-      let r = Bigstring.copy (Bigstring.sub b 0 l) in
+      let l = imin (Bi.length a) (Bi.length b) in
+      let r = Bi.copy (Bi.sub b 0 l) in
       ( xor_into a r l; r )
   end
 
@@ -394,13 +392,13 @@ struct
                         [@@noalloc]
 
     let xor_into a b n =
-      if n > imin (Bytes.length a) (Bytes.length b)
+      if n > imin (By.length a) (By.length b)
       then raise (Invalid_argument "Native.Bigstring.xor_into: buffers to small")
       else xor_into a 0 b 0 n
 
     let xor a b =
-      let l = imin (Bytes.length a) (Bytes.length b) in
-      let r = Bytes.copy (Bytes.sub b 0 l) in
+      let l = imin (By.length a) (By.length b) in
+      let r = By.copy (By.sub b 0 l) in
       ( xor_into a r l; r )
 
   end

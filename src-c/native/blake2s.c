@@ -22,8 +22,7 @@ static const uint8_t sigma[10][16] =
   { 10,  2,  8,  4,  7,  6,  1,  5, 15, 11,  9, 14,  3, 12, 13 , 0 } ,
 };
 
-#include <stdio.h>
-#include <inttypes.h>
+#include <stdint.h>
 
 static const struct blake2s_param P[] =
   { { BLAKE2S_OUTBYTES /* digest_length */

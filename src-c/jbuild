@@ -1,0 +1,13 @@
+(library
+ ((name digestif_c)
+  (public_name digestif.c)
+  (libraries (digestif.rakia))
+  (wrapped false)
+  (flags (:standard -no-keep-locs))))
+
+(rule (copy# ${lib:digestif:digestif.mli} digestif.mli))
+(rule (copy# ${lib:digestif:bi.ml} bi.ml))
+(rule (copy# ${lib:digestif:by.ml} by.ml))
+(rule (copy# ${lib:digestif:eq.ml} eq.ml))
+(rule (copy# ${lib:digestif:conv.ml} conv.ml))
+(rule (copy# ${lib:digestif:hash.ml} hash.ml))

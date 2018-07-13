@@ -1,10 +1,54 @@
-module type S = Digestif_sig.S
+type bigstring = (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
 
-module Bi = Digestif_bigstring
-module By = Digestif_bytes
-module Conv = Digestif_conv
-module Eq = Digestif_eq
-module Native = Rakia_native
+type 'a iter = ('a -> unit) -> unit
+type 'a compare = 'a -> 'a -> int
+type 'a equal = 'a -> 'a -> bool
+type 'a pp = Format.formatter -> 'a -> unit
+
+module type S = sig
+
+  val digest_size : int
+
+  type ctx
+  type kind
+  type t = private string
+
+  val empty: ctx
+  val init: unit -> ctx
+  val feed_bytes: ctx -> ?off:int -> ?len:int -> Bytes.t -> ctx
+  val feed_string: ctx -> ?off:int -> ?len:int -> String.t -> ctx
+  val feed_bigstring: ctx -> ?off:int -> ?len:int -> bigstring -> ctx
+  val feedi_bytes: ctx -> Bytes.t iter -> ctx
+  val feedi_string: ctx -> String.t iter -> ctx
+  val feedi_bigstring: ctx -> bigstring iter -> ctx
+  val get: ctx -> t
+  val digest_bytes: ?off:int -> ?len:int -> Bytes.t -> t
+  val digest_string: ?off:int -> ?len:int -> String.t -> t
+  val digest_bigstring: ?off:int -> ?len:int -> bigstring -> t
+  val digesti_bytes: Bytes.t iter -> t
+  val digesti_string: String.t iter -> t
+  val digesti_bigstring: bigstring iter -> t
+  val digestv_bytes: Bytes.t list -> t
+  val digestv_string: String.t list -> t
+  val digestv_bigstring: bigstring list -> t
+  val hmac_bytes: key:Bytes.t -> ?off:int -> ?len:int -> Bytes.t -> t
+  val hmac_string: key:String.t -> ?off:int -> ?len:int -> String.t -> t
+  val hmac_bigstring: key:bigstring -> ?off:int -> ?len:int -> bigstring -> t
+  val hmaci_bytes: key:Bytes.t -> Bytes.t iter -> t
+  val hmaci_string: key:String.t -> String.t iter -> t
+  val hmaci_bigstring: key:bigstring -> bigstring iter -> t
+  val hmacv_bytes: key:Bytes.t -> Bytes.t list -> t
+  val hmacv_string: key:String.t -> String.t list -> t
+  val hmacv_bigstring: key:bigstring -> bigstring list -> t
+  val unsafe_compare: t compare
+  val compare: t compare
+  val eq: t equal
+  val neq: t equal
+  val pp: t pp
+  val of_hex: string -> t
+  val consistent_of_hex: string -> t
+  val to_hex: t -> string
+end
 
 module type Foreign = sig
   open Native
@@ -85,7 +129,7 @@ module Core (F : Foreign) (D : Desc) = struct
 
   let get t =
     let t = Native.dup t in
-    unsafe_get t |> Bytes.unsafe_to_string
+    unsafe_get t |> By.unsafe_to_string
 
   let feed_bytes t ?off ?len buf =
     let t = Native.dup t in
@@ -130,14 +174,14 @@ end
 module Make (F : Foreign) (D : Desc) = struct
   include Core (F) (D)
 
-  let bytes_opad = Bytes.make block_size '\x5c'
-  let bytes_ipad = Bytes.make block_size '\x36'
+  let bytes_opad = By.make block_size '\x5c'
+  let bytes_ipad = By.make block_size '\x36'
 
   let rec norm_bytes key =
     match Pervasives.compare (String.length key) block_size with
     | 1  -> norm_bytes (digest_string key)
-    | -1 -> By.rpad (Bytes.unsafe_of_string key) block_size '\000'
-    | _  -> Bytes.of_string key
+    | -1 -> By.rpad (By.unsafe_of_string key) block_size '\000'
+    | _  -> By.of_string key
 
   let bigstring_opad = Bi.init block_size (fun _ -> '\x5c')
   let bigstring_ipad = Bi.init block_size (fun _ -> '\x36')
@@ -149,11 +193,11 @@ module Make (F : Foreign) (D : Desc) = struct
     Bi.blit_from_bytes res0 0 res1 0 (By.length res0); res1
 
   let hmaci_bytes ~key iter =
-    let key = norm_bytes (Bytes.unsafe_to_string key) in
+    let key = norm_bytes (By.unsafe_to_string key) in
     let outer = Native.XOR.Bytes.xor key bytes_opad in
     let inner = Native.XOR.Bytes.xor key bytes_ipad in
     let res = digesti_bytes (fun f -> f inner; iter f) in
-    digesti_bytes (fun f -> f outer; f (Bytes.unsafe_of_string res))
+    digesti_bytes (fun f -> f outer; f (By.unsafe_of_string res))
 
   let hmaci_string ~key iter =
     let key = norm_bytes key in
@@ -175,9 +219,9 @@ module Make (F : Foreign) (D : Desc) = struct
 
   let hmac_bytes ~key ?off ?len buf =
     let buf = match off, len with
-      | Some off, Some len -> Bytes.sub buf off len
-      | Some off, None -> Bytes.sub buf off (Bytes.length buf - off)
-      | None, Some len -> Bytes.sub buf 0 len
+      | Some off, Some len -> By.sub buf off len
+      | Some off, None -> By.sub buf off (By.length buf - off)
+      | None, Some len -> By.sub buf 0 len
       | None, None -> buf in
     hmaci_bytes ~key (fun f -> f buf)
 
@@ -250,7 +294,7 @@ module Make_BLAKE2 (F : Foreign_BLAKE2) (D : Desc) = struct
     then invalid_arg "BLAKE2{S,B}.hmaci_string: invalid key";
 
     let ctx = By.create ctx_size in
-    F.Bytes.with_outlen_and_key ctx digest_size (Bytes.unsafe_of_string key) 0 (String.length key);
+    F.Bytes.with_outlen_and_key ctx digest_size (By.unsafe_of_string key) 0 (String.length key);
     feedi_string ctx iter |> get
 
   let hmaci_bigstring ~key iter =
@@ -264,7 +308,7 @@ module Make_BLAKE2 (F : Foreign_BLAKE2) (D : Desc) = struct
   let hmac_bytes ~key ?off ?len buf : t =
     let buf = match off, len with
       | Some off, Some len -> By.sub buf off len
-      | Some off, None -> By.sub buf off (Bytes.length buf - off)
+      | Some off, None -> By.sub buf off (By.length buf - off)
       | None, Some len -> By.sub buf 0 len
       | None, None -> buf in
     hmaci_bytes ~key (fun f -> f buf)
@@ -310,7 +354,7 @@ struct
   include Make_BLAKE2(Native.BLAKE2S)(struct let (digest_size, block_size) = (D.digest_size, 64) end)
 end
 
-include Digestif_hash
+include Hash
 
 type blake2b = (module S with type kind = [ `BLAKE2B ])
 type blake2s = (module S with type kind = [ `BLAKE2S ])
@@ -319,14 +363,14 @@ let module_of : type k. k hash -> (module S with type kind = k) = fun hash ->
   let b2b : (int, blake2b) Hashtbl.t = Hashtbl.create 13 in
   let b2s : (int, blake2s) Hashtbl.t = Hashtbl.create 13 in
   match hash with
-  | Digestif_sig.MD5     -> (module MD5)
-  | Digestif_sig.SHA1    -> (module SHA1)
-  | Digestif_sig.RMD160  -> (module RMD160)
-  | Digestif_sig.SHA224  -> (module SHA224)
-  | Digestif_sig.SHA256  -> (module SHA256)
-  | Digestif_sig.SHA384  -> (module SHA384)
-  | Digestif_sig.SHA512  -> (module SHA512)
-  | Digestif_sig.BLAKE2B digest_size -> begin
+  | MD5     -> (module MD5)
+  | SHA1    -> (module SHA1)
+  | RMD160  -> (module RMD160)
+  | SHA224  -> (module SHA224)
+  | SHA256  -> (module SHA256)
+  | SHA384  -> (module SHA384)
+  | SHA512  -> (module SHA512)
+  | BLAKE2B digest_size -> begin
       match Hashtbl.find b2b digest_size with
       | exception Not_found ->
         let m : (module S with type kind = [ `BLAKE2B ]) =
@@ -335,7 +379,7 @@ let module_of : type k. k hash -> (module S with type kind = k) = fun hash ->
         Hashtbl.replace b2b digest_size m ; m
       | m -> m
     end
-  | Digestif_sig.BLAKE2S digest_size -> begin
+  | BLAKE2S digest_size -> begin
       match Hashtbl.find b2s digest_size with
       | exception Not_found ->
         let m =
@@ -346,12 +390,6 @@ let module_of : type k. k hash -> (module S with type kind = k) = fun hash ->
     end
 
 type 'kind t = string
-type bigstring = Digestif_sig.bigstring
-
-type 'a pp = 'a Digestif_sig.pp
-type 'a iter = 'a Digestif_sig.iter
-type 'a equal = 'a Digestif_sig.equal
-type 'a compare = 'a Digestif_sig.compare
 
 let digesti_bytes
   : type k. k hash -> Bytes.t iter -> k t

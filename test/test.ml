@@ -94,9 +94,10 @@ let makes ~name kind hash keys inputs expects =
 
 let to_bigstring s =
   let ln = Bytes.length s in
-  let bi = Digestif_bigstring.create ln in
+  let bi = Bigarray.Array1.create Bigarray.Char Bigarray.c_layout ln in
 
-  Digestif_bigstring.blit_from_bytes s 0 bi 0 ln; bi
+  for i = 0 to ln - 1
+  do Bigarray.Array1.set bi i (Bytes.get s i) done; bi
 
 let split3 lst =
   let rec go (ax, ay, az) = function

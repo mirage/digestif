@@ -1,6 +1,3 @@
-module By = Digestif_bytes
-module Bi = Digestif_bigstring
-
 module Int32 =
 struct
   include Int32
@@ -57,7 +54,7 @@ module Unsafe : S
     ; h    = Array.copy ctx.h }
 
   let init () =
-    let b = Bytes.make 128 '\x00' in
+    let b = By.make 128 '\x00' in
 
     { size = 0L
     ; b
@@ -185,7 +182,7 @@ module Unsafe : S
     let index = Int64.(to_int (ctx.size land 0x3FL)) in
     let padlen = if index < 56 then 56 - index else (64 + 56) - index in
 
-    let padding = Bytes.init padlen (function 0 -> '\x80' | _ -> '\x00') in
+    let padding = By.init padlen (function 0 -> '\x80' | _ -> '\x00') in
 
     let bits = By.create 8 in
     By.cpu_to_be64 bits 0 Int64.(ctx.size lsl 3);

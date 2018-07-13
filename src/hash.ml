@@ -1,4 +1,4 @@
-type 'kind hash = 'kind Digestif_sig.hash =
+type 'kind hash =
   | MD5 : [ `MD5 ] hash
   | SHA1 : [ `SHA1 ] hash
   | RMD160 : [ `RMD160 ] hash
@@ -8,9 +8,16 @@ type 'kind hash = 'kind Digestif_sig.hash =
   | SHA512 : [ `SHA512 ] hash
   | BLAKE2B : int -> [ `BLAKE2B ] hash
   | BLAKE2S : int-> [ `BLAKE2S ] hash
-and kind = Digestif_sig.kind
-
-open Digestif_sig
+and kind =
+  [ `MD5
+  | `SHA1
+  | `RMD160
+  | `SHA224
+  | `SHA256
+  | `SHA384
+  | `SHA512
+  | `BLAKE2B
+  | `BLAKE2S ]
 
 let md5 = MD5
 let sha1 = SHA1
