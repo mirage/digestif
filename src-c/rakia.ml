@@ -13,6 +13,9 @@
    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 *)
 
+module By = Digestif_by
+module Bi = Digestif_bi
+
 type off = int
 type size = int
 type ba = Bi.t

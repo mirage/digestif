@@ -1,3 +1,6 @@
+module By = Digestif_by
+module Bi = Digestif_bi
+
 module type S =
 sig
   type ctx

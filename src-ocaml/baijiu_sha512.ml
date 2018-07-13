@@ -1,3 +1,6 @@
+module By = Digestif_by
+module Bi = Digestif_bi
+
 module Int64 =
 struct
   include Int64

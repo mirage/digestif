@@ -6,8 +6,8 @@
   (flags (:standard -no-keep-locs))))
 
 (rule (copy# ${lib:digestif:digestif.mli} digestif.mli))
-(rule (copy# ${lib:digestif:bi.ml} bi.ml))
-(rule (copy# ${lib:digestif:by.ml} by.ml))
-(rule (copy# ${lib:digestif:eq.ml} eq.ml))
-(rule (copy# ${lib:digestif:conv.ml} conv.ml))
-(rule (copy# ${lib:digestif:hash.ml} hash.ml))
+(rule (copy# ${lib:digestif:digestif_bi.ml} digestif_bi.ml))
+(rule (copy# ${lib:digestif:digestif_by.ml} digestif_by.ml))
+(rule (copy# ${lib:digestif:digestif_eq.ml} digestif_eq.ml))
+(rule (copy# ${lib:digestif:digestif_conv.ml} digestif_conv.ml))
+(rule (copy# ${lib:digestif:digestif_hash.ml} digestif_hash.ml))

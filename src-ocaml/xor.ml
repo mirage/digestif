@@ -59,5 +59,5 @@ struct
     ( xor_into a r l; r )
 end
 
-module Bytes = Make(By)
-module Bigstring = Make(Bi)
+module Bytes = Make(Digestif_by)
+module Bigstring = Make(Digestif_bi)

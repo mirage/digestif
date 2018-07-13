@@ -5,6 +5,12 @@ type 'a compare = 'a -> 'a -> int
 type 'a equal = 'a -> 'a -> bool
 type 'a pp = Format.formatter -> 'a -> unit
 
+module By = Digestif_by
+module Bi = Digestif_bi
+module Eq = Digestif_eq
+module Hash = Digestif_hash
+module Conv = Digestif_conv
+
 module type S = sig
 
   val digest_size : int
