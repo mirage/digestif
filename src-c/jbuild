@@ -1,8 +1,8 @@
 (library
  ((name digestif_c)
   (public_name digestif.c)
-  (libraries (digestif.rakia))
   (wrapped false)
+  (libraries (bigarray digestif.rakia))
   (flags (:standard -no-keep-locs))))
 
 (rule (copy# ${lib:digestif:digestif.mli} digestif.mli))
