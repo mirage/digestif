@@ -1,5 +1,5 @@
-module By = Digestif_bytes
-module Bi = Digestif_bigstring
+module By = Digestif_by
+module Bi = Digestif_bi
 
 module type S =
 sig
@@ -53,10 +53,10 @@ module Unsafe : S
     { s = Array.copy ctx.s
     ; n = ctx.n
     ; h = Array.copy ctx.h
-    ; b = Bytes.copy ctx.b }
+    ; b = By.copy ctx.b }
 
   let init () =
-    let b = Bytes.make 64 '\x00' in
+    let b = By.make 64 '\x00' in
 
     { s = [| 0l; 0l; |]
     ; n = 0

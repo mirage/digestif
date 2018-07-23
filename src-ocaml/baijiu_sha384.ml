@@ -1,5 +1,5 @@
-module By = Digestif_bytes
-module Bi = Digestif_bigstring
+module By = Digestif_by
+module Bi = Digestif_bi
 
 module type S =
 sig
@@ -22,7 +22,7 @@ module Unsafe : S
   type nonrec ctx = ctx
 
   let init () =
-    let b = Bytes.make 128 '\x00' in
+    let b = By.make 128 '\x00' in
 
     { size = [| 0L; 0L |]
     ; b

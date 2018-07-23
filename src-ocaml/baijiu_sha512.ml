@@ -1,5 +1,5 @@
-module By = Digestif_bytes
-module Bi = Digestif_bigstring
+module By = Digestif_by
+module Bi = Digestif_bi
 
 module Int64 =
 struct
@@ -45,11 +45,11 @@ module Unsafe : S
 
   let dup ctx =
     { size = Array.copy ctx.size
-    ; b    = Bytes.copy ctx.b
+    ; b    = By.copy ctx.b
     ; h    = Array.copy ctx.h }
 
   let init () =
-    let b = Bytes.make 128 '\x00' in
+    let b = By.make 128 '\x00' in
 
     { size = [| 0L; 0L |]
     ; b
@@ -196,7 +196,7 @@ module Unsafe : S
     let index = Int64.(to_int (ctx.size.(0) land 0x7FL)) in
     let padlen = if index < 112 then 112 - index else (128 + 112) - index in
 
-    let padding = Bytes.init padlen (function 0 -> '\x80' | _ -> '\x00') in
+    let padding = By.init padlen (function 0 -> '\x80' | _ -> '\x00') in
 
     let bits = By.create 16 in
     By.cpu_to_be64 bits 0 Int64.((ctx.size.(1) lsl 3) lor (ctx.size.(0) lsr 61));

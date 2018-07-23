@@ -10,13 +10,12 @@ dev-repo:     "https://github.com/mirage/digestif.git"
 doc:          "https://mirage.github.io/digestif/"
 license:      "MIT"
 
-build: [ "ocaml" "pkg/pkg.ml" "build" "--pinned" "%{pinned}%" "--tests" "false" ]
+build: [ "jbuilder" "build" "-p" name "-j" jobs ]
 
 depends: [
-  "ocamlbuild"     {build}
-  "ocamlfind"      {build}
-  "topkg"          {build}
+  "jbuilder"       {build}
   "base-bytes"
+  "base-bigarray"
 ]
 
 available: [ ocaml-version >= "4.03.0" ]

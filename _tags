@@ -1,8 +1,0 @@
-true: safe_string, bin_annot
-true: warn_error(+1..49), warn(A-4-41-44)
-
-<src>: include
-<src-c/digestif-c.{cma,cmxa}>: record_digestif_rakia_stubs
-<src-c/digestif.cmxs>: link_digestif_rakia_stubs, use_bigarray
-<src-ocaml/digestif.cmxs>: use_bigarray
-<test/*.{ml,mli,byte,native}>: package(alcotest), package(cstruct)

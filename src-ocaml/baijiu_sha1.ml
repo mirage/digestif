@@ -1,3 +1,6 @@
+module By = Digestif_by
+module Bi = Digestif_bi
+
 module Int32 =
 struct
   include Int32
@@ -20,9 +23,6 @@ struct
   let ( land ) = Int64.logand
   let ( lsl ) = Int64.shift_left
 end
-
-module By = Digestif_bytes
-module Bi = Digestif_bigstring
 
 module type S =
 sig
@@ -47,11 +47,11 @@ module Unsafe : S
 
   let dup ctx =
     { size = ctx.size
-    ; b    = Bytes.copy ctx.b
+    ; b    = By.copy ctx.b
     ; h    = Array.copy ctx.h }
 
   let init () =
-    let b = Bytes.make 64 '\x00' in
+    let b = By.make 64 '\x00' in
 
     { size   = 0L
     ; b

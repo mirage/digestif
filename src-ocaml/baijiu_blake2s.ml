@@ -1,3 +1,6 @@
+module By = Digestif_by
+module Bi = Digestif_bi
+
 module Int32 =
 struct
   include Int32
@@ -33,9 +36,6 @@ struct
   let ror64 a n =
     (a asr n) lor (a lsl (64 - n))
 end
-
-module By = Digestif_bytes
-module Bi = Digestif_bigstring
 
 module type S =
 sig
@@ -81,7 +81,7 @@ module Unsafe : S
     { buflen    = ctx.buflen
     ; outlen    = ctx.outlen
     ; last_node = ctx.last_node
-    ; buf       = Bytes.copy ctx.buf
+    ; buf       = By.copy ctx.buf
     ; h         = Array.copy ctx.h
     ; t         = Array.copy ctx.t
     ; f         = Array.copy ctx.f }
@@ -130,7 +130,7 @@ module Unsafe : S
        ; param.personal.(6) land 0xFF
        ; param.personal.(7) land 0xFF |] in
 
-    Bytes.init 32 (fun i -> Char.unsafe_chr (Array.get arr i))
+    By.init 32 (fun i -> Char.unsafe_chr (Array.get arr i))
 
   let default_param =
     { digest_length = 32
@@ -165,7 +165,7 @@ module Unsafe : S
     ctx.f.(0) <- Int32.minus_one
 
   let init () =
-    let buf = Bytes.make 64 '\x00' in
+    let buf = By.make 64 '\x00' in
 
     let ctx =
       { buflen = 0
@@ -301,7 +301,7 @@ module Unsafe : S
   let unsafe_feed_bigstring = feed ~blit:By.blit_from_bigstring ~le32_to_cpu:Bi.le32_to_cpu
 
   let with_outlen_and_key ~blit outlen key off len =
-    let buf = Bytes.make 64 '\x00' in
+    let buf = By.make 64 '\x00' in
 
     let ctx =
       { buflen = 0
@@ -321,7 +321,7 @@ module Unsafe : S
 
     if len > 0
     then begin
-      let block = Bytes.make 64 '\x00' in
+      let block = By.make 64 '\x00' in
 
       blit key off block 0 len;
       unsafe_feed_bytes ctx block 0 64;
@@ -336,7 +336,7 @@ module Unsafe : S
     with_outlen_and_key ~blit:By.blit_from_bigstring outlen key off len
 
   let unsafe_get ctx =
-    let res = Bytes.make 32 '\x00' in
+    let res = By.make 32 '\x00' in
 
     increment_counter ctx (Int32.of_int ctx.buflen);
     set_lastblock ctx;
