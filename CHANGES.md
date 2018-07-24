@@ -1,3 +1,11 @@
+v0.6.1 2018-07-24 Paris (France)
+--------------------------------
+
+- *breaking change* API: Digestif implements a true linking trick. End-user need
+  to explicitely link with `digestif.{c,ocaml}` and it needs to be the first of
+  your dependencies.
+- move to `jbuilder`/`dune`
+
 v0.6 2018-07-05 Paris (France)
 ------------------------------
 
