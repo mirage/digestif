@@ -144,7 +144,8 @@ module type S = sig
   (** [consistent_of_hex] tries to parse an hexadecimal representation of {!t}.
      [consistent_of_hex] raises an [invalid_argument] when input is malformed.
      However, instead {!of_hex}, [consistent_of_hex] expects exactly
-     {!digest_size} hexadecimal values (but continues to ignore whitespaces). *)
+     [{!digest_size} * 2] hexadecimal values (but continues to ignore
+     whitespaces). *)
 
   val to_hex: t -> string
   (** [to_hex] makes a hex-decimal representation of {!t}. *)
