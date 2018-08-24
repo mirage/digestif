@@ -179,11 +179,11 @@ let results_sha512 =
   |> List.map (Digestif.of_hex Digestif.sha512)
 
 let results_blake2b =
-  [ "47e8cd6c879a6c1f9b8f89d202c8000f11ad42636e4b967fbad8ea31489eeec8d80583af1418816acac808c6787b8d72226bcbb9116ffc8fa0e7519dc1e67501"
-  ; "380246f80263db862b00d41ebb70e6d26fa97c4b42ae7985991deb963b4317aa33735ff9dc76bd294455731365ab3a9eb67d33f83f98360f2bae5f7a4356e6b1"
-  ; "948194b8cffdafa5ceb8d56f02be0dee66014d5b8f7ca3536863334a498d073e2ef64c66e6933a2a3ae952aac4838a679fa49846133349f58cbd0db029ba0b3a"
-  ; "c3a0eec1f5a3c60064e40de1b2ce0657edfde39ac23036350f4467ce1adf2756e5f7fd536b6d68646b48b26708649db1b25c3c98522b3ce532e2fd159b0d5f0e"
-  ; "0b6cb224edfd69df745a102660c4629cc75c6ba25c342702815744d41434e75a451560d692dd64cec0fe5cace12385c807b4a6244cf1849c3566c3cc48d71e74" ]
+  [ "aba2eef053923ba3a671b54244580ca7c8dfa9c487431c3437e1a8504e166ed894778045a5c6a314fadee110a5254f6f370e9db1d3093a62e0448a5e91b1d4c6"
+  ; "6ff884f8ddc2a6586b3c98a4cd6ebdf14ec10204b6710073eb5865ade37a2643b8807c1335d107ecdb9ffeaeb6828c4625ba172c66379efcd222c2de11727ab4"
+  ; "42aadab231ff4edbdad29a18262bbb6ba74cf0850f40b64a92dc62a92608a65f06af850aa1988cd1e379cf9cc9a8f64d61125d7b3def292ae57e537bc202e812"
+  ; "4abf562dc64f4062ea59ae9b4e2061a7a6c1a75af74b3663fd05aa4437420b8deea657e395a7dbac02aef7b7d70dc8b8a8db99aa8db028961a5ee66bac22b0f0"
+  ; "69f9e4236cd0c50204e4f8b86dc1751d37cc195835e9db25c9b366f41e1d86cdeec6a8702dfed1bc0ed0d6a1e2c5af275c331ec91f884c979021fb64021915de" ]
   |> List.map (Digestif.of_hex (Digestif.blake2b Digestif.BLAKE2B.digest_size))
 
 let results_rmd160 =
@@ -195,11 +195,11 @@ let results_rmd160 =
   |> List.map (Digestif.of_hex Digestif.rmd160)
 
 let results_blake2s =
-  [ "73842d110e4c2b77a9231c9dbc76b791a2ea9b1e660a8237c0c8c99caa653628"
-  ; "d7fe099d889ba98178a934de6bd36da084600d7831ff16b8deaeefa8f6c00af4"
-  ; "88f53c94bf50819acd1d5db805c61fed44de72d58962802780b9972cf974274b"
-  ; "af80be61a4103fc5daac2fe4b70125f146999850627d63a38aa416e59f237644"
-  ; "e6a5a4794cd3421ad19f6e7621415bad773776859189c4d5173aed8677f93a31" ]
+  [ "5bb23bbe41678b23e6d38881d2515fdf5df253dd2e9a80075ea759c93e1bca3a"
+  ; "90b6281e2f3038c9056af0b4a7e763cae6fe5d9eb4386a0ec95237890c104ff0"
+  ; "5d0064cb2848ab5dc948876a6be3e5685301a744735c25858c0bd283a7940eb7"
+  ; "6903efd2383b13adaa985d00ca271ccb420ab8f953841081c9c15a2dfebf866c"
+  ; "b8e167de23a5f136dc26bf06da0d724ebf7310903c2f702403b66810a230d622" ]
   |> List.map (Digestif.of_hex (Digestif.blake2s Digestif.BLAKE2S.digest_size))
 
 module BLAKE2 =
@@ -265,17 +265,44 @@ struct
 
     loop `In []
 
-  let tests kind filename =
+  let test_mac
+    : type k a. a s -> k Digestif.hash -> (module Digestif.MAC) -> a -> a -> k Digestif.t -> unit
+    = fun kind hash (module Mac) key input expect ->
+    let title = title `HMAC hash kind in
+    let check (result : Mac.t) =
+      Alcotest.(check string)
+        title
+        (expect :> string)
+        (result :> string)
+    in
+    match kind with
+    | Bytes -> check @@ Mac.maci_bytes ~key (fun f -> f input)
+    | String -> check @@ Mac.maci_string ~key (fun f -> f input)
+    | Bigstring -> check @@ Mac.maci_bigstring ~key (fun f -> f input)
+
+  let make_keyed_blake m ~name kind hash key input expect =
+  name, `Slow, (fun () -> test_mac kind hash m key input expect)
+
+  let tests m  kind filename =
     let ic = open_in filename in
     let tests = parse kind ic in
 
     close_in ic;
     List.map
-      (fun (input, key, expect) -> make_hmac ~name:"blake2{b,s}" string kind key input expect)
+      (fun (input, key, expect) -> make_keyed_blake m ~name:"blake2{b,s}" string kind key input expect)
       tests
 
-  let tests_blake2s = tests Digestif.(blake2s BLAKE2S.digest_size) input_blake2s_file
-  let tests_blake2b = tests Digestif.(blake2b BLAKE2B.digest_size) input_blake2b_file
+  let tests_blake2s =
+    tests
+      (module Digestif.BLAKE2S.Keyed)
+      Digestif.(blake2s BLAKE2S.digest_size)
+      input_blake2s_file
+
+  let tests_blake2b =
+    tests
+      (module Digestif.BLAKE2B.Keyed)
+      Digestif.(blake2b BLAKE2B.digest_size)
+      input_blake2b_file
 end
 
 module RMD160 =
@@ -340,8 +367,8 @@ let tests () =
     ; "rmd160 (bigstring)",  makes ~name:"rmd160"  bigstring Digestif.rmd160  keys_bi inputs_bi results_rmd160
     ; "blake2s",             makes ~name:"blake2s" bytes     Digestif.(blake2s BLAKE2S.digest_size) keys_by inputs_by results_blake2s
     ; "blake2s (bigstring)", makes ~name:"blake2s" bigstring Digestif.(blake2s BLAKE2S.digest_size) keys_bi inputs_bi results_blake2s
-    ; "blake2s (input file)", BLAKE2.tests_blake2s
-    ; "blake2b (input file)", BLAKE2.tests_blake2b
+    ; "blake2s (keyed, input file)", BLAKE2.tests_blake2s
+    ; "blake2b (keyed, input file)", BLAKE2.tests_blake2b
     ; "ripemd160", RMD160.tests ]
 
 let () = tests ()
