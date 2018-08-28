@@ -48,7 +48,6 @@ module type S = sig
   val hmacv_string: key:String.t -> String.t list -> t
   val hmacv_bigstring: key:bigstring -> bigstring list -> t
   val unsafe_compare: t compare
-  val compare: t compare
   val eq: t equal
   val neq: t equal
   val pp: t pp

@@ -111,18 +111,9 @@ module type S = sig
 
   val unsafe_compare: t compare
   (** [unsafe_compare] function returns [0] on equality and a negative/positive
-     [int] depending on the difference (like {!String.compare}). However, this
-     behavior is dangerous since sorting by these hashes can allow attackers to
-     infer information about them. *)
-
-  val compare: t compare
-  (** [compare a b] uses [caml_hash] (murmur3) to get an unique integer of [a]
-     and [b] a do a substraction on them. Order is not lexicographical. The
-     safety relies on the assumption that the murmur3 seed cannot be
-     reconstructed by an attacker.
-
-     About safety, [t] is private string and let the user to define its own
-     [compare] function. *)
+      [int] depending on the difference (like {!String.compare}).
+      This is usually OK, but this is not constant time, so in some cases it
+      could leak some information. *)
 
   val eq: t equal
   (** The equal function for {!t}. *)
