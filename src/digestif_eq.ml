@@ -13,6 +13,4 @@ module Make (D : sig val digest_size : int end) = struct
   let neq a b = not (eq a b)
 
   let unsafe_compare a b = String.compare a b
-  external int_compare : int -> int -> int = "caml_int_compare"
-  let compare a b = int_compare (Hashtbl.hash a) (Hashtbl.hash b)
 end
