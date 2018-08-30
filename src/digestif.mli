@@ -151,6 +151,30 @@ module type S = sig
   (** [to_hex] makes a hex-decimal representation of {!t}. *)
 end
 
+(** Some hash algorithms expose extra MAC constructs.
+    The interface is similar to the [hmac_*] functions in [S]. *)
+module type MAC = sig
+  type t = private string
+
+  val mac_bytes: key:Bytes.t -> ?off:int -> ?len:int -> Bytes.t -> t
+
+  val mac_string: key:String.t -> ?off:int -> ?len:int -> String.t -> t
+
+  val mac_bigstring: key:bigstring -> ?off:int -> ?len:int -> bigstring -> t
+
+  val maci_bytes: key:Bytes.t -> Bytes.t iter -> t
+
+  val maci_string: key:String.t -> String.t iter -> t
+
+  val maci_bigstring: key:bigstring -> bigstring iter -> t
+
+  val macv_bytes: key:Bytes.t -> Bytes.t list -> t
+
+  val macv_string: key:String.t -> String.t list -> t
+
+  val macv_bigstring: key:bigstring -> bigstring list -> t
+end
+
 type kind =
   [ `MD5
   | `SHA1
@@ -179,8 +203,14 @@ module SHA224: S with type kind = [ `SHA224 ]
 module SHA256: S with type kind = [ `SHA256 ]
 module SHA384: S with type kind = [ `SHA384 ]
 module SHA512: S with type kind = [ `SHA512 ]
-module BLAKE2B: S with type kind = [ `BLAKE2B ]
-module BLAKE2S: S with type kind = [ `BLAKE2S ]
+module BLAKE2B: sig
+  include S with type kind = [ `BLAKE2B ]
+  module Keyed: MAC
+end
+module BLAKE2S: sig
+  include S with type kind = [ `BLAKE2S ]
+  module Keyed: MAC
+end
 module RMD160: S with type kind = [ `RMD160 ]
 
 module Make_BLAKE2B(D : sig val digest_size : int end): S with type kind = [ `BLAKE2B ]

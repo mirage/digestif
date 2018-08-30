@@ -57,6 +57,19 @@ module type S = sig
   val to_hex: t -> string
 end
 
+module type MAC = sig
+  type t = private string
+  val mac_bytes: key:Bytes.t -> ?off:int -> ?len:int -> Bytes.t -> t
+  val mac_string: key:String.t -> ?off:int -> ?len:int -> String.t -> t
+  val mac_bigstring: key:bigstring -> ?off:int -> ?len:int -> bigstring -> t
+  val maci_bytes: key:Bytes.t -> Bytes.t iter -> t
+  val maci_string: key:String.t -> String.t iter -> t
+  val maci_bigstring: key:bigstring -> bigstring iter -> t
+  val macv_bytes: key:Bytes.t -> Bytes.t list -> t
+  val macv_string: key:String.t -> String.t list -> t
+  val macv_bigstring: key:bigstring -> bigstring list -> t
+end
+
 module type Foreign = sig
   open Native
 
@@ -278,67 +291,69 @@ module type Foreign_BLAKE2 = sig
 
   val ctx_size: unit -> int
   val key_size: unit -> int
-  val digest_size: ctx -> int
 end
 
-module Core_BLAKE2 (F : Foreign_BLAKE2) (D : Desc) = Core (F) (D)
-
 module Make_BLAKE2 (F : Foreign_BLAKE2) (D : Desc) = struct
-  include Core_BLAKE2 (F) (D)
+  include Make (F) (D)
 
-  let key_size = F.key_size ()
+  type outer = t
+  module Keyed = struct
+    type t = outer
 
-  let hmaci_bytes ~key iter : t =
-    if By.length key > key_size
-    then invalid_arg "BLAKE2{S,B}.hmaci_bytes: invalid key";
+    let key_size = F.key_size ()
 
-    let ctx = By.create ctx_size in
-    F.Bytes.with_outlen_and_key ctx digest_size key 0 (By.length key);
-    feedi_bytes ctx iter |> get
+    let maci_bytes ~key iter : t =
+      if By.length key > key_size
+      then invalid_arg "BLAKE2{S,B}.Keyed.maci_bytes: invalid key";
 
-  let hmaci_string ~key iter =
-    if String.length key > key_size
-    then invalid_arg "BLAKE2{S,B}.hmaci_string: invalid key";
+      let ctx = By.create ctx_size in
+      F.Bytes.with_outlen_and_key ctx digest_size key 0 (By.length key);
+      feedi_bytes ctx iter |> get
 
-    let ctx = By.create ctx_size in
-    F.Bytes.with_outlen_and_key ctx digest_size (By.unsafe_of_string key) 0 (String.length key);
-    feedi_string ctx iter |> get
+    let maci_string ~key iter =
+      if String.length key > key_size
+      then invalid_arg "BLAKE2{S,B}.Keyed.maci_string: invalid key";
 
-  let hmaci_bigstring ~key iter =
-    if Bi.length key > key_size
-    then invalid_arg "BLAKE2{S,B}.hmaci_bigstring: invalid key";
+      let ctx = By.create ctx_size in
+      F.Bytes.with_outlen_and_key ctx digest_size (By.unsafe_of_string key) 0 (String.length key);
+      feedi_string ctx iter |> get
 
-    let ctx = By.create ctx_size in
-    F.Bigstring.with_outlen_and_key ctx digest_size key 0 (Bi.length key);
-    feedi_bigstring ctx iter |> get
+    let maci_bigstring ~key iter =
+      if Bi.length key > key_size
+      then invalid_arg "BLAKE2{S,B}.Keyed.maci_bigstring: invalid key";
 
-  let hmac_bytes ~key ?off ?len buf : t =
-    let buf = match off, len with
-      | Some off, Some len -> By.sub buf off len
-      | Some off, None -> By.sub buf off (By.length buf - off)
-      | None, Some len -> By.sub buf 0 len
-      | None, None -> buf in
-    hmaci_bytes ~key (fun f -> f buf)
+      let ctx = By.create ctx_size in
+      F.Bigstring.with_outlen_and_key ctx digest_size key 0 (Bi.length key);
+      feedi_bigstring ctx iter |> get
 
-  let hmac_string ~key ?off ?len buf =
-    let buf = match off, len with
-      | Some off, Some len -> String.sub buf off len
-      | Some off, None -> String.sub buf off (String.length buf - off)
-      | None, Some len -> String.sub buf 0 len
-      | None, None -> buf in
-    hmaci_string ~key (fun f -> f buf)
+    let mac_bytes ~key ?off ?len buf : t =
+      let buf = match off, len with
+        | Some off, Some len -> By.sub buf off len
+        | Some off, None -> By.sub buf off (By.length buf - off)
+        | None, Some len -> By.sub buf 0 len
+        | None, None -> buf in
+      maci_bytes ~key (fun f -> f buf)
 
-  let hmac_bigstring ~key ?off ?len buf =
-    let buf = match off, len with
-      | Some off, Some len -> Bi.sub buf off len
-      | Some off, None -> Bi.sub buf off (Bi.length buf - off)
-      | None, Some len -> Bi.sub buf 0 len
-      | None, None -> buf in
-    hmaci_bigstring ~key (fun f -> f buf)
+    let mac_string ~key ?off ?len buf =
+      let buf = match off, len with
+        | Some off, Some len -> String.sub buf off len
+        | Some off, None -> String.sub buf off (String.length buf - off)
+        | None, Some len -> String.sub buf 0 len
+        | None, None -> buf in
+      maci_string ~key (fun f -> f buf)
 
-  let hmacv_bytes ~key bufs = hmaci_bytes ~key (fun f -> List.iter f bufs)
-  let hmacv_string ~key bufs = hmaci_string ~key (fun f -> List.iter f bufs)
-  let hmacv_bigstring ~key bufs = hmaci_bigstring ~key (fun f -> List.iter f bufs)
+    let mac_bigstring ~key ?off ?len buf =
+      let buf = match off, len with
+        | Some off, Some len -> Bi.sub buf off len
+        | Some off, None -> Bi.sub buf off (Bi.length buf - off)
+        | None, Some len -> Bi.sub buf 0 len
+        | None, None -> buf in
+      maci_bigstring ~key (fun f -> f buf)
+
+    let macv_bytes ~key bufs = maci_bytes ~key (fun f -> List.iter f bufs)
+    let macv_string ~key bufs = maci_string ~key (fun f -> List.iter f bufs)
+    let macv_bigstring ~key bufs = maci_bigstring ~key (fun f -> List.iter f bufs)
+  end
 end
 
 module MD5 : S with type kind = [ `MD5 ] = Make (Native.MD5) (struct let (digest_size, block_size) = (16, 64) end)
@@ -347,8 +362,14 @@ module SHA224 : S with type kind = [ `SHA224 ] = Make (Native.SHA224) (struct le
 module SHA256 : S with type kind = [ `SHA256 ] = Make (Native.SHA256) (struct let (digest_size, block_size) = (32, 64) end)
 module SHA384 : S with type kind = [ `SHA384 ] = Make (Native.SHA384) (struct let (digest_size, block_size) = (48, 128) end)
 module SHA512 : S with type kind = [ `SHA512 ] = Make (Native.SHA512) (struct let (digest_size, block_size) = (64, 128) end)
-module BLAKE2B : S with type kind = [ `BLAKE2B ] = Make_BLAKE2(Native.BLAKE2B) (struct let (digest_size, block_size) = (64, 128) end)
-module BLAKE2S : S with type kind = [ `BLAKE2S ] = Make_BLAKE2(Native.BLAKE2S) (struct let (digest_size, block_size) = (32, 64) end)
+module BLAKE2B : sig
+  include S with type kind = [ `BLAKE2B ]
+  module Keyed : MAC
+end = Make_BLAKE2(Native.BLAKE2B) (struct let (digest_size, block_size) = (64, 128) end)
+module BLAKE2S : sig
+  include S with type kind = [ `BLAKE2S ]
+  module Keyed : MAC
+end = Make_BLAKE2(Native.BLAKE2S) (struct let (digest_size, block_size) = (32, 64) end)
 module RMD160 : S with type kind = [ `RMD160 ] = Make (Native.RMD160) (struct let (digest_size, block_size) = (20, 64) end)
 
 module Make_BLAKE2B (D : sig val digest_size : int end) : S with type kind = [ `BLAKE2B ] =
