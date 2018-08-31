@@ -6,7 +6,7 @@ script: bash -ex .travis-opam.sh
 sudo: true
 env:
   matrix:
-  - PACKAGE="digestif" OCAML_VERSION=4.03 TESTS=false
+  - PACKAGE="digestif" OCAML_VERSION=4.03
 
   - PACKAGE="digestif" OCAML_VERSION=4.03 INSTALL=false
     PINS="digestif-test-c:test"
