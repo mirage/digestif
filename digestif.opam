@@ -17,6 +17,8 @@ depends: [
   "jbuilder"       {build}
   "base-bytes"
   "base-bigarray"
+  "fmt"            {test}
+  "alcotest"       {test}
 ]
 
 available: [ ocaml-version >= "4.03.0" ]
