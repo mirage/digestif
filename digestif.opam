@@ -11,6 +11,7 @@ doc:          "https://mirage.github.io/digestif/"
 license:      "MIT"
 
 build: [ "jbuilder" "build" "-p" name "-j" jobs ]
+build-test: [ "jbuilder" "runtest" "-j" jobs ]
 
 depends: [
   "jbuilder"       {build}
