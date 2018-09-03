@@ -143,6 +143,13 @@ module type S = sig
 
   val to_hex: t -> string
   (** [to_hex] makes a hex-decimal representation of {!t}. *)
+
+  val of_raw_string: string -> t
+  (** [of_raw_string s] see [s] as a hash. Useful when reading
+     serialized hashes. *)
+
+  val to_raw_string: t -> string
+  (** [to_raw_string s] is [(s :> string)]. *)
 end
 
 (** Some hash algorithms expose extra MAC constructs.
@@ -239,3 +246,6 @@ val unsafe_compare: 'k hash -> 'k t compare
 
 val to_hex: 'k hash -> 'k t -> string
 val of_hex: 'k hash -> string -> 'k t
+
+val of_raw_string: 'k hash -> string -> 'k t
+val to_raw_string: 'k hash -> 'k t -> string
