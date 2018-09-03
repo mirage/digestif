@@ -238,8 +238,6 @@ struct
                  do Bytes.set res i '\000' done; res))
     |> Bytes.unsafe_to_string
 
-  let downcast : type k. k Digestif.t -> string = fun x -> (x :> string)
-
   let parse kind ic =
     ignore @@ input_line ic;
     ignore @@ input_line ic;
@@ -251,7 +249,7 @@ struct
         loop (`Key !i) acc
       | `Key i, line ->
         let k = ref None in
-        Scanf.sscanf line "key:\t%s" (fun v -> k := Some (downcast @@ Digestif.of_hex kind v));
+        Scanf.sscanf line "key:\t%s" (fun v -> k := Some (Digestif.to_raw_string kind (Digestif.of_hex kind v)));
         (match !k with Some k -> loop (`Hash (i, (k :> string))) acc | None -> loop `In acc)
       | `Hash (i, k), line ->
         let h = ref None in
@@ -272,8 +270,11 @@ struct
     let check (result : Mac.t) =
       Alcotest.(check string)
         title
-        (expect :> string)
-        (result :> string)
+        (Digestif.to_raw_string hash expect)
+        (Obj.magic result)
+        (* XXX(dinosaure): ok, this is really bad but I'm lazy to keep type
+           equality on [Mac] - extend interface and play with [with type t = t]
+           anywhere. *)
     in
     match kind with
     | Bytes -> check @@ Mac.maci_bytes ~key (fun f -> f input)
