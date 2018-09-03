@@ -22,6 +22,9 @@ module type S = sig
   type kind
   type t = private string
 
+  val kind: kind
+  (** The kind of hash. *)
+
   val empty: ctx
   (** An empty hash context. *)
 

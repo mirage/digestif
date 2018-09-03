@@ -20,6 +20,7 @@ module type S = sig
   type kind
   type t = private string
 
+  val kind: kind
   val empty: ctx
   val init: unit -> ctx
   val feed_bytes: ctx -> ?off:int -> ?len:int -> Bytes.t -> ctx
@@ -93,8 +94,10 @@ end
 
 module type Desc =
 sig
-  val block_size: int
+  type kind
+  val block_size : int
   val digest_size: int
+  val kind       : kind
 end
 
 module Unsafe (F : Foreign) (D : Desc) = struct
@@ -142,6 +145,7 @@ module Core (F : Foreign) (D : Desc) = struct
   include Conv.Make (D)
   include Eq.Make (D)
 
+  let kind = D.kind
   let eq = String.equal
   let neq a b = not (eq a b)
   let unsafe_compare = String.compare
@@ -355,30 +359,113 @@ module Make_BLAKE2 (F : Foreign_BLAKE2) (D : Desc) = struct
   end
 end
 
-module MD5 : S with type kind = [ `MD5 ] = Make (Native.MD5) (struct let (digest_size, block_size) = (16, 64) end)
-module SHA1 : S with type kind = [ `SHA1 ] = Make (Native.SHA1) (struct let (digest_size, block_size) = (20, 64) end)
-module SHA224 : S with type kind = [ `SHA224 ] = Make (Native.SHA224) (struct let (digest_size, block_size) = (28, 64) end)
-module SHA256 : S with type kind = [ `SHA256 ] = Make (Native.SHA256) (struct let (digest_size, block_size) = (32, 64) end)
-module SHA384 : S with type kind = [ `SHA384 ] = Make (Native.SHA384) (struct let (digest_size, block_size) = (48, 128) end)
-module SHA512 : S with type kind = [ `SHA512 ] = Make (Native.SHA512) (struct let (digest_size, block_size) = (64, 128) end)
+module MD5 : S with type kind = [ `MD5 ] =
+  Make
+    (Native.MD5)
+    (struct
+      let (digest_size, block_size) = (16, 64)
+      type kind = [`MD5]
+      let kind = `MD5
+    end)
+
+module SHA1 : S with type kind = [ `SHA1 ] =
+  Make
+    (Native.SHA1)
+    (struct
+      let (digest_size, block_size) = (20, 64)
+      type kind = [`SHA1]
+      let kind = `SHA1
+    end)
+
+module SHA224 : S with type kind = [ `SHA224 ] =
+  Make
+    (Native.SHA224)
+    (struct
+      let (digest_size, block_size) = (28, 64)
+      type kind = [`SHA224]
+      let kind = `SHA224
+    end)
+
+module SHA256 : S with type kind = [ `SHA256 ] =
+  Make
+    (Native.SHA256)
+    (struct
+      let (digest_size, block_size) = (32, 64)
+      type kind = [`SHA256]
+      let kind = `SHA256
+    end)
+
+module SHA384 : S with type kind = [ `SHA384 ] =
+  Make
+    (Native.SHA384)
+    (struct
+      let (digest_size, block_size) = (48, 128)
+      type kind = [`SHA384]
+      let kind = `SHA384
+    end)
+
+module SHA512 : S with type kind = [ `SHA512 ] =
+  Make
+    (Native.SHA512)
+    (struct
+      let (digest_size, block_size) = (64, 128)
+      type kind = [`SHA512]
+      let kind = `SHA512
+    end)
+
 module BLAKE2B : sig
   include S with type kind = [ `BLAKE2B ]
   module Keyed : MAC
-end = Make_BLAKE2(Native.BLAKE2B) (struct let (digest_size, block_size) = (64, 128) end)
+end = Make_BLAKE2
+    (Native.BLAKE2B)
+    (struct
+      let (digest_size, block_size) = (64, 128)
+      type kind = [`BLAKE2B]
+      let kind = `BLAKE2B
+    end)
+
 module BLAKE2S : sig
   include S with type kind = [ `BLAKE2S ]
   module Keyed : MAC
-end = Make_BLAKE2(Native.BLAKE2S) (struct let (digest_size, block_size) = (32, 64) end)
-module RMD160 : S with type kind = [ `RMD160 ] = Make (Native.RMD160) (struct let (digest_size, block_size) = (20, 64) end)
+end = Make_BLAKE2
+    (Native.BLAKE2S)
+    (struct
+      let (digest_size, block_size) = (32, 64)
+      type kind = [`BLAKE2S]
+      let kind = `BLAKE2S
+    end)
 
-module Make_BLAKE2B (D : sig val digest_size : int end) : S with type kind = [ `BLAKE2B ] =
+module RMD160 : S with type kind = [ `RMD160 ] =
+  Make
+    (Native.RMD160)
+    (struct
+      let (digest_size, block_size) = (20, 64)
+      type kind = [`RMD160]
+      let kind = `RMD160
+    end)
+
+module Make_BLAKE2B (D : sig val digest_size : int end) :
+  S with type kind = [ `BLAKE2B ] =
 struct
-  include Make_BLAKE2(Native.BLAKE2B)(struct let (digest_size, block_size) = (D.digest_size, 128) end)
+  include Make_BLAKE2
+      (Native.BLAKE2B)
+      (struct
+        let (digest_size, block_size) = (D.digest_size, 128)
+        type kind = [`BLAKE2B]
+        let kind = `BLAKE2B
+      end)
 end
 
-module Make_BLAKE2S (D : sig val digest_size : int end) : S with type kind = [ `BLAKE2S ] =
+module Make_BLAKE2S (D : sig val digest_size : int end) :
+  S with type kind = [ `BLAKE2S ] =
 struct
-  include Make_BLAKE2(Native.BLAKE2S)(struct let (digest_size, block_size) = (D.digest_size, 64) end)
+  include Make_BLAKE2
+      (Native.BLAKE2S)
+      (struct
+        let (digest_size, block_size) = (D.digest_size, 64)
+        type kind = [`BLAKE2S]
+        let kind = `BLAKE2S
+      end)
 end
 
 include Hash
