@@ -69,4 +69,11 @@ module Make (D : sig val digest_size : int end) = struct
   let pp ppf hash =
     for i = 0 to D.digest_size - 1
     do Format.fprintf ppf "%02x" (Char.code (String.get hash i)) done
+
+  let of_raw_string x =
+    if String.length x <> D.digest_size then invalid_arg "invalid hash size"
+    else x
+
+  let to_raw_string x = x
+
 end

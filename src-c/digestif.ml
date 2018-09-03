@@ -54,6 +54,8 @@ module type S = sig
   val of_hex: string -> t
   val consistent_of_hex: string -> t
   val to_hex: t -> string
+  val of_raw_string: string -> t
+  val to_raw_string: t -> string
 end
 
 module type MAC = sig
@@ -496,3 +498,15 @@ let to_hex
     let module H = (val (module_of hash)) in
     let unsafe : 'k t -> H.t = Obj.magic in
     (H.to_hex (unsafe t))
+
+let of_raw_string
+  : type k. k hash -> string -> k t
+  = fun hash hex ->
+    let module H = (val (module_of hash)) in
+    (H.of_raw_string hex :> string)
+
+let to_raw_string
+  : type k. k hash -> k t -> string
+  = fun hash t ->
+    let module H = (val (module_of hash)) in
+    (t :> string)
