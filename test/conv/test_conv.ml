@@ -32,7 +32,7 @@ let consistent_hex =
     (* XXX(dinosaure): an oracle [to_hex]? *) hashes
 
 let random_wsp length =
-  let rec go _ =
+  let go _ =
     match Random.int 4 with
     | 0 -> ' '
     | 1 -> '\t'
@@ -52,7 +52,7 @@ let spaces_expand hex =
 let spaces_hex = List.map spaces_expand consistent_hex
 
 let random_hex length =
-  let rec go _ =
+  let go _ =
     match Random.int (10 + 26 + 26) with
     | n when n < 10 -> Char.chr (Char.code '0' + n)
     | n when n < 10 + 26 -> Char.chr (Char.code 'a' + n - 10)

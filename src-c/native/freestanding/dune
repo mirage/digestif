@@ -1,10 +1,10 @@
 (library
- ((name rakia_freestanding)
-  (public_name digestif.rakia.freestanding)
-  (optional)
-  (libraries (mirage-solo5))
-  (c_names (blake2b blake2s md5 ripemd160 sha1 sha256 sha512 misc stubs))
-  (c_flags (:include cflags.sexp))))
+ (name        rakia_freestanding)
+ (public_name digestif.rakia.freestanding)
+ (optional)
+ (libraries   mirage-solo5)
+ (c_names     blake2b blake2s md5 ripemd160 sha1 sha256 sha512 misc stubs)
+ (c_flags     (:include cflags.sexp)))
 
 (rule (copy# ../blake2b.c blake2b.c))
 (rule (copy# ../blake2s.c blake2s.c))
@@ -16,7 +16,4 @@
 (rule (copy# ../misc.c misc.c))
 (rule (copy# ../stubs.c stubs.c))
 
-(rule
- ((targets (cflags.sexp))
-  (deps (cflags.sh))
-  (action (bash "./${<} > ${@}"))))
+(rule (with-stdout-to cflags.sexp (run ./cflags.sh)))
