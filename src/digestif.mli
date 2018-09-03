@@ -206,11 +206,11 @@ module SHA384: S with type kind = [ `SHA384 ]
 module SHA512: S with type kind = [ `SHA512 ]
 module BLAKE2B: sig
   include S with type kind = [ `BLAKE2B ]
-  module Keyed: MAC
+  module Keyed: MAC with type t = t
 end
 module BLAKE2S: sig
   include S with type kind = [ `BLAKE2S ]
-  module Keyed: MAC
+  module Keyed: MAC with type t = t
 end
 module RMD160: S with type kind = [ `RMD160 ]
 
