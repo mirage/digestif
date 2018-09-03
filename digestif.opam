@@ -11,11 +11,14 @@ doc:          "https://mirage.github.io/digestif/"
 license:      "MIT"
 
 build: [ "jbuilder" "build" "-p" name "-j" jobs ]
+build-test: [ "jbuilder" "runtest" "-j" jobs ]
 
 depends: [
   "jbuilder"       {build}
   "base-bytes"
   "base-bigarray"
+  "fmt"            {test}
+  "alcotest"       {test}
 ]
 
 available: [ ocaml-version >= "4.03.0" ]

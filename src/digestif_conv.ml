@@ -1,3 +1,5 @@
+let invalid_arg fmt = Format.ksprintf (fun s -> invalid_arg s) fmt
+
 module Make (D : sig val digest_size : int end) = struct
   let to_hex hash =
     let res = Bytes.create (D.digest_size * 2) in
@@ -16,10 +18,10 @@ module Make (D : sig val digest_size : int end) = struct
     Bytes.unsafe_to_string res
 
   let code x = match x with
-    | '0' .. '9' -> Char.code x - 48
-    | 'A' .. 'F' -> Char.code x - 55
-    | 'a' .. 'z' -> Char.code x - 87
-    | _ -> invalid_arg "of_hex"
+    | '0' .. '9' -> Char.code x - (Char.code '0')
+    | 'A' .. 'F' -> Char.code x - (Char.code 'A') + 10
+    | 'a' .. 'f' -> Char.code x - (Char.code 'a') + 10
+    | _ -> invalid_arg "of_hex: %02X" (Char.code x)
 
   let decode chr1 chr2 = Char.chr ((code chr1 lsl 4) lor (code chr2))
 
@@ -59,12 +61,12 @@ module Make (D : sig val digest_size : int end) = struct
     let res = String.init D.digest_size (go false) in
     let is_wsp = function ' ' | '\t'| '\r' | '\n' -> true | _ -> false in
 
-    while (D.digest_size * 2) + !offset < String.length str
+    while D.digest_size + !offset < String.length str
           && is_wsp (String.get str (!offset + (D.digest_size * 2)))
     do incr offset done;
 
-    if !offset + (D.digest_size * 2) = String.length str
-    then res else invalid_arg "Too much enough bytes"
+    if !offset + D.digest_size = String.length str
+    then res else invalid_arg "Too much enough bytes (reach: %d, expect: %d)" (!offset + (D.digest_size * 2)) (String.length str)
 
   let pp ppf hash =
     for i = 0 to D.digest_size - 1
