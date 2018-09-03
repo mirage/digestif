@@ -18,7 +18,7 @@ module type S = sig
 
   type ctx
   type kind
-  type t = private string
+  type t
 
   val kind: kind
   val empty: ctx
@@ -60,7 +60,7 @@ module type S = sig
 end
 
 module type MAC = sig
-  type t = private string
+  type t
   val mac_bytes: key:Bytes.t -> ?off:int -> ?len:int -> Bytes.t -> t
   val mac_string: key:String.t -> ?off:int -> ?len:int -> String.t -> t
   val mac_bigstring: key:bigstring -> ?off:int -> ?len:int -> bigstring -> t
@@ -511,37 +511,37 @@ let digesti_bytes
   : type k. k hash -> Bytes.t iter -> k t
   = fun hash iter ->
     let module H = (val (module_of hash)) in
-    ((H.digesti_bytes iter :> string) : H.kind t)
+    (H.to_raw_string (H.digesti_bytes iter) : H.kind t)
 
 let digesti_string
   : type k. k hash -> String.t iter -> k t
   = fun hash iter ->
     let module H = (val (module_of hash)) in
-    ((H.digesti_string iter :> string) : H.kind t)
+    (H.to_raw_string (H.digesti_string iter) : H.kind t)
 
 let digesti_bigstring
   : type k. k hash -> bigstring iter -> k t
   = fun hash iter ->
     let module H = (val (module_of hash)) in
-    ((H.digesti_bigstring iter :> string) : H.kind t)
+    (H.to_raw_string (H.digesti_bigstring iter) : H.kind t)
 
 let hmaci_bytes
   : type k. k hash -> key:Bytes.t -> Bytes.t iter -> k t
   = fun hash ~key iter ->
     let module H = (val (module_of hash)) in
-    ((H.hmaci_bytes ~key iter :> string) : H.kind t)
+    (H.to_raw_string (H.hmaci_bytes ~key iter) : H.kind t)
 
 let hmaci_string
   : type k. k hash -> key:String.t -> String.t iter -> k t
   = fun hash ~key iter ->
     let module H = (val (module_of hash)) in
-    ((H.hmaci_string ~key iter :> string) : H.kind t)
+    (H.to_raw_string (H.hmaci_string ~key iter) : H.kind t)
 
 let hmaci_bigstring
   : type k. k hash -> key:bigstring -> bigstring iter -> k t
   = fun hash ~key iter ->
     let module H = (val (module_of hash)) in
-    ((H.hmaci_bigstring ~key iter :> string) : H.kind t)
+    (H.to_raw_string (H.hmaci_bigstring ~key iter) : H.kind t)
 
 (* XXX(dinosaure): unsafe part to avoid overhead. *)
 
@@ -577,23 +577,14 @@ let of_hex
   : type k. k hash -> string -> k t
   = fun hash hex ->
     let module H = (val (module_of hash)) in
-    (H.of_hex hex :> string)
+    H.to_raw_string (H.of_hex hex)
 
 let to_hex
   : type k. k hash -> k t -> string
   = fun hash t ->
     let module H = (val (module_of hash)) in
     let unsafe : 'k t -> H.t = Obj.magic in
-    (H.to_hex (unsafe t))
+    H.to_hex (unsafe t)
 
-let of_raw_string
-  : type k. k hash -> string -> k t
-  = fun hash hex ->
-    let module H = (val (module_of hash)) in
-    (H.of_raw_string hex :> string)
-
-let to_raw_string
-  : type k. k hash -> k t -> string
-  = fun hash t ->
-    let module H = (val (module_of hash)) in
-    (t :> string)
+let of_raw_string: type k. k hash -> string -> k t = fun _ s -> s
+let to_raw_string: type k. k hash -> k t -> string = fun _ t -> t

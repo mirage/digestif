@@ -20,7 +20,7 @@ module type S = sig
 
   type ctx
   type kind
-  type t = private string
+  type t
 
   val kind: kind
   (** The kind of hash. *)
@@ -155,7 +155,7 @@ end
 (** Some hash algorithms expose extra MAC constructs.
     The interface is similar to the [hmac_*] functions in [S]. *)
 module type MAC = sig
-  type t = private string
+  type t
 
   val mac_bytes: key:Bytes.t -> ?off:int -> ?len:int -> Bytes.t -> t
 
@@ -227,7 +227,7 @@ val sha512: [ `SHA512 ] hash
 val blake2b: int -> [ `BLAKE2B ] hash
 val blake2s: int -> [ `BLAKE2S ] hash
 
-type 'kind t = private string
+type 'kind t
 
 val module_of: 'k hash -> (module S with type kind = 'k)
 
