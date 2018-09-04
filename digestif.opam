@@ -17,6 +17,7 @@ depends: [
   "jbuilder"       {build}
   "base-bytes"
   "base-bigarray"
+  "eqaf"
   "fmt"            {test}
   "alcotest"       {test}
 ]

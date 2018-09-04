@@ -134,9 +134,6 @@ struct
   include Eq.Make (D)
 
   let kind = D.kind
-  let eq = String.equal
-  let neq a b = not (eq a b)
-  let unsafe_compare = String.compare
 
   let get t =
     let t = Hash.dup t in
