@@ -3,4 +3,5 @@
  (public_name digestif)
  (wrapped     false)
  (flags       (:standard -no-keep-locs))
+ (libraries   eqaf)
  (modules_without_implementation digestif))

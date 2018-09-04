@@ -2,7 +2,7 @@
  (name        digestif_ocaml)
  (public_name digestif.ocaml)
  (wrapped     false)
- (libraries   bigarray)
+ (libraries   bigarray eqaf)
  (flags       (:standard -no-keep-locs)))
 
 (rule (copy# %{lib:digestif:digestif.mli}     digestif.mli))
