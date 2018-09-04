@@ -5,13 +5,9 @@ install:
 script: bash -ex .travis-opam.sh
 sudo: true
 env:
+  global:
+  - PACKAGE=digestif
   matrix:
-  - PACKAGE="digestif" OCAML_VERSION=4.03
-
-  - PACKAGE="digestif" OCAML_VERSION=4.03 INSTALL=false
-    PINS="digestif-test-c:test"
-    EXTRA_DEPS="digestif-test-c"
-
-  - PACKAGE="digestif" OCAML_VERSION=4.03 INSTALL=false
-    PINS="digestif-test-ocaml:test"
-    EXTRA_DEPS="digestif-test-ocaml"
+  - OCAML_VERSION=4.03
+  - OCAML_VERSION=4.05 EXTRA_DEPS="mirage-xen"
+  - OCAML_VERSION=4.07 EXTRA_DEPS="mirage-solo5"

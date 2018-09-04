@@ -204,8 +204,8 @@ let results_blake2s =
 
 module BLAKE2 =
 struct
-  let input_blake2b_file = "./blake2b.test"
-  let input_blake2s_file = "./blake2s.test"
+  let input_blake2b_file = "../blake2b.test"
+  let input_blake2s_file = "../blake2s.test"
 
   let fold_s f a s =
     let r = ref a in
@@ -327,7 +327,7 @@ struct
     ; "b0e20b6e3116640286ed3a87a5713079b21f5189"
     ; "9b752e45573d4b39f4dbd3323cab82bf63326bfb" ]
 
-  let million : type t. expect:[ `RMD160 ] Digestif.t -> unit Alcotest.test_case
+  let million : expect:[ `RMD160 ] Digestif.t -> unit Alcotest.test_case
     = fun ~expect ->
       let iter n f =
         let rec go = function
