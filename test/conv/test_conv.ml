@@ -24,8 +24,7 @@ let random_string length _ =
 
 let hashes = list_init (random_string Digestif.SHA1.digest_size) 32
 
-(* XXX(dinosaure): ok, this is fine, [Digestif.SHA1.t = private string]. *)
-let hashes = List.map (fun x -> (Obj.magic x : Digestif.SHA1.t)) hashes
+let hashes = List.map Digestif.SHA1.of_raw_string hashes
 
 let consistent_hex =
   List.map Digestif.SHA1.to_hex
@@ -88,14 +87,14 @@ let sha1 = Alcotest.testable Digestif.SHA1.pp Digestif.SHA1.eq
 let test_hex_iso i random_input =
   Alcotest.test_case (strf "iso:%d" i) `Quick
   @@ fun () ->
-  let hash : Digestif.SHA1.t = Obj.magic random_input in
+  let hash : Digestif.SHA1.t = Digestif.SHA1.of_raw_string random_input in
   let hex = Digestif.SHA1.to_hex hash in
   Alcotest.(check sha1) "iso hex" (Digestif.SHA1.of_hex hex) hash
 
 let test_consistent_hex_iso i random_input =
   Alcotest.test_case (strf "iso:%d" i) `Quick
   @@ fun () ->
-  let hash : Digestif.SHA1.t = Obj.magic random_input in
+  let hash : Digestif.SHA1.t = Digestif.SHA1.of_raw_string random_input in
   let hex = Digestif.SHA1.to_hex hash in
   Alcotest.(check sha1)
     "iso consistent hex"
