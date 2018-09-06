@@ -546,28 +546,28 @@ let unsafe_compare
   : type k. k hash -> k t -> k t -> int
   = fun hash a b ->
     let module H = (val (module_of hash)) in
-    let unsafe : 'k t -> H.t = Obj.magic in
+    let unsafe : 'k t -> H.t = H.of_raw_string in
     H.unsafe_compare (unsafe a) (unsafe b)
 
 let eq
   : type k. k hash -> k t equal
   = fun hash a b ->
     let module H = (val (module_of hash)) in
-    let unsafe : 'k t -> H.t = Obj.magic in
+    let unsafe : 'k t -> H.t = H.of_raw_string in
     H.eq (unsafe a) (unsafe b)
 
 let neq
   : type k. k hash -> k t equal
   = fun hash a b ->
     let module H = (val (module_of hash)) in
-    let unsafe : 'k t -> H.t = Obj.magic in
+    let unsafe : 'k t -> H.t = H.of_raw_string in
     H.neq (unsafe a) (unsafe b)
 
 let pp
   : type k. k hash -> k t pp
   = fun hash ppf t  ->
     let module H = (val (module_of hash)) in
-    let unsafe : 'k t -> H.t = Obj.magic in
+    let unsafe : 'k t -> H.t = H.of_raw_string in
     H.pp ppf (unsafe t)
 
 let of_hex
@@ -580,7 +580,7 @@ let to_hex
   : type k. k hash -> k t -> string
   = fun hash t ->
     let module H = (val (module_of hash)) in
-    let unsafe : 'k t -> H.t = Obj.magic in
+    let unsafe : 'k t -> H.t = H.of_raw_string in
     H.to_hex (unsafe t)
 
 let of_raw_string: type k. k hash -> string -> k t = fun _ s -> s
