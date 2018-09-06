@@ -24,7 +24,6 @@ let random_string length _ =
 
 let hashes = list_init (random_string Digestif.SHA1.digest_size) 32
 
-(* XXX(dinosaure): ok, this is fine, [Digestif.SHA1.t = private string]. *)
 let hashes = List.map Digestif.SHA1.of_raw_string hashes
 
 let consistent_hex =
