@@ -607,7 +607,13 @@ let to_hex
     let unsafe : 'k t -> H.t = H.of_raw_string in
     H.to_hex (unsafe t)
 
-let of_raw_string: type k. k hash -> string -> k t = fun _ s -> s
+let of_raw_string
+  : type k. k hash -> string -> k t
+  = fun hash s ->
+    let module H = (val (module_of hash)) in
+    let unsafe : H.t -> 'k t = H.to_raw_string in
+    unsafe (H.of_raw_string s)
+
 let to_raw_string: type k. k hash -> k t -> string = fun _ t -> t
 
 let of_digest (type hash) (type kind) (module H : S with type t = hash and type kind = kind) (hash: H.t) : kind t =
