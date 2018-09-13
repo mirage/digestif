@@ -610,6 +610,9 @@ let to_hex
 let of_raw_string: type k. k hash -> string -> k t = fun _ s -> s
 let to_raw_string: type k. k hash -> k t -> string = fun _ t -> t
 
+let of_digest (type hash) (type kind) (module H : S with type t = hash and type kind = kind) (hash: H.t) : kind t =
+  H.to_raw_string hash
+
 let of_md5 hash = of_raw_string md5 (MD5.to_raw_string hash)
 let of_sha1 hash = of_raw_string sha1 (SHA1.to_raw_string hash)
 let of_rmd160 hash = of_raw_string rmd160 (RMD160.to_raw_string hash)

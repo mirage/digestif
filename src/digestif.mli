@@ -255,6 +255,9 @@ val consistent_of_hex: 'k hash -> string -> 'k t
 val of_raw_string: 'k hash -> string -> 'k t
 val to_raw_string: 'k hash -> 'k t -> string
 
+val of_digest:
+  (module S with type t = 'hash and type kind = 'k) -> 'hash -> 'k t
+
 val of_md5: MD5.t -> [ `MD5 ] t
 val of_sha1: SHA1.t -> [ `SHA1 ] t
 val of_rmd160: RMD160.t -> [ `RMD160 ] t
