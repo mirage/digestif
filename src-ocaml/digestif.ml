@@ -465,6 +465,24 @@ let module_of : type k. k hash -> (module S with type kind = k) = fun hash ->
 
 type 'kind t = string
 
+let digest_bytes
+  : type k. k hash -> Bytes.t -> k t
+  = fun hash buf ->
+    let module H = (val (module_of hash)) in
+    (H.to_raw_string (H.digest_bytes buf) : H.kind t)
+
+let digest_string
+  : type k. k hash -> String.t -> k t
+  = fun hash buf ->
+    let module H = (val (module_of hash)) in
+    (H.to_raw_string (H.digest_string buf) : H.kind t)
+
+let digest_bigstring
+  : type k. k hash -> bigstring -> k t
+  = fun hash buf ->
+    let module H = (val (module_of hash)) in
+    (H.to_raw_string (H.digest_bigstring buf) : H.kind t)
+
 let digesti_bytes
   : type k. k hash -> Bytes.t iter -> k t
   = fun hash iter ->

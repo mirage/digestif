@@ -231,6 +231,10 @@ type 'kind t
 
 val module_of: 'k hash -> (module S with type kind = 'k)
 
+val digest_bytes: 'k hash -> Bytes.t -> 'k t
+val digest_string: 'k hash -> String.t -> 'k t
+val digest_bigstring: 'k hash -> bigstring -> 'k t
+
 val digesti_bytes: 'k hash -> Bytes.t iter -> 'k t
 val digesti_string: 'k hash -> String.t iter -> 'k t
 val digesti_bigstring: 'k hash -> bigstring iter -> 'k t
