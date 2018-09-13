@@ -134,6 +134,13 @@ module type S = sig
      enough hexadecimal values, trailing values of the output hash are zero
      ([\x00]), *)
 
+  val of_hex_opt: string -> t option
+  (** [of_hex] tries to parse an hexadecimal representation of {!t}. [of_hex]
+      returns [None] when input is malformed. We take only first {!digest_size}
+      hexadecimal values and ignore rest of input. If it has not enough
+      hexadecimal values, trailing values of the output hash are zero
+      ([\x00]). *)
+
   val consistent_of_hex: string -> t
   (** [consistent_of_hex] tries to parse an hexadecimal representation of {!t}.
      [consistent_of_hex] raises an [invalid_argument] when input is malformed.
@@ -141,12 +148,24 @@ module type S = sig
      [{!digest_size} * 2] hexadecimal values (but continues to ignore
      whitespaces). *)
 
+  val consistent_of_hex_opt: string -> t option
+  (** [consistent_of_hex_opt] tries to parse an hexadecimal representation of
+      {!t}. [consistent_of_hex] returns [None] when input is malformed.
+      However, instead {!of_hex}, [consistent_of_hex] expects exactly
+      [{!digest_size} * 2] hexadecimal values (but continues to ignore
+      whitespaces). *)
+
   val to_hex: t -> string
   (** [to_hex] makes a hex-decimal representation of {!t}. *)
 
   val of_raw_string: string -> t
   (** [of_raw_string s] see [s] as a hash. Useful when reading
      serialized hashes. *)
+
+  val of_raw_string_opt: string -> t option
+  (** [of_raw_string_opt s] see [s] as a hash. Useful when reading
+      serialized hashes.  Returns [None] if [s] is not the {!digest_size}
+      bytes long. *)
 
   val to_raw_string: t -> string
   (** [to_raw_string s] is [(s :> string)]. *)
@@ -250,9 +269,12 @@ val unsafe_compare: 'k hash -> 'k t compare
 
 val to_hex: 'k hash -> 'k t -> string
 val of_hex: 'k hash -> string -> 'k t
+val of_hex_opt: 'k hash -> string -> 'k t option
 val consistent_of_hex: 'k hash -> string -> 'k t
+val consistent_of_hex_opt: 'k hash -> string -> 'k t option
 
 val of_raw_string: 'k hash -> string -> 'k t
+val of_raw_string_opt: 'k hash -> string -> 'k t option
 val to_raw_string: 'k hash -> 'k t -> string
 
 val of_digest:

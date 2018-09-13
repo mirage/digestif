@@ -53,9 +53,12 @@ module type S = sig
   val neq: t equal
   val pp: t pp
   val of_hex: string -> t
+  val of_hex_opt: string -> t option
   val consistent_of_hex: string -> t
+  val consistent_of_hex_opt: string -> t option
   val to_hex: t -> string
   val of_raw_string: string -> t
+  val of_raw_string_opt: string -> t option
   val to_raw_string: t -> string
 end
 
@@ -594,11 +597,27 @@ let consistent_of_hex
     let module H = (val (module_of hash)) in
     H.to_raw_string (H.consistent_of_hex hex)
 
+let consistent_of_hex_opt
+  : type k. k hash -> string -> k t option
+  = fun hash hex ->
+    let module H = (val (module_of hash)) in
+    match H.consistent_of_hex_opt hex with
+    | None -> None
+    | Some digest -> Some (H.to_raw_string digest)
+
 let of_hex
   : type k. k hash -> string -> k t
   = fun hash hex ->
     let module H = (val (module_of hash)) in
     H.to_raw_string (H.of_hex hex)
+
+let of_hex_opt
+  : type k. k hash -> string -> k t option
+  = fun hash hex ->
+    let module H = (val (module_of hash)) in
+    match H.of_hex_opt hex with
+    | None -> None
+    | Some digest -> Some (H.to_raw_string digest)
 
 let to_hex
   : type k. k hash -> k t -> string
@@ -613,6 +632,15 @@ let of_raw_string
     let module H = (val (module_of hash)) in
     let unsafe : H.t -> 'k t = H.to_raw_string in
     unsafe (H.of_raw_string s)
+
+let of_raw_string_opt
+  : type k. k hash -> string -> k t option
+  = fun hash s ->
+    let module H = (val (module_of hash)) in
+    let unsafe : H.t -> 'k t = H.to_raw_string in
+    match H.of_raw_string_opt s with
+    | None -> None
+    | Some digest -> Some (unsafe digest)
 
 let to_raw_string: type k. k hash -> k t -> string = fun _ t -> t
 

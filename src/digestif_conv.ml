@@ -44,6 +44,11 @@ module Make (D : sig val digest_size : int end) = struct
           else invalid_arg "of_hex: odd number of hex characters" in
     String.init D.digest_size (go false)
 
+  let of_hex_opt hex =
+    match of_hex hex with
+    | digest -> Some digest
+    | exception _ -> None
+
   let consistent_of_hex str =
     let offset = ref 0 in
     let rec go have_first idx =
@@ -68,6 +73,11 @@ module Make (D : sig val digest_size : int end) = struct
     if !offset + D.digest_size = String.length str
     then res else invalid_arg "Too much enough bytes (reach: %d, expect: %d)" (!offset + (D.digest_size * 2)) (String.length str)
 
+  let consistent_of_hex_opt hex =
+    match consistent_of_hex hex with
+    | digest -> Some digest
+    | exception _ -> None
+
   let pp ppf hash =
     for i = 0 to D.digest_size - 1
     do Format.fprintf ppf "%02x" (Char.code (String.get hash i)) done
@@ -75,6 +85,11 @@ module Make (D : sig val digest_size : int end) = struct
   let of_raw_string x =
     if String.length x <> D.digest_size then invalid_arg "invalid hash size"
     else x
+
+  let of_raw_string_opt x =
+    match of_raw_string x with
+    | digest -> Some digest
+    | exception _ -> None
 
   let to_raw_string x = x
 
