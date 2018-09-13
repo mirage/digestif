@@ -246,6 +246,17 @@ val unsafe_compare: 'k hash -> 'k t compare
 
 val to_hex: 'k hash -> 'k t -> string
 val of_hex: 'k hash -> string -> 'k t
+val consistent_of_hex: 'k hash -> string -> 'k t
 
 val of_raw_string: 'k hash -> string -> 'k t
 val to_raw_string: 'k hash -> 'k t -> string
+
+val of_md5: MD5.t -> [ `MD5 ] t
+val of_sha1: SHA1.t -> [ `SHA1 ] t
+val of_rmd160: RMD160.t -> [ `RMD160 ] t
+val of_sha224: SHA224.t -> [ `SHA224 ] t
+val of_sha256: SHA256.t -> [ `SHA256 ] t
+val of_sha384: SHA384.t -> [ `SHA384 ] t
+val of_sha512: SHA512.t -> [ `SHA512 ] t
+val of_blake2b: BLAKE2B.t -> [ `BLAKE2B ] t
+val of_blake2s: BLAKE2S.t -> [ `BLAKE2S ] t

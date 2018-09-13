@@ -537,6 +537,12 @@ let of_hex
     let module H = (val (module_of hash)) in
     H.to_raw_string (H.of_hex hex)
 
+let consistent_of_hex
+  : type k. k hash -> string -> k t
+  = fun hash hex ->
+    let module H = (val (module_of hash)) in
+    H.to_raw_string (H.consistent_of_hex hex)
+
 let to_hex
   : type k. k hash -> k t -> string
   = fun hash t ->
@@ -546,3 +552,15 @@ let to_hex
 
 let of_raw_string: type k. k hash -> string -> k t = fun _ t -> t
 let to_raw_string: type k. k hash -> k t -> string = fun _ t -> t
+
+let of_md5 hash = of_raw_string md5 (MD5.to_raw_string hash)
+let of_sha1 hash = of_raw_string sha1 (SHA1.to_raw_string hash)
+let of_rmd160 hash = of_raw_string rmd160 (RMD160.to_raw_string hash)
+let of_sha224 hash = of_raw_string sha224 (SHA224.to_raw_string hash)
+let of_sha256 hash = of_raw_string sha256 (SHA256.to_raw_string hash)
+let of_sha384 hash = of_raw_string sha384 (SHA384.to_raw_string hash)
+let of_sha512 hash = of_raw_string sha512 (SHA512.to_raw_string hash)
+let of_blake2b hash =
+  of_raw_string (blake2b BLAKE2B.digest_size) (BLAKE2B.to_raw_string hash)
+let of_blake2s hash =
+  of_raw_string (blake2s BLAKE2S.digest_size) (BLAKE2S.to_raw_string hash)
