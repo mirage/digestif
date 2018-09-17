@@ -53,9 +53,12 @@ module type S = sig
   val neq: t equal
   val pp: t pp
   val of_hex: string -> t
+  val of_hex_opt: string -> t option
   val consistent_of_hex: string -> t
+  val consistent_of_hex_opt: string -> t option
   val to_hex: t -> string
   val of_raw_string: string -> t
+  val of_raw_string_opt: string -> t option
   val to_raw_string: t -> string
 end
 
@@ -504,6 +507,24 @@ let module_of : type k. k hash -> (module S with type kind = k) = fun hash ->
 
 type 'kind t = string
 
+let digest_bytes
+  : type k. k hash -> Bytes.t -> k t
+  = fun hash buf ->
+    let module H = (val (module_of hash)) in
+    (H.to_raw_string (H.digest_bytes buf) : H.kind t)
+
+let digest_string
+  : type k. k hash -> String.t -> k t
+  = fun hash buf ->
+    let module H = (val (module_of hash)) in
+    (H.to_raw_string (H.digest_string buf) : H.kind t)
+
+let digest_bigstring
+  : type k. k hash -> bigstring -> k t
+  = fun hash buf ->
+    let module H = (val (module_of hash)) in
+    (H.to_raw_string (H.digest_bigstring buf) : H.kind t)
+
 let digesti_bytes
   : type k. k hash -> Bytes.t iter -> k t
   = fun hash iter ->
@@ -570,11 +591,33 @@ let pp
     let unsafe : 'k t -> H.t = H.of_raw_string in
     H.pp ppf (unsafe t)
 
+let consistent_of_hex
+  : type k. k hash -> string -> k t
+  = fun hash hex ->
+    let module H = (val (module_of hash)) in
+    H.to_raw_string (H.consistent_of_hex hex)
+
+let consistent_of_hex_opt
+  : type k. k hash -> string -> k t option
+  = fun hash hex ->
+    let module H = (val (module_of hash)) in
+    match H.consistent_of_hex_opt hex with
+    | None -> None
+    | Some digest -> Some (H.to_raw_string digest)
+
 let of_hex
   : type k. k hash -> string -> k t
   = fun hash hex ->
     let module H = (val (module_of hash)) in
     H.to_raw_string (H.of_hex hex)
+
+let of_hex_opt
+  : type k. k hash -> string -> k t option
+  = fun hash hex ->
+    let module H = (val (module_of hash)) in
+    match H.of_hex_opt hex with
+    | None -> None
+    | Some digest -> Some (H.to_raw_string digest)
 
 let to_hex
   : type k. k hash -> k t -> string
@@ -583,5 +626,35 @@ let to_hex
     let unsafe : 'k t -> H.t = H.of_raw_string in
     H.to_hex (unsafe t)
 
-let of_raw_string: type k. k hash -> string -> k t = fun _ s -> s
+let of_raw_string
+  : type k. k hash -> string -> k t
+  = fun hash s ->
+    let module H = (val (module_of hash)) in
+    let unsafe : H.t -> 'k t = H.to_raw_string in
+    unsafe (H.of_raw_string s)
+
+let of_raw_string_opt
+  : type k. k hash -> string -> k t option
+  = fun hash s ->
+    let module H = (val (module_of hash)) in
+    let unsafe : H.t -> 'k t = H.to_raw_string in
+    match H.of_raw_string_opt s with
+    | None -> None
+    | Some digest -> Some (unsafe digest)
+
 let to_raw_string: type k. k hash -> k t -> string = fun _ t -> t
+
+let of_digest (type hash) (type kind) (module H : S with type t = hash and type kind = kind) (hash: H.t) : kind t =
+  H.to_raw_string hash
+
+let of_md5 hash = of_raw_string md5 (MD5.to_raw_string hash)
+let of_sha1 hash = of_raw_string sha1 (SHA1.to_raw_string hash)
+let of_rmd160 hash = of_raw_string rmd160 (RMD160.to_raw_string hash)
+let of_sha224 hash = of_raw_string sha224 (SHA224.to_raw_string hash)
+let of_sha256 hash = of_raw_string sha256 (SHA256.to_raw_string hash)
+let of_sha384 hash = of_raw_string sha384 (SHA384.to_raw_string hash)
+let of_sha512 hash = of_raw_string sha512 (SHA512.to_raw_string hash)
+let of_blake2b hash =
+  of_raw_string (blake2b BLAKE2B.digest_size) (BLAKE2B.to_raw_string hash)
+let of_blake2s hash =
+  of_raw_string (blake2s BLAKE2S.digest_size) (BLAKE2S.to_raw_string hash)

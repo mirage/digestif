@@ -134,6 +134,13 @@ module type S = sig
      enough hexadecimal values, trailing values of the output hash are zero
      ([\x00]), *)
 
+  val of_hex_opt: string -> t option
+  (** [of_hex] tries to parse an hexadecimal representation of {!t}. [of_hex]
+      returns [None] when input is malformed. We take only first {!digest_size}
+      hexadecimal values and ignore rest of input. If it has not enough
+      hexadecimal values, trailing values of the output hash are zero
+      ([\x00]). *)
+
   val consistent_of_hex: string -> t
   (** [consistent_of_hex] tries to parse an hexadecimal representation of {!t}.
      [consistent_of_hex] raises an [invalid_argument] when input is malformed.
@@ -141,12 +148,24 @@ module type S = sig
      [{!digest_size} * 2] hexadecimal values (but continues to ignore
      whitespaces). *)
 
+  val consistent_of_hex_opt: string -> t option
+  (** [consistent_of_hex_opt] tries to parse an hexadecimal representation of
+      {!t}. [consistent_of_hex] returns [None] when input is malformed.
+      However, instead {!of_hex}, [consistent_of_hex] expects exactly
+      [{!digest_size} * 2] hexadecimal values (but continues to ignore
+      whitespaces). *)
+
   val to_hex: t -> string
   (** [to_hex] makes a hex-decimal representation of {!t}. *)
 
   val of_raw_string: string -> t
   (** [of_raw_string s] see [s] as a hash. Useful when reading
      serialized hashes. *)
+
+  val of_raw_string_opt: string -> t option
+  (** [of_raw_string_opt s] see [s] as a hash. Useful when reading
+      serialized hashes.  Returns [None] if [s] is not the {!digest_size}
+      bytes long. *)
 
   val to_raw_string: t -> string
   (** [to_raw_string s] is [(s :> string)]. *)
@@ -231,6 +250,10 @@ type 'kind t
 
 val module_of: 'k hash -> (module S with type kind = 'k)
 
+val digest_bytes: 'k hash -> Bytes.t -> 'k t
+val digest_string: 'k hash -> String.t -> 'k t
+val digest_bigstring: 'k hash -> bigstring -> 'k t
+
 val digesti_bytes: 'k hash -> Bytes.t iter -> 'k t
 val digesti_string: 'k hash -> String.t iter -> 'k t
 val digesti_bigstring: 'k hash -> bigstring iter -> 'k t
@@ -246,6 +269,23 @@ val unsafe_compare: 'k hash -> 'k t compare
 
 val to_hex: 'k hash -> 'k t -> string
 val of_hex: 'k hash -> string -> 'k t
+val of_hex_opt: 'k hash -> string -> 'k t option
+val consistent_of_hex: 'k hash -> string -> 'k t
+val consistent_of_hex_opt: 'k hash -> string -> 'k t option
 
 val of_raw_string: 'k hash -> string -> 'k t
+val of_raw_string_opt: 'k hash -> string -> 'k t option
 val to_raw_string: 'k hash -> 'k t -> string
+
+val of_digest:
+  (module S with type t = 'hash and type kind = 'k) -> 'hash -> 'k t
+
+val of_md5: MD5.t -> [ `MD5 ] t
+val of_sha1: SHA1.t -> [ `SHA1 ] t
+val of_rmd160: RMD160.t -> [ `RMD160 ] t
+val of_sha224: SHA224.t -> [ `SHA224 ] t
+val of_sha256: SHA256.t -> [ `SHA256 ] t
+val of_sha384: SHA384.t -> [ `SHA384 ] t
+val of_sha512: SHA512.t -> [ `SHA512 ] t
+val of_blake2b: BLAKE2B.t -> [ `BLAKE2B ] t
+val of_blake2s: BLAKE2S.t -> [ `BLAKE2S ] t
