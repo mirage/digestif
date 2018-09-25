@@ -1,18 +1,18 @@
 let () = Printexc.record_backtrace true
 
-type _ s =
-  | Bytes : Bytes.t s
-  | String : String.t s
-  | Bigstring : bigstring s
-and bigstring = (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
+type _ s = Bytes : Bytes.t s | String : String.t s | Bigstring : bigstring s
 
-let title
-  : type a k. [ `HMAC | `Digest ] -> k Digestif.hash -> a s -> string
-  = fun computation hash input ->
+and bigstring =
+  (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
+
+let title : type a k. [`HMAC | `Digest] -> k Digestif.hash -> a s -> string =
+ fun computation hash input ->
   let pp_computation ppf = function
     | `HMAC -> Fmt.string ppf "hmac"
-    | `Digest -> Fmt.string ppf "digest" in
-  let pp_hash : type k. k Digestif.hash Fmt.t = fun ppf -> function
+    | `Digest -> Fmt.string ppf "digest"
+  in
+  let pp_hash : type k. k Digestif.hash Fmt.t =
+   fun ppf -> function
     | Digestif.MD5 -> Fmt.string ppf "md5"
     | Digestif.SHA1 -> Fmt.string ppf "sha1"
     | Digestif.RMD160 -> Fmt.string ppf "rmd160"
@@ -21,120 +21,130 @@ let title
     | Digestif.SHA384 -> Fmt.string ppf "sha384"
     | Digestif.SHA512 -> Fmt.string ppf "sha512"
     | Digestif.BLAKE2B _ -> Fmt.string ppf "blake2b"
-    | Digestif.BLAKE2S _ -> Fmt.string ppf "blake2s" in
-  let pp_input : type a. a s Fmt.t = fun ppf -> function
+    | Digestif.BLAKE2S _ -> Fmt.string ppf "blake2s"
+  in
+  let pp_input : type a. a s Fmt.t =
+   fun ppf -> function
     | Bytes -> Fmt.string ppf "bytes"
     | String -> Fmt.string ppf "string"
-    | Bigstring -> Fmt.string ppf "bigstring" in
-  Fmt.strf "%a:%a:%a"
-    pp_computation computation
-    pp_hash hash
-    pp_input input
+    | Bigstring -> Fmt.string ppf "bigstring"
+  in
+  Fmt.strf "%a:%a:%a" pp_computation computation pp_hash hash pp_input input
 
 let bytes = Bytes
 let string = String
 let bigstring = Bigstring
 
-let test_hmac
-  : type k a. a s -> k Digestif.hash -> a -> a -> k Digestif.t -> unit
-  = fun kind hash key input expect ->
-    let title = title `HMAC hash kind in
-    let test_hash = Alcotest.testable (Digestif.pp hash) (Digestif.eq hash) in
-
-    match kind with
-    | Bytes ->
+let test_hmac : type k a.
+    a s -> k Digestif.hash -> a -> a -> k Digestif.t -> unit =
+ fun kind hash key input expect ->
+  let title = title `HMAC hash kind in
+  let test_hash = Alcotest.testable (Digestif.pp hash) (Digestif.eq hash) in
+  match kind with
+  | Bytes ->
       let result = Digestif.hmaci_bytes hash ~key (fun f -> f input) in
       Alcotest.(check test_hash) title expect result
-    | String ->
+  | String ->
       let result = Digestif.hmaci_string hash ~key (fun f -> f input) in
       Alcotest.(check test_hash) title expect result
-    | Bigstring ->
+  | Bigstring ->
       let result = Digestif.hmaci_bigstring hash ~key (fun f -> f input) in
       Alcotest.(check test_hash) title expect result
 
-let test_digest
-  : type k a. a s -> k Digestif.hash -> a -> k Digestif.t -> unit
-  = fun kind hash input expect ->
-    let title = title `Digest hash kind in
-    let test_hash = Alcotest.testable (Digestif.pp hash) (Digestif.eq hash) in
-
-    match kind with
-    | Bytes ->
+let test_digest : type k a. a s -> k Digestif.hash -> a -> k Digestif.t -> unit
+    =
+ fun kind hash input expect ->
+  let title = title `Digest hash kind in
+  let test_hash = Alcotest.testable (Digestif.pp hash) (Digestif.eq hash) in
+  match kind with
+  | Bytes ->
       let result = Digestif.digesti_bytes hash (fun f -> f input) in
       Alcotest.(check test_hash) title expect result
-    | String ->
+  | String ->
       let result = Digestif.digesti_string hash (fun f -> f input) in
       Alcotest.(check test_hash) title expect result
-    | Bigstring ->
+  | Bigstring ->
       let result = Digestif.digesti_bigstring hash (fun f -> f input) in
       Alcotest.(check test_hash) title expect result
 
-let make_hmac
-  : type a k. name:string -> a s -> k Digestif.hash -> a -> a -> k Digestif.t -> unit Alcotest.test_case
-  = fun ~name kind hash key input expect ->
-    name, `Slow, (fun () -> test_hmac kind hash key input expect)
+let make_hmac : type a k.
+       name:string
+    -> a s
+    -> k Digestif.hash
+    -> a
+    -> a
+    -> k Digestif.t
+    -> unit Alcotest.test_case =
+ fun ~name kind hash key input expect ->
+  name, `Slow, fun () -> test_hmac kind hash key input expect
 
-let make_digest
-  : type a k. name:string -> a s -> k Digestif.hash -> a -> k Digestif.t -> unit Alcotest.test_case
-  = fun ~name kind hash input expect ->
-    name, `Slow, (fun () -> test_digest kind hash input expect)
+let make_digest : type a k.
+       name:string
+    -> a s
+    -> k Digestif.hash
+    -> a
+    -> k Digestif.t
+    -> unit Alcotest.test_case =
+ fun ~name kind hash input expect ->
+  name, `Slow, fun () -> test_digest kind hash input expect
 
 let combine a b c =
-  let rec aux r a b c = match a, b, c with
-    | xa :: ra, xb :: rb, xc :: rc ->
-      aux ((xa, xb, xc) :: r) ra rb rc
+  let rec aux r a b c =
+    match a, b, c with
+    | xa :: ra, xb :: rb, xc :: rc -> aux ((xa, xb, xc) :: r) ra rb rc
     | [], [], [] -> List.rev r
     | _ -> raise (Invalid_argument "combine")
   in
   aux [] a b c
 
 let makes ~name kind hash keys inputs expects =
-  List.map (fun (key, input, expect) -> make_hmac ~name kind hash key input expect)
+  List.map
+    (fun (key, input, expect) -> make_hmac ~name kind hash key input expect)
     (combine keys inputs expects)
 
 let to_bigstring s =
   let ln = Bytes.length s in
   let bi = Bigarray.Array1.create Bigarray.Char Bigarray.c_layout ln in
-
-  for i = 0 to ln - 1
-  do Bigarray.Array1.set bi i (Bytes.get s i) done; bi
+  for i = 0 to ln - 1 do
+    bi.{i} <- (Bytes.get s i)
+  done ;
+  bi
 
 let split3 lst =
   let rec go (ax, ay, az) = function
     | (x, y, z) :: r -> go (x :: ax, y :: ay, z :: az) r
-    | [] -> List.rev ax, List.rev ay, List.rev az in
+    | [] -> List.rev ax, List.rev ay, List.rev az
+  in
   go ([], [], []) lst
 
 let keys_by, keys_st, keys_bi =
-  [ "Salut"
-  ; "Jefe"
-  ; "Lorenzo"
-  ; "Le son qui fait plaiz'"
-  ; "La c'est un peu chaud en vrai"]
-  |> List.map (fun s -> Bytes.unsafe_of_string s, s, to_bigstring (Bytes.unsafe_of_string s))
+  [ "Salut"; "Jefe"; "Lorenzo"; "Le son qui fait plaiz'"
+  ; "La c'est un peu chaud en vrai" ]
+  |> List.map (fun s ->
+         Bytes.unsafe_of_string s, s, to_bigstring (Bytes.unsafe_of_string s)
+     )
   |> split3
 
 let inputs_by, inputs_st, inputs_bi =
-  [ "Hi There"
-  ; "what do ya want for nothing?"
+  [ "Hi There"; "what do ya want for nothing?"
   ; "C'est Lolo je bois de l'Ice Tea quand j'suis fonsde"
   ; "Mes pecs dansent le flamenco, Lolo l'empereur du sale, dans le deal on \
-    m'surnomme Joe La Crapule"
+     m'surnomme Joe La Crapule"
   ; "Y'a un pack de douze a cote du cadavre dans le coffre. Pourquoi t'etais \
-    Charlie mais t'etais pas Jean-Pierre Coffe. Ca sniffe tellement la coke, \
-    mes crottes de nez c'est d'la MD. J'deteste juste les keufs, j'aime bien \
-    les obeses et les pedes. Mamene finira dans le dico'. J'ai qu'un reuf: le \
-    poto Rico. Ca rotte-ca l'argent des clodos. C'est moi qu'ecrit tous les \
-    pornos. Cite-moi en controle de philo'. Toutes les miss grimpent aux \
-    rideaux." ]
-  |> List.map (fun s -> Bytes.unsafe_of_string s, s, to_bigstring (Bytes.unsafe_of_string s))
+     Charlie mais t'etais pas Jean-Pierre Coffe. Ca sniffe tellement la coke, \
+     mes crottes de nez c'est d'la MD. J'deteste juste les keufs, j'aime bien \
+     les obeses et les pedes. Mamene finira dans le dico'. J'ai qu'un reuf: \
+     le poto Rico. Ca rotte-ca l'argent des clodos. C'est moi qu'ecrit tous \
+     les pornos. Cite-moi en controle de philo'. Toutes les miss grimpent aux \
+     rideaux." ]
+  |> List.map (fun s ->
+         Bytes.unsafe_of_string s, s, to_bigstring (Bytes.unsafe_of_string s)
+     )
   |> split3
 
 let results_md5 =
-  [ "689e721d493b6eeea482947be736c808"
-  ; "750c783e6ab0b503eaa86e310a5db738"
-  ; "1cdd24eef6163afee7adc7c53dd6c9df"
-  ; "0316ebcad933675e84a81850e24d55b2"
+  [ "689e721d493b6eeea482947be736c808"; "750c783e6ab0b503eaa86e310a5db738"
+  ; "1cdd24eef6163afee7adc7c53dd6c9df"; "0316ebcad933675e84a81850e24d55b2"
   ; "9ee938a2659d546ccc2e5993601964eb" ]
   |> List.map (Digestif.of_hex Digestif.md5)
 
@@ -167,7 +177,8 @@ let results_sha384 =
   ; "af45d2e376484031617f78d2b58a6b1b9c7ef464f5a01b47e42ec3736322445e8e2240ca5e69e2c78b3239ecfab21649"
   ; "bd3b5c82edcd0f206aadff7aa89dbbc3a7655844ffc9f8f9fa17c90eb36b13ec7828fba7252c3f5d90cff666ea44d557"
   ; "16461c2a44877c69fb38e4dce2edc822d68517917fc84d252de64132bd43c7cbe3310b7e8661741b7728000e8abf51e0"
-  ; "2c3751d1dc792344514928fad94672a256cf2f66344e4df96b0cc4cc3f6800aa5a628e9becf5f65672e1acf013284893" ]
+  ; "2c3751d1dc792344514928fad94672a256cf2f66344e4df96b0cc4cc3f6800aa5a628e9becf5f65672e1acf013284893"
+  ]
   |> List.map (Digestif.of_hex Digestif.sha384)
 
 let results_sha512 =
@@ -175,7 +186,8 @@ let results_sha512 =
   ; "164b7a7bfcf819e2e395fbe73b56e0a387bd64222e831fd610270cd7ea2505549758bf75c05a994a6d034f65f8f0e6fdcaeab1a34d4a6b4b636e070a38bce737"
   ; "c2f2077f538171d7c6cbee0c94948f82987117a50229fb0b48a534e3c63553a9a9704cdb460c597c8b46b631e49c22a9d2d46bded40f8a77652f754ec725e351"
   ; "89d7284e89642ec195f7a8ef098ef4e411fa3df17a07724cf13033bc6b7863968aad449cee973df9b92800d803ba3e14244231a86253cfacd1de882a542e945f"
-  ; "f6ecfca37d2abcff4b362f1919629e784c4b618af77e1061bb992c11d7f518716f5df5978b0a1455d68ceeb10ced9251306d2f26181407be76a219d48c36b592" ]
+  ; "f6ecfca37d2abcff4b362f1919629e784c4b618af77e1061bb992c11d7f518716f5df5978b0a1455d68ceeb10ced9251306d2f26181407be76a219d48c36b592"
+  ]
   |> List.map (Digestif.of_hex Digestif.sha512)
 
 let results_blake2b =
@@ -183,7 +195,8 @@ let results_blake2b =
   ; "6ff884f8ddc2a6586b3c98a4cd6ebdf14ec10204b6710073eb5865ade37a2643b8807c1335d107ecdb9ffeaeb6828c4625ba172c66379efcd222c2de11727ab4"
   ; "42aadab231ff4edbdad29a18262bbb6ba74cf0850f40b64a92dc62a92608a65f06af850aa1988cd1e379cf9cc9a8f64d61125d7b3def292ae57e537bc202e812"
   ; "4abf562dc64f4062ea59ae9b4e2061a7a6c1a75af74b3663fd05aa4437420b8deea657e395a7dbac02aef7b7d70dc8b8a8db99aa8db028961a5ee66bac22b0f0"
-  ; "69f9e4236cd0c50204e4f8b86dc1751d37cc195835e9db25c9b366f41e1d86cdeec6a8702dfed1bc0ed0d6a1e2c5af275c331ec91f884c979021fb64021915de" ]
+  ; "69f9e4236cd0c50204e4f8b86dc1751d37cc195835e9db25c9b366f41e1d86cdeec6a8702dfed1bc0ed0d6a1e2c5af275c331ec91f884c979021fb64021915de"
+  ]
   |> List.map (Digestif.of_hex (Digestif.blake2b Digestif.BLAKE2B.digest_size))
 
 let results_rmd160 =
@@ -202,79 +215,95 @@ let results_blake2s =
   ; "b8e167de23a5f136dc26bf06da0d724ebf7310903c2f702403b66810a230d622" ]
   |> List.map (Digestif.of_hex (Digestif.blake2s Digestif.BLAKE2S.digest_size))
 
-module BLAKE2 =
-struct
+module BLAKE2 = struct
   let input_blake2b_file = "../blake2b.test"
   let input_blake2s_file = "../blake2s.test"
 
   let fold_s f a s =
     let r = ref a in
-    String.iter (fun x -> r := f !r x) s; !r
+    String.iter (fun x -> r := f !r x) s ;
+    !r
 
   let of_hex len hex =
-    let code x = match x with
+    let code x =
+      match x with
       | '0' .. '9' -> Char.code x - 48
       | 'A' .. 'F' -> Char.code x - 55
       | 'a' .. 'z' -> Char.code x - 87
-      | _ -> raise (Invalid_argument "of_hex") in
-
+      | _ -> raise (Invalid_argument "of_hex")
+    in
     let wsp = function ' ' | '\t' | '\r' | '\n' -> true | _ -> false in
-
     fold_s
-      (fun (res, i, acc) -> function
-         | chr when wsp chr -> (res, i, acc)
-         | chr ->
-           match acc, code chr with
-           | None, x -> (res, i, Some (x lsl 4))
-           | Some y, x -> Bytes.set res i (Char.unsafe_chr (x lor y)); (res, succ i, None))
+      (fun (res, i, acc) -> function chr when wsp chr -> res, i, acc
+        | chr -> (
+          match acc, code chr with
+          | None, x -> res, i, Some (x lsl 4)
+          | Some y, x ->
+              Bytes.set res i (Char.unsafe_chr (x lor y)) ;
+              res, succ i, None ) )
       (Bytes.create len, 0, None)
       hex
     |> (function
-        | (_, _, Some _)  -> invalid_arg "of_hex"
-        | (res, i, _) ->
-           if i = len
-           then res
-           else (for i = i to len - 1
-                 do Bytes.set res i '\000' done; res))
+         | _, _, Some _ -> invalid_arg "of_hex"
+         | res, i, _ ->
+             if i = len then res
+             else (
+               for i = i to len - 1 do
+                 Bytes.set res i '\000'
+               done ;
+               res ))
     |> Bytes.unsafe_to_string
 
   let parse kind ic =
-    ignore @@ input_line ic;
-    ignore @@ input_line ic;
-
-    let rec loop state acc = match state, input_line ic with
+    ignore @@ input_line ic ;
+    ignore @@ input_line ic ;
+    let rec loop state acc =
+      match state, input_line ic with
       | `In, line ->
-        let i = ref "" in
-        Scanf.sscanf line "in:\t%s" (fun v -> i := of_hex (String.length v / 2) v);
-        loop (`Key !i) acc
-      | `Key i, line ->
-        let k = ref None in
-        Scanf.sscanf line "key:\t%s" (fun v -> k := Some (Digestif.to_raw_string kind (Digestif.of_hex kind v)));
-        (match !k with Some k -> loop (`Hash (i, (k :> string))) acc | None -> loop `In acc)
-      | `Hash (i, k), line ->
-        let h = ref None in
-        Scanf.sscanf line "hash:\t%s" (fun v -> h := Some (Digestif.of_hex kind v));
-        (match !h with Some h -> loop (`Res (i, k, h)) acc | None -> loop `In acc)
-      | `Res v, "" ->
-        loop `In (v :: acc)
+          let i = ref "" in
+          Scanf.sscanf line "in:\t%s" (fun v ->
+              i := of_hex (String.length v / 2) v ) ;
+          loop (`Key !i) acc
+      | `Key i, line -> (
+          let k = ref None in
+          Scanf.sscanf line "key:\t%s" (fun v ->
+              k := Some (Digestif.to_raw_string kind (Digestif.of_hex kind v))
+          ) ;
+          match !k with
+          | Some k -> loop (`Hash (i, (k :> string))) acc
+          | None -> loop `In acc )
+      | `Hash (i, k), line -> (
+          let h = ref None in
+          Scanf.sscanf line "hash:\t%s" (fun v ->
+              h := Some (Digestif.of_hex kind v) ) ;
+          match !h with
+          | Some h -> loop (`Res (i, k, h)) acc
+          | None -> loop `In acc )
+      | `Res v, "" -> loop `In (v :: acc)
       | `Res v, _ -> (* avoid malformed line *)
-        loop (`Res v) acc
-      | exception End_of_file -> List.rev acc in
-
+                     loop (`Res v) acc
+      | exception End_of_file -> List.rev acc
+    in
     loop `In []
 
-  let test_mac
-    : type k a. a s -> k Digestif.hash -> (module Digestif.MAC) -> a -> a -> k Digestif.t -> unit
-    = fun kind hash (module Mac) key input expect ->
+  let test_mac : type k a.
+         a s
+      -> k Digestif.hash
+      -> (module Digestif.MAC)
+      -> a
+      -> a
+      -> k Digestif.t
+      -> unit =
+   fun kind hash (module Mac) key input expect ->
     let title = title `HMAC hash kind in
     let check (result : Mac.t) =
       Alcotest.(check string)
         title
         (Digestif.to_raw_string hash expect)
         (Obj.magic result)
-        (* XXX(dinosaure): ok, this is really bad but I'm lazy to keep type
-           equality on [Mac] - extend interface and play with [with type t = t]
-           anywhere. *)
+      (* XXX(dinosaure): ok, this is really bad but I'm lazy to keep type
+         equality on [Mac] - extend interface and play with [with type t = t]
+         anywhere. *)
     in
     match kind with
     | Bytes -> check @@ Mac.maci_bytes ~key (fun f -> f input)
@@ -282,15 +311,15 @@ struct
     | Bigstring -> check @@ Mac.maci_bigstring ~key (fun f -> f input)
 
   let make_keyed_blake m ~name kind hash key input expect =
-  name, `Slow, (fun () -> test_mac kind hash m key input expect)
+    name, `Slow, fun () -> test_mac kind hash m key input expect
 
-  let tests m  kind filename =
+  let tests m kind filename =
     let ic = open_in filename in
     let tests = parse kind ic in
-
-    close_in ic;
+    close_in ic ;
     List.map
-      (fun (input, key, expect) -> make_keyed_blake m ~name:"blake2{b,s}" string kind key input expect)
+      (fun (input, key, expect) ->
+        make_keyed_blake m ~name:"blake2{b,s}" string kind key input expect )
       tests
 
   let tests_blake2s =
@@ -306,17 +335,13 @@ struct
       input_blake2b_file
 end
 
-module RMD160 =
-struct
+module RMD160 = struct
   let inputs =
-    [ ""
-    ; "a"
-    ; "abc"
-    ; "message digest"
-    ; "abcdefghijklmnopqrstuvwxyz"
+    [ ""; "a"; "abc"; "message digest"; "abcdefghijklmnopqrstuvwxyz"
     ; "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"
     ; "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-    ; "12345678901234567890123456789012345678901234567890123456789012345678901234567890" ]
+    ; "12345678901234567890123456789012345678901234567890123456789012345678901234567890"
+    ]
 
   let expects =
     [ "9c1185a5c5e9fc54612808977ee8f548b2258d31"
@@ -328,46 +353,94 @@ struct
     ; "b0e20b6e3116640286ed3a87a5713079b21f5189"
     ; "9b752e45573d4b39f4dbd3323cab82bf63326bfb" ]
 
-  let million : expect:[ `RMD160 ] Digestif.t -> unit Alcotest.test_case
-    = fun ~expect ->
-      let iter n f =
-        let rec go = function
-          | 0 -> ()
-          | n -> f "a"; go (n - 1) in
-        go n in
-      let result = Digestif.digesti_string Digestif.rmd160 (iter 1_000_000) in
-      let test_hash = Alcotest.testable Digestif.(pp rmd160) Digestif.(eq rmd160) in
-
-      "give me a million", `Slow, (fun () -> Alcotest.(check test_hash) "rmd160" expect result)
+  let million : expect:[`RMD160] Digestif.t -> unit Alcotest.test_case =
+   fun ~expect ->
+    let iter n f =
+      let rec go = function
+        | 0 -> ()
+        | n ->
+            f "a" ;
+            go (n - 1)
+      in
+      go n
+    in
+    let result = Digestif.digesti_string Digestif.rmd160 (iter 1_000_000) in
+    let test_hash =
+      Alcotest.testable Digestif.(pp rmd160) Digestif.(eq rmd160)
+    in
+    ( "give me a million"
+    , `Slow
+    , fun () -> Alcotest.(check test_hash) "rmd160" expect result )
 
   let tests =
-    let expect_million = Digestif.of_hex Digestif.rmd160 "52783243c1697bdbe16d37f97f68f08325dc1528" in
-
-    List.map (fun (input, expect) -> make_digest ~name:"rmd160" string Digestif.rmd160 input expect)
+    let expect_million =
+      Digestif.of_hex Digestif.rmd160
+        "52783243c1697bdbe16d37f97f68f08325dc1528"
+    in
+    List.map
+      (fun (input, expect) ->
+        make_digest ~name:"rmd160" string Digestif.rmd160 input expect )
       (List.combine inputs (List.map Digestif.(of_hex rmd160) expects))
-    @ [ million ~expect:expect_million ]
+    @ [million ~expect:expect_million]
 end
 
 let tests () =
   Alcotest.run "digestif"
-    [ "md5",                 makes ~name:"md5"     bytes     Digestif.md5     keys_by inputs_by results_md5
-    ; "md5 (bigstring)",     makes ~name:"md5"     bigstring Digestif.md5     keys_bi inputs_bi results_md5
-    ; "sha1",                makes ~name:"sha1"    bytes     Digestif.sha1    keys_by inputs_by results_sha1
-    ; "sha1 (bigstring)",    makes ~name:"sha1"    bigstring Digestif.sha1    keys_bi inputs_bi results_sha1
-    ; "sha224",              makes ~name:"sha224"  bytes     Digestif.sha224  keys_by inputs_by results_sha224
-    ; "sha224 (bigstring)",  makes ~name:"sha224"  bigstring Digestif.sha224  keys_bi inputs_bi results_sha224
-    ; "sha256",              makes ~name:"sha256"  bytes     Digestif.sha256  keys_by inputs_by results_sha256
-    ; "sha256 (bigstring)",  makes ~name:"sha256"  bigstring Digestif.sha256  keys_bi inputs_bi results_sha256
-    ; "sha384",              makes ~name:"sha384"  bytes     Digestif.sha384  keys_by inputs_by results_sha384
-    ; "sha384 (bigstring)",  makes ~name:"sha384"  bigstring Digestif.sha384  keys_bi inputs_bi results_sha384
-    ; "sha512",              makes ~name:"sha512"  bytes     Digestif.sha512  keys_by inputs_by results_sha512
-    ; "sha512 (bigstring)",  makes ~name:"sha512"  bigstring Digestif.sha512  keys_bi inputs_bi results_sha512
-    ; "blake2b",             makes ~name:"blake2b" bytes     Digestif.(blake2b BLAKE2B.digest_size) keys_by inputs_by results_blake2b
-    ; "blake2b (bigstring)", makes ~name:"blake2b" bigstring Digestif.(blake2b BLAKE2B.digest_size) keys_bi inputs_bi results_blake2b
-    ; "rmd160",              makes ~name:"rmd160"  bytes     Digestif.rmd160  keys_by inputs_by results_rmd160
-    ; "rmd160 (bigstring)",  makes ~name:"rmd160"  bigstring Digestif.rmd160  keys_bi inputs_bi results_rmd160
-    ; "blake2s",             makes ~name:"blake2s" bytes     Digestif.(blake2s BLAKE2S.digest_size) keys_by inputs_by results_blake2s
-    ; "blake2s (bigstring)", makes ~name:"blake2s" bigstring Digestif.(blake2s BLAKE2S.digest_size) keys_bi inputs_bi results_blake2s
+    [ "md5", makes ~name:"md5" bytes Digestif.md5 keys_by inputs_by results_md5
+    ; ( "md5 (bigstring)"
+      , makes ~name:"md5" bigstring Digestif.md5 keys_bi inputs_bi results_md5
+      )
+    ; ( "sha1"
+      , makes ~name:"sha1" bytes Digestif.sha1 keys_by inputs_by results_sha1 )
+    ; ( "sha1 (bigstring)"
+      , makes ~name:"sha1" bigstring Digestif.sha1 keys_bi inputs_bi
+          results_sha1 )
+    ; ( "sha224"
+      , makes ~name:"sha224" bytes Digestif.sha224 keys_by inputs_by
+          results_sha224 )
+    ; ( "sha224 (bigstring)"
+      , makes ~name:"sha224" bigstring Digestif.sha224 keys_bi inputs_bi
+          results_sha224 )
+    ; ( "sha256"
+      , makes ~name:"sha256" bytes Digestif.sha256 keys_by inputs_by
+          results_sha256 )
+    ; ( "sha256 (bigstring)"
+      , makes ~name:"sha256" bigstring Digestif.sha256 keys_bi inputs_bi
+          results_sha256 )
+    ; ( "sha384"
+      , makes ~name:"sha384" bytes Digestif.sha384 keys_by inputs_by
+          results_sha384 )
+    ; ( "sha384 (bigstring)"
+      , makes ~name:"sha384" bigstring Digestif.sha384 keys_bi inputs_bi
+          results_sha384 )
+    ; ( "sha512"
+      , makes ~name:"sha512" bytes Digestif.sha512 keys_by inputs_by
+          results_sha512 )
+    ; ( "sha512 (bigstring)"
+      , makes ~name:"sha512" bigstring Digestif.sha512 keys_bi inputs_bi
+          results_sha512 )
+    ; ( "blake2b"
+      , makes ~name:"blake2b" bytes
+          Digestif.(blake2b BLAKE2B.digest_size)
+          keys_by inputs_by results_blake2b )
+    ; ( "blake2b (bigstring)"
+      , makes ~name:"blake2b" bigstring
+          Digestif.(blake2b BLAKE2B.digest_size)
+          keys_bi inputs_bi results_blake2b )
+    ; ( "rmd160"
+      , makes ~name:"rmd160" bytes Digestif.rmd160 keys_by inputs_by
+          results_rmd160 )
+    ; ( "rmd160 (bigstring)"
+      , makes ~name:"rmd160" bigstring Digestif.rmd160 keys_bi inputs_bi
+          results_rmd160 )
+    ; ( "blake2s"
+      , makes ~name:"blake2s" bytes
+          Digestif.(blake2s BLAKE2S.digest_size)
+          keys_by inputs_by results_blake2s )
+    ; ( "blake2s (bigstring)"
+      , makes ~name:"blake2s" bigstring
+          Digestif.(blake2s BLAKE2S.digest_size)
+          keys_bi inputs_bi results_blake2s )
     ; "blake2s (keyed, input file)", BLAKE2.tests_blake2s
     ; "blake2b (keyed, input file)", BLAKE2.tests_blake2b
     ; "ripemd160", RMD160.tests ]
