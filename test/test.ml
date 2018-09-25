@@ -39,7 +39,7 @@ let test_hmac : type k a.
     a s -> k Digestif.hash -> a -> a -> k Digestif.t -> unit =
  fun kind hash key input expect ->
   let title = title `HMAC hash kind in
-  let test_hash = Alcotest.testable (Digestif.pp hash) (Digestif.eq hash) in
+  let test_hash = Alcotest.testable (Digestif.pp hash) (Digestif.equal hash) in
   match kind with
   | Bytes ->
       let result = Digestif.hmaci_bytes hash ~key (fun f -> f input) in
@@ -55,7 +55,7 @@ let test_digest : type k a. a s -> k Digestif.hash -> a -> k Digestif.t -> unit
     =
  fun kind hash input expect ->
   let title = title `Digest hash kind in
-  let test_hash = Alcotest.testable (Digestif.pp hash) (Digestif.eq hash) in
+  let test_hash = Alcotest.testable (Digestif.pp hash) (Digestif.equal hash) in
   match kind with
   | Bytes ->
       let result = Digestif.digesti_bytes hash (fun f -> f input) in
@@ -366,7 +366,7 @@ module RMD160 = struct
     in
     let result = Digestif.digesti_string Digestif.rmd160 (iter 1_000_000) in
     let test_hash =
-      Alcotest.testable Digestif.(pp rmd160) Digestif.(eq rmd160)
+      Alcotest.testable Digestif.(pp rmd160) Digestif.(equal rmd160)
     in
     ( "give me a million"
     , `Slow
