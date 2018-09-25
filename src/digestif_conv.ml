@@ -77,7 +77,7 @@ struct
   let consistent_of_hex_opt hex =
     match consistent_of_hex hex with
     | digest -> Some digest
-    | exception _ -> None
+    | exception Invalid_argument _ -> None
 
   let pp ppf hash =
     for i = 0 to D.digest_size - 1 do
