@@ -1,13 +1,9 @@
 external random_seed : unit -> int array = "caml_sys_random_seed"
 
 let seed = random_seed ()
-
 let () = Random.full_init seed
-
 let () = Fmt.epr "seed: %a.\n%!" Fmt.(Dump.array int) seed
-
 let strf = Fmt.strf
-
 let invalid_arg = Fmt.invalid_arg
 
 let list_init f l =
@@ -23,7 +19,6 @@ let random_string length _ =
   close_in ic ; rs
 
 let hashes = list_init (random_string Digestif.SHA1.digest_size) 32
-
 let hashes = List.map Digestif.SHA1.of_raw_string hashes
 
 let consistent_hex =
@@ -103,13 +98,12 @@ let test_consistent_hex_iso i random_input =
 
 let tests () =
   Alcotest.run "digestif"
-    [ ("of_hex", List.mapi test_hex_success consistent_hex)
-    ; ( "consistent_of_hex"
-      , List.mapi test_consistent_hex_success consistent_hex )
-    ; ("of_hex", List.mapi test_hex_success spaces_hex)
-    ; ("consistent_of_hex", List.mapi test_consistent_hex_success spaces_hex)
-    ; ("of_hex", List.mapi test_hex_success inconsistent_hex)
-    ; ("consistent_of_hex", List.mapi test_consistent_hex_fail inconsistent_hex)
+    [ "of_hex", List.mapi test_hex_success consistent_hex
+    ; "consistent_of_hex", List.mapi test_consistent_hex_success consistent_hex
+    ; "of_hex", List.mapi test_hex_success spaces_hex
+    ; "consistent_of_hex", List.mapi test_consistent_hex_success spaces_hex
+    ; "of_hex", List.mapi test_hex_success inconsistent_hex
+    ; "consistent_of_hex", List.mapi test_consistent_hex_fail inconsistent_hex
     ; ( "iso of_hex"
       , List.mapi test_hex_iso
           (list_init (random_string Digestif.SHA1.digest_size) 64) )
