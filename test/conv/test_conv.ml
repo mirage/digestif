@@ -77,7 +77,7 @@ let test_consistent_hex_fail i hex =
     assert false
   with Invalid_argument _ -> ()
 
-let sha1 = Alcotest.testable Digestif.SHA1.pp Digestif.SHA1.eq
+let sha1 = Alcotest.testable Digestif.SHA1.pp Digestif.SHA1.equal
 
 let test_hex_iso i random_input =
   Alcotest.test_case (strf "iso:%d" i) `Quick

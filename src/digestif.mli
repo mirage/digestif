@@ -119,11 +119,8 @@ module type S = sig
       usually OK, but this is not constant time, so in some cases it could leak
       some information. *)
 
-  val eq : t equal
-  (** The equal function for {!t}. *)
-
-  val neq : t equal
-  (** [neq a b = not (eq a b)]. *)
+  val equal : t equal
+  (** The equal (constant-time) function for {!t}. *)
 
   val pp : t pp
   (** Pretty-printer of {!t}. *)
@@ -258,8 +255,7 @@ val hmaci_bytes : 'k hash -> key:Bytes.t -> Bytes.t iter -> 'k t
 val hmaci_string : 'k hash -> key:String.t -> String.t iter -> 'k t
 val hmaci_bigstring : 'k hash -> key:bigstring -> bigstring iter -> 'k t
 val pp : 'k hash -> 'k t pp
-val eq : 'k hash -> 'k t equal
-val neq : 'k hash -> 'k t equal
+val equal : 'k hash -> 'k t equal
 val unsafe_compare : 'k hash -> 'k t compare
 val to_hex : 'k hash -> 'k t -> string
 val of_hex : 'k hash -> string -> 'k t

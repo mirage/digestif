@@ -48,8 +48,7 @@ module type S = sig
   val hmacv_string : key:String.t -> String.t list -> t
   val hmacv_bigstring : key:bigstring -> bigstring list -> t
   val unsafe_compare : t compare
-  val eq : t equal
-  val neq : t equal
+  val equal : t equal
   val pp : t pp
   val of_hex : string -> t
   val of_hex_opt : string -> t option
@@ -582,17 +581,11 @@ let unsafe_compare : type k. k hash -> k t -> k t -> int =
   let unsafe : 'k t -> H.t = H.of_raw_string in
   H.unsafe_compare (unsafe a) (unsafe b)
 
-let eq : type k. k hash -> k t equal =
+let equal : type k. k hash -> k t equal =
  fun hash a b ->
   let module H = (val module_of hash) in
   let unsafe : 'k t -> H.t = H.of_raw_string in
-  H.eq (unsafe a) (unsafe b)
-
-let neq : type k. k hash -> k t equal =
- fun hash a b ->
-  let module H = (val module_of hash) in
-  let unsafe : 'k t -> H.t = H.of_raw_string in
-  H.neq (unsafe a) (unsafe b)
+  H.equal (unsafe a) (unsafe b)
 
 let pp : type k. k hash -> k t pp =
  fun hash ppf t ->
