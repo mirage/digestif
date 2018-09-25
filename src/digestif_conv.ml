@@ -44,7 +44,9 @@ struct
     String.init D.digest_size (go false)
 
   let of_hex_opt hex =
-    match of_hex hex with digest -> Some digest | exception _ -> None
+    match of_hex hex with
+    | digest -> Some digest
+    | exception Invalid_argument _ -> None
 
   let consistent_of_hex str =
     let offset = ref 0 in
@@ -89,7 +91,9 @@ struct
     else x
 
   let of_raw_string_opt x =
-    match of_raw_string x with digest -> Some digest | exception _ -> None
+    match of_raw_string x with
+    | digest -> Some digest
+    | exception Invalid_argument _ -> None
 
   let to_raw_string x = x
 end
