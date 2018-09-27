@@ -10,11 +10,11 @@ dev-repo:     "https://github.com/mirage/digestif.git"
 doc:          "https://mirage.github.io/digestif/"
 license:      "MIT"
 
-build: [ "jbuilder" "build" "-p" name "-j" jobs ]
-build-test: [ "jbuilder" "runtest" "-j" jobs ]
+build: [ "dune" "build" "-p" name "-j" jobs ]
+build-test: [ "dune" "runtest" "-j" jobs ]
 
 depends: [
-  "jbuilder"       {build}
+  "dune"           {build}
   "base-bytes"
   "base-bigarray"
   "eqaf"
