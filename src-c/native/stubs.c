@@ -28,14 +28,14 @@
   CAMLprim value                                                             \
   caml_digestif_ ## name ## _ba_update (value ctx, value src, value off, value len) { \
     CAMLparam4 (ctx, src, off, len);                                         \
-    uint8_t *off_ = Caml_ba_data_val(src) + Int_val (off);                   \
-    int len_ = Int_val (len);                                                \
+    uint8_t *off_ = ((uint8_t*) Caml_ba_data_val(src)) + Long_val (off);     \
+    uint32_t len_ = Long_val (len);                                          \
     struct name ## _ctx ctx_;                                                \
-    memcpy(&ctx_, String_val(ctx), sizeof(struct name ## _ctx));             \
+    memcpy(&ctx_, Bytes_val(ctx), sizeof(struct name ## _ctx));              \
     caml_release_runtime_system();                                           \
     digestif_ ## name ## _update (&ctx_, off_, len_);                        \
     caml_acquire_runtime_system();                                           \
-    memcpy(String_val(ctx), &ctx_, sizeof(struct name ## _ctx));             \
+    memcpy(Bytes_val(ctx), &ctx_, sizeof(struct name ## _ctx));              \
     CAMLreturn (Val_unit);                                                   \
   }                                                                          \
                                                                              \
