@@ -109,7 +109,9 @@ module Unsafe (Hash : Hash) (D : Desc) = struct
       | None, Some len -> 0, len
       | None, None -> 0, By.length buf
     in
-    unsafe_feed_bytes ctx buf off len
+    if off < 0 || len < 0 || off > By.length buf - len then
+      invalid_arg "offset out of bounds"
+    else unsafe_feed_bytes ctx buf off len
 
   let unsafe_feed_string ctx ?off ?len buf =
     unsafe_feed_bytes ctx ?off ?len (By.unsafe_of_string buf)
@@ -122,7 +124,9 @@ module Unsafe (Hash : Hash) (D : Desc) = struct
       | None, Some len -> 0, len
       | None, None -> 0, Bi.length buf
     in
-    unsafe_feed_bigstring ctx buf off len
+    if off < 0 || len < 0 || off > Bi.length buf - len then
+      invalid_arg "offset out of bounds"
+    else unsafe_feed_bigstring ctx buf off len
 
   let unsafe_get = unsafe_get
 end
