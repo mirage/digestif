@@ -123,7 +123,9 @@ module Unsafe (F : Foreign) (D : Desc) = struct
       | None, Some len -> 0, len
       | None, None -> 0, By.length buf
     in
-    F.Bytes.update t buf off len
+    if off < 0 || len < 0 || off > By.length buf - len then
+      invalid_arg "offset out of bounds"
+    else F.Bytes.update t buf off len
 
   let unsafe_feed_string t ?off ?len buf =
     unsafe_feed_bytes t ?off ?len (Bytes.unsafe_of_string buf)
@@ -136,7 +138,9 @@ module Unsafe (F : Foreign) (D : Desc) = struct
       | None, Some len -> 0, len
       | None, None -> 0, Bi.length buf
     in
-    F.Bigstring.update t buf off len
+    if off < 0 || len < 0 || off > Bi.length buf - len then
+      invalid_arg "offset out of bounds"
+    else F.Bigstring.update t buf off len
 
   let unsafe_get t =
     let res = By.create digest_size in
