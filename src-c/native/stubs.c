@@ -11,6 +11,12 @@
 #include <caml/memory.h>
 #include <string.h>
 
+#ifdef CAML_SAFE_STRING
+#define Ctx_val(x) Bytes_val(x)
+#else
+#define Ctx_val(x) String_val(x)
+#endif
+
 #define __define_hash(name, upper)                                           \
                                                                              \
   CAMLprim value                                                             \
@@ -31,11 +37,11 @@
     uint8_t *off_ = ((uint8_t*) Caml_ba_data_val(src)) + Long_val (off);     \
     uint32_t len_ = Long_val (len);                                          \
     struct name ## _ctx ctx_;                                                \
-    memcpy(&ctx_, Bytes_val(ctx), sizeof(struct name ## _ctx));              \
+    memcpy(&ctx_, Ctx_val(ctx), sizeof(struct name ## _ctx));                \
     caml_release_runtime_system();                                           \
     digestif_ ## name ## _update (&ctx_, off_, len_);                        \
     caml_acquire_runtime_system();                                           \
-    memcpy(Bytes_val(ctx), &ctx_, sizeof(struct name ## _ctx));              \
+    memcpy(Ctx_val(ctx), &ctx_, sizeof(struct name ## _ctx));                \
     CAMLreturn (Val_unit);                                                   \
   }                                                                          \
                                                                              \
