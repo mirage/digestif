@@ -7,6 +7,13 @@
 #include "blake2b.h"
 #include "blake2s.h"
 #include "ripemd160.h"
+#include <caml/threads.h>
+#include <caml/memory.h>
+#include <string.h>
+
+#ifndef Bytes_val
+#define Bytes_val(x) String_val(x)
+#endif
 
 #define __define_hash(name, upper)                                           \
                                                                              \
@@ -24,10 +31,16 @@
                                                                              \
   CAMLprim value                                                             \
   caml_digestif_ ## name ## _ba_update (value ctx, value src, value off, value len) { \
-    digestif_ ## name ## _update (                                           \
-      (struct name ## _ctx *) String_val (ctx),                              \
-      _ba_uint8_off (src, off), Int_val (len));                              \
-    return Val_unit;                                                         \
+    CAMLparam4 (ctx, src, off, len);                                         \
+    uint8_t *off_ = ((uint8_t*) Caml_ba_data_val(src)) + Long_val (off);     \
+    uint32_t len_ = Long_val (len);                                          \
+    struct name ## _ctx ctx_;                                                \
+    memcpy(&ctx_, Bytes_val(ctx), sizeof(struct name ## _ctx));                \
+    caml_release_runtime_system();                                           \
+    digestif_ ## name ## _update (&ctx_, off_, len_);                        \
+    caml_acquire_runtime_system();                                           \
+    memcpy(Bytes_val(ctx), &ctx_, sizeof(struct name ## _ctx));                \
+    CAMLreturn (Val_unit);                                                   \
   }                                                                          \
                                                                              \
   CAMLprim value                                                             \

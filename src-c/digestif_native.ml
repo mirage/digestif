@@ -32,7 +32,6 @@ module MD5 = struct
     external update :
       ctx -> ba -> off -> size -> unit
       = "caml_digestif_md5_ba_update"
-      [@@noalloc]
 
     external finalize :
       ctx -> ba -> off -> unit
@@ -66,7 +65,6 @@ module SHA1 = struct
     external update :
       ctx -> ba -> off -> size -> unit
       = "caml_digestif_sha1_ba_update"
-      [@@noalloc]
 
     external finalize :
       ctx -> ba -> off -> unit
@@ -100,7 +98,6 @@ module SHA224 = struct
     external update :
       ctx -> ba -> off -> size -> unit
       = "caml_digestif_sha224_ba_update"
-      [@@noalloc]
 
     external finalize :
       ctx -> ba -> off -> unit
@@ -134,7 +131,6 @@ module SHA256 = struct
     external update :
       ctx -> ba -> off -> size -> unit
       = "caml_digestif_sha256_ba_update"
-      [@@noalloc]
 
     external finalize :
       ctx -> ba -> off -> unit
@@ -168,7 +164,6 @@ module SHA384 = struct
     external update :
       ctx -> ba -> off -> size -> unit
       = "caml_digestif_sha384_ba_update"
-      [@@noalloc]
 
     external finalize :
       ctx -> ba -> off -> unit
@@ -202,7 +197,6 @@ module SHA512 = struct
     external update :
       ctx -> ba -> off -> size -> unit
       = "caml_digestif_sha512_ba_update"
-      [@@noalloc]
 
     external finalize :
       ctx -> ba -> off -> unit
@@ -236,7 +230,6 @@ module BLAKE2B = struct
     external update :
       ctx -> ba -> off -> size -> unit
       = "caml_digestif_blake2b_ba_update"
-      [@@noalloc]
 
     external finalize :
       ctx -> ba -> off -> unit
@@ -287,7 +280,6 @@ module BLAKE2S = struct
     external update :
       ctx -> ba -> off -> size -> unit
       = "caml_digestif_blake2s_ba_update"
-      [@@noalloc]
 
     external finalize :
       ctx -> ba -> off -> unit
@@ -338,7 +330,6 @@ module RMD160 = struct
     external update :
       ctx -> ba -> off -> size -> unit
       = "caml_digestif_rmd160_ba_update"
-      [@@noalloc]
 
     external finalize :
       ctx -> ba -> off -> unit
