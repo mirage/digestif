@@ -1,3 +1,22 @@
+v0.7 2018-10-15 Paris (France)
+--------------------------------
+
+- Fixed HMAC on BLAKE2{S,B} (@emillon)
+- Fixed `convenient_of_hex` (@dinosaure, @hannesm, @cfcs)
+- Add `of_raw_string`/`to_raw_string` (@samoht)
+- Test `digestif` on solo5 and xen backends (@amoht)
+- *breaking change*, commont type `t` is an abstract type
+- Fixed META file (@dinosaure, @g2p)
+- New dependency `eqaf` (@dinosaure, @cfcs, @hannesm) (constant-time equal function)
+- Remove `Obj.magic` in common implementation (@dinosaure, @samoht)
+- Add conveniences functions in common implementation (@hcarty)
+- Add option-returning functions in common implementation (@harcty)
+- Verify length of string on `of_raw_string` function (@hcarty)
+- Release runtime lock (@andersfugmann, @dinosaure, @cfcs)
+- Bounds check (@cfcs, @dinosaure)
+- Fixed linking problem (@andersfugmann, @g2p, @dinosaure)
+- Update OPAM file (@dinosaure)
+
 v0.6.1 2018-07-24 Paris (France)
 --------------------------------
 
