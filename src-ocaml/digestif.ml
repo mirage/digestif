@@ -420,6 +420,17 @@ module SHA512 : S with type kind = [`SHA512] =
       let kind = `SHA512
     end)
 
+module WHIRLPOOL : S with type kind = [`WHIRLPOOL] =
+  Make
+    (Baijiu_whirlpool.Unsafe)
+    (struct
+      let digest_size, block_size = 64, 64
+
+      type kind = [`WHIRLPOOL]
+
+      let kind = `WHIRLPOOL
+    end)
+
 module BLAKE2B : sig
   include S with type kind = [`BLAKE2B]
   module Keyed : MAC with type t = t
@@ -504,6 +515,7 @@ let module_of : type k. k hash -> (module S with type kind = k) =
   | SHA256 -> (module SHA256)
   | SHA384 -> (module SHA384)
   | SHA512 -> (module SHA512)
+  | WHIRLPOOL -> (module WHIRLPOOL)
   | BLAKE2B digest_size -> (
     match Hashtbl.find b2b digest_size with
     | exception Not_found ->
@@ -655,6 +667,7 @@ let of_sha224 hash = of_raw_string sha224 (SHA224.to_raw_string hash)
 let of_sha256 hash = of_raw_string sha256 (SHA256.to_raw_string hash)
 let of_sha384 hash = of_raw_string sha384 (SHA384.to_raw_string hash)
 let of_sha512 hash = of_raw_string sha512 (SHA512.to_raw_string hash)
+let of_whirlpool hash = of_raw_string whirlpool (WHIRLPOOL.to_raw_string hash)
 
 let of_blake2b hash =
   of_raw_string (blake2b BLAKE2B.digest_size) (BLAKE2B.to_raw_string hash)

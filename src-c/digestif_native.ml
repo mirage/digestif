@@ -221,6 +221,39 @@ module SHA512 = struct
   external ctx_size : unit -> int = "caml_digestif_sha512_ctx_size" [@@noalloc]
 end
 
+module WHIRLPOOL = struct
+  type kind = [`WHIRLPOOL]
+
+  module Bigstring = struct
+    external init : ctx -> unit = "caml_digestif_whirlpool_ba_init" [@@noalloc]
+
+    external update :
+      ctx -> ba -> off -> size -> unit
+      = "caml_digestif_whirlpool_ba_update"
+
+    external finalize :
+      ctx -> ba -> off -> unit
+      = "caml_digestif_whirlpool_ba_finalize"
+      [@@noalloc]
+  end
+
+  module Bytes = struct
+    external init : ctx -> unit = "caml_digestif_whirlpool_st_init" [@@noalloc]
+
+    external update :
+      ctx -> st -> off -> size -> unit
+      = "caml_digestif_whirlpool_st_update"
+      [@@noalloc]
+
+    external finalize :
+      ctx -> st -> off -> unit
+      = "caml_digestif_whirlpool_st_finalize"
+      [@@noalloc]
+  end
+
+  external ctx_size : unit -> int = "caml_digestif_whirlpool_ctx_size" [@@noalloc]
+end
+
 module BLAKE2B = struct
   type kind = [`BLAKE2B]
 

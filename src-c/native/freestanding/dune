@@ -3,7 +3,7 @@
  (public_name digestif.rakia.freestanding)
  (optional)
  (libraries   mirage-solo5)
- (c_names     blake2b blake2s md5 ripemd160 sha1 sha256 sha512 misc stubs)
+ (c_names     blake2b blake2s md5 ripemd160 sha1 sha256 sha512 whirlpool misc stubs)
  (c_flags     (:include cflags.sexp)))
 
 (rule (copy# ../blake2b.c blake2b.c))
@@ -13,6 +13,7 @@
 (rule (copy# ../sha1.c sha1.c))
 (rule (copy# ../sha256.c sha256.c))
 (rule (copy# ../sha512.c sha512.c))
+(rule (copy# ../whirlpool.c whirlpool.c))
 (rule (copy# ../misc.c misc.c))
 (rule (copy# ../stubs.c stubs.c))
 
