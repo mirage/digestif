@@ -557,7 +557,6 @@ module Unsafe : S = struct
   let whirlpool_do_chunk : type a.
       be64_to_cpu:(a -> int -> int64) -> ctx -> a -> int -> unit =
    fun ~be64_to_cpu ctx buf off ->
-    (* --- TO_DO --- *)
     let key = Array.init 2 (fun _ -> Array.make 8 (Int64.zero)) in
     let state = Array.init 2 (fun _ -> Array.make 8 (Int64.zero)) in
     let m = ref 0 in
@@ -574,44 +573,28 @@ module Unsafe : S = struct
     let wp_op src shift =
       Int64.(
         let shift = of_int shift in
-        k.(0).(to_int ((src.(to_int (shift land 7L)) lsr 56 land 0xffL))) lxor
+        k.(0).(to_int ((src.(to_int ( shift       land 7L)) lsr 56) land 0xffL)) lxor
         k.(1).(to_int ((src.(to_int ((shift + 7L) land 7L)) lsr 48) land 0xffL)) lxor
         k.(2).(to_int ((src.(to_int ((shift + 6L) land 7L)) lsr 40) land 0xffL)) lxor
         k.(3).(to_int ((src.(to_int ((shift + 5L) land 7L)) lsr 32) land 0xffL)) lxor
         k.(4).(to_int ((src.(to_int ((shift + 4L) land 7L)) lsr 24) land 0xffL)) lxor
         k.(5).(to_int ((src.(to_int ((shift + 3L) land 7L)) lsr 16) land 0xffL)) lxor
         k.(6).(to_int ((src.(to_int ((shift + 2L) land 7L)) lsr  8) land 0xffL)) lxor
-        k.(7).(to_int ((src.(to_int ((shift + 1L) land 7L))      ) land 0xffL))
+        k.(7).(to_int ((src.(to_int ((shift + 1L) land 7L))       ) land 0xffL))
         ) in
     for i = 0 to 9 do
-      let m0, m1 = !m, !m lxor 1 in (
-      key.(m1).(0) <- Int64.(wp_op key.(m0) 0 lxor rc.(i));
-      key.(m1).(1) <- wp_op key.(m0) 1;
-      key.(m1).(2) <- wp_op key.(m0) 2;
-      key.(m1).(3) <- wp_op key.(m0) 3;
-      key.(m1).(4) <- wp_op key.(m0) 4;
-      key.(m1).(5) <- wp_op key.(m0) 5;
-      key.(m1).(6) <- wp_op key.(m0) 6;
-      key.(m1).(7) <- wp_op key.(m0) 7;
-      state.(m1).(0) <- Int64.(wp_op state.(m0) 0 lxor key.(m1).(0));
-      state.(m1).(1) <- Int64.(wp_op state.(m0) 1 lxor key.(m1).(1));
-      state.(m1).(2) <- Int64.(wp_op state.(m0) 2 lxor key.(m1).(2));
-      state.(m1).(3) <- Int64.(wp_op state.(m0) 3 lxor key.(m1).(3));
-      state.(m1).(4) <- Int64.(wp_op state.(m0) 4 lxor key.(m1).(4));
-      state.(m1).(5) <- Int64.(wp_op state.(m0) 5 lxor key.(m1).(5));
-      state.(m1).(6) <- Int64.(wp_op state.(m0) 6 lxor key.(m1).(6));
-      state.(m1).(7) <- Int64.(wp_op state.(m0) 7 lxor key.(m1).(7)));
+      let m0, m1 = !m, !m lxor 1 in
+      let upd_key i = key.(m1).(i) <- wp_op key.(m0) i; in
+      let upd_state i =
+        state.(m1).(i) <- Int64.(wp_op state.(m0) i lxor key.(m1).(i))
+      in
+      for i = 0 to 7 do upd_key i done;
+      key.(m1).(0) <- Int64.(key.(m1).(0) lxor rc.(i));
+      for i = 0 to 7 do upd_state i done;
       m := !m lxor 1;
     done ;
-    let open Int64 in
-    ctx.h.(0) <- ctx.h.(0) lxor state.(0).(0) ;
-    ctx.h.(1) <- ctx.h.(1) lxor state.(0).(1) ;
-    ctx.h.(2) <- ctx.h.(2) lxor state.(0).(2) ;
-    ctx.h.(3) <- ctx.h.(3) lxor state.(0).(3) ;
-    ctx.h.(4) <- ctx.h.(4) lxor state.(0).(4) ;
-    ctx.h.(5) <- ctx.h.(5) lxor state.(0).(5) ;
-    ctx.h.(6) <- ctx.h.(6) lxor state.(0).(6) ;
-    ctx.h.(7) <- ctx.h.(7) lxor state.(0).(7) ;
+    let upd_hash i = Int64.(ctx.h.(i) <- ctx.h.(i) lxor state.(0).(i)) in
+    for i = 0 to 7 do upd_hash i done;
     ()
 
   let feed : type a.
