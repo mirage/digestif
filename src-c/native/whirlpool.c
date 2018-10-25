@@ -577,14 +577,13 @@ void digestif_whirlpool_init(struct whirlpool_ctx* ctx)
 	digestif_whirlpool_sbox[6][(int)(src[(shift + 2) & 7] >>  8) & 0xff] ^ \
 	digestif_whirlpool_sbox[7][(int)(src[(shift + 1) & 7]      ) & 0xff])
 
-
 /**
  * The core transformation. Process a 512-bit block.
  *
  * @param hash algorithm state
  * @param block the message block to process
  */
-static void digestif_whirlpool_process_block(uint64_t *hash, uint64_t* p_block)
+static void whirlpool_do_chunk(uint64_t *hash, uint64_t* p_block)
 {
 	int i;                /* loop counter */
 	uint64_t K[2][8];       /* key */
@@ -666,7 +665,6 @@ static void digestif_whirlpool_process_block(uint64_t *hash, uint64_t* p_block)
 void digestif_whirlpool_update(struct whirlpool_ctx* ctx, uint8_t *data, uint32_t len)
 {
 	unsigned int index, to_fill;
-	// unsigned left;
 
 	/* check for partial buffer */
 	index = (unsigned int) (ctx->sz & 0x3f);
@@ -677,7 +675,7 @@ void digestif_whirlpool_update(struct whirlpool_ctx* ctx, uint8_t *data, uint32_
 	/* process partial buffer if there's enough data to make a block */
 	if (index && len >= to_fill) {
 		memcpy(ctx->buf + index, data, to_fill);
-		digestif_whirlpool_process_block(ctx->h, (uint64_t*)ctx->buf);
+		whirlpool_do_chunk(ctx->h, (uint64_t*)ctx->buf);
 		len -= to_fill;
 		data += to_fill;
 		index = 0;
@@ -685,45 +683,11 @@ void digestif_whirlpool_update(struct whirlpool_ctx* ctx, uint8_t *data, uint32_
 
 	/* process as much 128-block as possible */
 	for (; len >= 64; len -= 64, data += 64)
-		// uint64_t* aligned_message_block;
-		// if (0 == (7 & ((const char*)(data) - (const char*)0))) {
-		// 	/* the most common case is processing of an already aligned message
-		// 	without copying it */
-		// 	aligned_message_block = (uint64_t*)data;
-		// } else {
-		// 	memcpy(ctx->buf, data, 64);
-		// 	aligned_message_block = (uint64_t*)ctx->buf;
-		// }
-		digestif_whirlpool_process_block(ctx->h, data);
+		whirlpool_do_chunk(ctx->h, (uint64_t*)data);
 
 	/* append data into buf */
 	if (len)
 		memcpy(ctx->buf + index, data, len);
-}
-
-/**
- * Copy a memory block with changed byte order.
- * The byte order is changed from little-endian 64-bit integers
- * to big-endian (or vice-versa).
- *
- * @param to     the pointer where to copy memory block
- * @param index  the index to start writing from
- * @param from   the source block to copy
- * @param length length of the memory block
- */
-void digestif_swap_copy_str_to_u64(void* to, int index, const void* from, size_t length)
-{
-	/* if all pointers and length are 64-bits aligned */
-	if ( 0 == (( (int)((char*)to - (char*)0) | ((char*)from - (char*)0) | index | length ) & 7) ) {
-		/* copy aligned memory block as 64-bit integers */
-		const uint64_t* src = (const uint64_t*)from;
-		const uint64_t* end = (const uint64_t*)((const char*)src + length);
-		uint64_t* dst = (uint64_t*)((char*)to + index);
-		while (src < end) *(dst++) = bitfn_swap64(*(src++));
-	} else {
-		const char* src = (const char*)from;
-		for (length += index; (size_t)index < length; index++) ((char*)to)[index ^ 7] = *(src++);
-	}
 }
 
 /**
@@ -734,8 +698,10 @@ void digestif_swap_copy_str_to_u64(void* to, int index, const void* from, size_t
  */
 void digestif_whirlpool_finalize(struct whirlpool_ctx* ctx, uint8_t *out)
 {
-	unsigned index = (unsigned)ctx->sz & 63;
+    uint32_t i, index;
 	uint64_t* msg64 = (uint64_t*)ctx->buf;
+	index = (unsigned int) (ctx->sz & 0x3f);
+	uint64_t *p = (uint64_t *) out;
 
 	/* pad message and run for last block */
 	ctx->buf[index++] = 0x80;
@@ -746,16 +712,18 @@ void digestif_whirlpool_finalize(struct whirlpool_ctx* ctx, uint8_t *out)
 		while (index < 64) {
 			ctx->buf[index++] = 0;
 		}
-		digestif_whirlpool_process_block(ctx->h, msg64);
+		whirlpool_do_chunk(ctx->h, msg64);
 		index = 0;
 	}
+    
 	/* due to optimization actually only 64-bit of message length are stored */
 	while (index < 56) {
 		ctx->buf[index++] = 0;
 	}
 	msg64[7] = be64_to_cpu(ctx->sz << 3);
-	digestif_whirlpool_process_block(ctx->h, msg64);
+	whirlpool_do_chunk(ctx->h, msg64);
 
 	/* save result hash */
-	digestif_swap_copy_str_to_u64(out, 0, ctx->h, 64);
+	for (i = 0; i < 8; i++)
+		p[i] = cpu_to_be64(ctx->h[i]);
 }
