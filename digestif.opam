@@ -42,3 +42,12 @@ depends: [
   "fmt"            {with-test}
   "alcotest"       {with-test}
 ]
+
+depopts: [
+  "ocaml-freestanding"
+  "mirage-xen-posix"
+]
+
+conflicts: [
+  "ocaml-freestanding" {< "0.4.1"}
+]
