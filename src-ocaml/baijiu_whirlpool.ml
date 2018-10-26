@@ -4,7 +4,6 @@ module Bi = Digestif_bi
 module Int64 = struct
   include Int64
 
-  let zero = 0x0000000000000000L
   let ( lsl ) = Int64.shift_left
   let ( lsr ) = Int64.shift_right
   let ( asr ) = Int64.shift_right_logical
@@ -571,17 +570,9 @@ module Unsafe : S = struct
       ctx.h.(i) <- state.(0).(i);
     done;
     let wp_op src shift =
-      Int64.(
-        let shift = of_int shift in
-        k.(0).(to_int ((src.(to_int ( shift       land 7L)) lsr 56) land 0xffL)) lxor
-        k.(1).(to_int ((src.(to_int ((shift + 7L) land 7L)) lsr 48) land 0xffL)) lxor
-        k.(2).(to_int ((src.(to_int ((shift + 6L) land 7L)) lsr 40) land 0xffL)) lxor
-        k.(3).(to_int ((src.(to_int ((shift + 5L) land 7L)) lsr 32) land 0xffL)) lxor
-        k.(4).(to_int ((src.(to_int ((shift + 4L) land 7L)) lsr 24) land 0xffL)) lxor
-        k.(5).(to_int ((src.(to_int ((shift + 3L) land 7L)) lsr 16) land 0xffL)) lxor
-        k.(6).(to_int ((src.(to_int ((shift + 2L) land 7L)) lsr  8) land 0xffL)) lxor
-        k.(7).(to_int ((src.(to_int ((shift + 1L) land 7L))       ) land 0xffL))
-        ) in
+      let mask v = Int64.(to_int(v land 0xffL)) in
+      let get_k i = k.(i).(mask (Int64.shift_right src.((shift + 8 - i) land 7) (56 - 8 * i))) in
+      List.fold_left Int64.logxor Int64.zero (List.init 8 get_k) in
     for i = 0 to 9 do
       let m0, m1 = !m, !m lxor 1 in
       let upd_key i = key.(m1).(i) <- wp_op key.(m0) i; in
