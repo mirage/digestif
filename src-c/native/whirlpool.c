@@ -585,7 +585,7 @@ void digestif_whirlpool_init(struct whirlpool_ctx* ctx)
  */
 static void whirlpool_do_chunk(uint64_t *hash, uint64_t* p_block)
 {
-	int i;                /* loop counter */
+	int i;                  /* loop counter */
 	uint64_t K[2][8];       /* key */
 	uint64_t state[2][8];   /* state */
 
@@ -668,7 +668,7 @@ void digestif_whirlpool_update(struct whirlpool_ctx* ctx, uint8_t *data, uint32_
 
 	/* check for partial buffer */
 	index = (unsigned int) (ctx->sz & 0x3f);
-	to_fill = 64 - index; // XXX
+	to_fill = 64 - index; // sizeof(ctx->buf) - index
 
 	ctx->sz += len;
 
@@ -698,7 +698,7 @@ void digestif_whirlpool_update(struct whirlpool_ctx* ctx, uint8_t *data, uint32_
  */
 void digestif_whirlpool_finalize(struct whirlpool_ctx* ctx, uint8_t *out)
 {
-    uint32_t i, index;
+  uint32_t i, index;
 	uint64_t* msg64 = (uint64_t*)ctx->buf;
 	index = (uint32_t) (ctx->sz & 0x3f);
 	uint64_t *p = (uint64_t *) out;
@@ -715,7 +715,7 @@ void digestif_whirlpool_finalize(struct whirlpool_ctx* ctx, uint8_t *out)
 		whirlpool_do_chunk(ctx->h, msg64);
 		index = 0;
 	}
-    
+
 	/* due to optimization actually only 64-bit of message length are stored */
 	while (index < 56) {
 		ctx->buf[index++] = 0;
