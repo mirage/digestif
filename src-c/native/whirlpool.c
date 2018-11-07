@@ -700,7 +700,7 @@ void digestif_whirlpool_finalize(struct whirlpool_ctx* ctx, uint8_t *out)
 {
     uint32_t i, index;
 	uint64_t* msg64 = (uint64_t*)ctx->buf;
-	index = (unsigned int) (ctx->sz & 0x3f);
+	index = (uint32_t) (ctx->sz & 0x3f);
 	uint64_t *p = (uint64_t *) out;
 
 	/* pad message and run for last block */
