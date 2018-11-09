@@ -20,6 +20,7 @@ let title : type a k. [`HMAC | `Digest] -> k Digestif.hash -> a s -> string =
     | Digestif.SHA256 -> Fmt.string ppf "sha256"
     | Digestif.SHA384 -> Fmt.string ppf "sha384"
     | Digestif.SHA512 -> Fmt.string ppf "sha512"
+    | Digestif.WHIRLPOOL -> Fmt.string ppf "whirlpool"
     | Digestif.BLAKE2B _ -> Fmt.string ppf "blake2b"
     | Digestif.BLAKE2S _ -> Fmt.string ppf "blake2s"
   in
@@ -189,6 +190,14 @@ let results_sha512 =
   ; "f6ecfca37d2abcff4b362f1919629e784c4b618af77e1061bb992c11d7f518716f5df5978b0a1455d68ceeb10ced9251306d2f26181407be76a219d48c36b592"
   ]
   |> List.map (Digestif.of_hex Digestif.sha512)
+
+let results_whirlpool =
+  [ "1174a4781245c2c78435b68bd0eb5e462f66a455ccfde94f61be594f9db841e7f4e85ba740f31dfd89186724f953cbd454451e987c608958dc9b563fd9594776"
+  ; "3d595ccd1d4f4cfd045af53ba7d5c8283fee6ded6eaf1269071b6b4ea64800056b5077c6a942cfa1221bd4e5aed791276e5dd46a407d2b8007163d3e7cd1de66"
+  ; "7af46cc6bb193d7958bd55a91509c99570cbd233d48a8fbf05207017040e27671024a21fad3877ecd2a309fc13c403ea8e83c6423ab8d695b654dbf6a1d2e8ee"
+  ; "a8646f7e371a1f9de1169d21de9a59ff2a32c73617c9b73708a226081b9316e81442e793e094c41a89e79705f1832c22e0cd3ac93d3b68a6842ddf35169908ae"
+  ; "b80dc14932e92fda0ba7f09e1db20d514633d15c2b89ad96a96198f4f751f2acf34e4fe0c9e2d13c4efaf7082c0871584b8dde7a367703d6fdf4f400a52f9432" ]
+  |> List.map (Digestif.of_hex Digestif.whirlpool)
 
 let results_blake2b =
   [ "aba2eef053923ba3a671b54244580ca7c8dfa9c487431c3437e1a8504e166ed894778045a5c6a314fadee110a5254f6f370e9db1d3093a62e0448a5e91b1d4c6"
@@ -419,6 +428,12 @@ let tests () =
     ; ( "sha512 (bigstring)"
       , makes ~name:"sha512" bigstring Digestif.sha512 keys_bi inputs_bi
           results_sha512 )
+    ; ( "whirlpool"
+      , makes ~name:"whirlpool" bytes Digestif.whirlpool keys_by inputs_by
+          results_whirlpool )
+    ; ( "whirlpool (bigstring)"
+      , makes ~name:"whirlpool" bigstring Digestif.whirlpool keys_bi inputs_bi
+          results_whirlpool )
     ; ( "blake2b"
       , makes ~name:"blake2b" bytes
           Digestif.(blake2b BLAKE2B.digest_size)
