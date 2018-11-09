@@ -11,6 +11,7 @@ Digestif is a toolbox which implements hashes:
  * SHA256
  * SHA384
  * SHA512
+ * WHIRLPOOL
  * BLAKE2B
  * BLAKE2S
  * RIPEMD160

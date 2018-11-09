@@ -750,7 +750,7 @@ module Unsafe : S = struct
         k.(i).(mask
                  (Int64.shift_right src.((shift + 8 - i) land 7) (56 - (8 * i))))
       in
-      List.fold_left Int64.logxor Int64.zero (List.init 8 get_k)
+      Array.fold_left Int64.logxor Int64.zero (Array.init 8 get_k)
     in
     for i = 0 to 9 do
       let m0, m1 = !m, !m lxor 1 in
