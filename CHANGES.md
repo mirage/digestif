@@ -1,3 +1,10 @@
+v0.7.1 2018-11-15 Paris (France)
+--------------------------------
+
+- Cross compilation adjustments (@hannesm) (# 76)
+- Add the WHIRLPOOL hash algorithm (@clecat) (#77)
+- Backport fix on opam file (@dinosaure, @kit-ty-kate)
+
 v0.7 2018-10-15 Paris (France)
 --------------------------------
 
