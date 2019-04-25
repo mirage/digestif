@@ -25,6 +25,9 @@ implementation he wants to use. We provide 2 implementations:
 Both are well-tested. However, OCaml implementation is slower than the C
 implementation.
 
+**Note**: The linking trick requires `digestif.c` or `digestif.ocaml` to be the first of your dependencies.
+
+
 Home page: http://din.osau.re/
 
 Contact: Romain Calascibetta `<romain.calascibet ta@gmail.com>`
