@@ -1,11 +1,16 @@
 (library
  (name        digestif_c)
  (public_name digestif.c)
- (wrapped     false)
+ (implements  digestif)
  (libraries   bigarray eqaf digestif.rakia)
+ (private_modules digestif_native
+                  digestif_hash
+                  digestif_eq
+                  digestif_conv
+                  digestif_by
+                  digestif_bi)
  (flags       (:standard -no-keep-locs)))
 
-(rule (copy# ../src/digestif.mli     digestif.mli))
 (rule (copy# ../src/digestif_bi.ml   digestif_bi.ml))
 (rule (copy# ../src/digestif_by.ml   digestif_by.ml))
 (rule (copy# ../src/digestif_eq.ml   digestif_eq.ml))

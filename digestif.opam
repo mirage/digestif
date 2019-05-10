@@ -28,14 +28,14 @@ We provides implementation of:
 """
 
 build: [
-  [ "dune" "subst"]
+  [ "dune" "subst"] {pinned}
   [ "dune" "build" "-p" name "-j" jobs ]
   [ "dune" "runtest" "-p" name "-j" jobs ] {with-test}
 ]
 
 depends: [
   "ocaml"          {>= "4.03.0"}
-  "dune"           {build}
+  "dune"           {build & >= "1.9.2"}
   "eqaf"
   "base-bytes"
   "base-bigarray"
