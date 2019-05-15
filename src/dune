@@ -5,4 +5,5 @@
  (wrapped     false)
  (flags       (:standard -no-keep-locs))
  (virtual_modules digestif)
+ (default_implementation digestif.c)
  (libraries   eqaf))
