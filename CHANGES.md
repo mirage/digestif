@@ -1,12 +1,10 @@
-v0.7.1 2018-11-15 Paris (France)
---------------------------------
+### v0.7.1 2018-11-15 Paris (France)
 
 - Cross compilation adjustments (@hannesm) (# 76)
 - Add the WHIRLPOOL hash algorithm (@clecat) (#77)
 - Backport fix on opam file (@dinosaure, @kit-ty-kate)
 
-v0.7 2018-10-15 Paris (France)
---------------------------------
+### v0.7 2018-10-15 Paris (France)
 
 - Fixed HMAC on BLAKE2{S,B} (@emillon) (#46, #51)
 - Fixed `convenient_of_hex` (@dinosaure, @hannesm, @cfcs) (#55)
@@ -24,16 +22,14 @@ v0.7 2018-10-15 Paris (France)
 - Fixed linking problem (@andersfugmann, @g2p, @dinosaure) (#49, #53, #73, #74)
 - Update OPAM file (@dinosaure)
 
-v0.6.1 2018-07-24 Paris (France)
---------------------------------
+### v0.6.1 2018-07-24 Paris (France)
 
 - *breaking change* API: Digestif implements a true linking trick. End-user need
   to explicitely link with `digestif.{c,ocaml}` and it needs to be the first of
   your dependencies.
 - move to `jbuilder`/`dune`
 
-v0.6 2018-07-05 Paris (France)
-------------------------------
+### v0.6 2018-07-05 Paris (France)
 
 - *breaking change* API:
   From a consensus between people who use `digestif`, we decide to delete `*.Bytes.*` and `*.Bigstring.*` sub-modules.
@@ -48,8 +44,7 @@ v0.6 2018-07-05 Paris (France)
   (@cfcs)
 - Add `consistent_of_hex` (@hannesm, @cfcs)
 
-v0.4 2017-10-30 Mysore / ಮೈಸೂರು (India)
-----------------------------------------
+### v0.4 2017-10-30 Mysore / ಮೈಸೂರು (India)
 
 - Add an automatised test suit
 - Add the RIPEMD160 hash algorithm
@@ -57,20 +52,17 @@ v0.4 2017-10-30 Mysore / ಮೈಸೂರು (India)
 - Update authors
 - Add `feed_bytes` and `feed_bigstring` for `Bytes` and `Bigstring`
 
-v0.3 2017-07-21 Phnom Penh (Cambodia)
--------------------------------------
+### v0.3 2017-07-21 Phnom Penh (Cambodia)
 
 - Fixed issue #6
 - Make a new test suit
 
-v0.2 2017-07-05 Phnom Penh (Cambodia)
--------------------------------------
+### v0.2 2017-07-05 Phnom Penh (Cambodia)
 
 - Implementation of the hash function in pure OCaml
 - Link improvement (à la `mtime`) to decide to use the C stub or the OCaml implementation
 - Improvement of the common interface (pretty-print, type t, etc.)
 
-v0.1 2017-05-12 Rạch Giá (Vietnam)
-------------------------------------
+### v0.1 2017-05-12 Rạch Giá (Vietnam)
 
 - First release
