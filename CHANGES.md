@@ -1,3 +1,11 @@
+### v0.7.2 2019-05-16 Paris (France)
+
+- Add conflict with `< mirage-xen-posix.3.1.0` packages (@hannesm)
+- Add a note on README.md about the linking-trick and order of dependencies (@rizo)
+- Use experimental feature of variants with `dune` (@dinosaure, review @rgrinberg)
+
+  `digestif` requires at least `dune.1.9.2`
+
 ### v0.7.1 2018-11-15 Paris (France)
 
 - Cross compilation adjustments (@hannesm) (# 76)
