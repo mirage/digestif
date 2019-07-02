@@ -13,6 +13,8 @@ module Eq = Digestif_eq
 module Hash = Digestif_hash
 module Conv = Digestif_conv
 
+let failwith fmt = Format.ksprintf failwith fmt
+
 module type S = sig
   val digest_size : int
 
@@ -313,11 +315,16 @@ module type Foreign_BLAKE2 = sig
     val with_outlen_and_key : ctx -> int -> st -> int -> int -> unit
   end
 
+  val max_outlen : unit -> int
   val ctx_size : unit -> int
   val key_size : unit -> int
 end
 
 module Make_BLAKE2 (F : Foreign_BLAKE2) (D : Desc) = struct
+  let () =
+    if D.digest_size > F.max_outlen ()
+    then failwith "Invalid digest_size:%d to make a BLAKE2{S,B} implementation" D.digest_size
+
   include Make (struct
       type kind = F.kind
 

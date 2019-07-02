@@ -112,6 +112,11 @@ caml_digestif_blake2b_key_size(__unit ()) {
 }
 
 CAMLprim value
+caml_digestif_blake2b_max_outlen(__unit ()) {
+  return Val_int (BLAKE2B_OUTBYTES);
+}
+
+CAMLprim value
 caml_digestif_blake2b_digest_size(value ctx) {
   return Val_int(((struct blake2b_ctx *) String_val (ctx))->outlen);
 }
@@ -139,6 +144,11 @@ caml_digestif_blake2s_st_init_with_outlen_and_key(value ctx, value outlen, value
 CAMLprim value
 caml_digestif_blake2s_key_size(__unit ()) {
   return Val_int (BLAKE2S_KEYBYTES);
+}
+
+CAMLprim value
+caml_digestif_blake2s_max_outlen(__unit ()) {
+  return Val_int (BLAKE2S_OUTBYTES);
 }
 
 CAMLprim value

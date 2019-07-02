@@ -300,6 +300,9 @@ module BLAKE2B = struct
   external key_size : unit -> int = "caml_digestif_blake2b_key_size"
     [@@noalloc]
 
+  external max_outlen : unit -> int = "caml_digestif_blake2b_max_outlen"
+    [@@noalloc]
+
   external digest_size : ctx -> int = "caml_digestif_blake2b_digest_size"
     [@@noalloc]
 end
@@ -348,6 +351,9 @@ module BLAKE2S = struct
     [@@noalloc]
 
   external key_size : unit -> int = "caml_digestif_blake2s_key_size"
+    [@@noalloc]
+
+  external max_outlen : unit -> int = "caml_digestif_blake2s_max_outlen"
     [@@noalloc]
 
   external digest_size : ctx -> int = "caml_digestif_blake2s_digest_size"

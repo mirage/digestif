@@ -489,11 +489,11 @@ let tests () =
     ; "blake2s (keyed, input file)", BLAKE2.tests_blake2s
     ; "blake2b (keyed, input file)", BLAKE2.tests_blake2b
     ; "blake2s (specialization)", [ blake2s_spe 32
-                                  ; blake2s_spe 64
-                                  ; blake2s_spe 128 ]
+                                  ; blake2s_spe 8
+                                  ; blake2s_spe 16 ]
     ; "blake2b (specialization)", [ blake2b_spe 32
                                   ; blake2b_spe 64
-                                  ; blake2b_spe 128 ]
+                                  ; blake2b_spe 16 ]
     ; "ripemd160", RMD160.tests ]
 
 let () = tests ()
