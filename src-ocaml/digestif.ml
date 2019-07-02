@@ -280,7 +280,6 @@ module type Hash_BLAKE2 = sig
   type ctx
   type kind
 
-  val init : unit -> ctx
   val with_outlen_and_bytes_key : int -> By.t -> int -> int -> ctx
   val with_outlen_and_bigstring_key : int -> Bi.t -> int -> int -> ctx
   val unsafe_feed_bytes : ctx -> By.t -> int -> int -> unit
@@ -290,7 +289,16 @@ module type Hash_BLAKE2 = sig
 end
 
 module Make_BLAKE2 (H : Hash_BLAKE2) (D : Desc) = struct
-  include Make (H) (D)
+  include Make (struct
+      type ctx = H.ctx
+      type kind = H.kind
+
+      let init () = H.with_outlen_and_bytes_key D.digest_size By.empty 0 0
+      let unsafe_feed_bytes = H.unsafe_feed_bytes
+      let unsafe_feed_bigstring = H.unsafe_feed_bigstring
+      let unsafe_get = H.unsafe_get
+      let dup = H.dup
+    end) (D)
 
   type outer = t
 

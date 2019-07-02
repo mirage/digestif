@@ -343,5 +343,10 @@ module Unsafe : S = struct
     for i = 0 to 7 do
       By.cpu_to_le64 res (i * 8) ctx.h.(i)
     done ;
-    By.sub res 0 ctx.outlen
+    if ctx.outlen < default_param.digest_length
+    then By.sub res 0 ctx.outlen
+    else if ctx.outlen > default_param.digest_length
+    then ( let res' = By.make ctx.outlen '\x00' in
+           By.blit res 0 res' 0 64 ; res' )
+    else res 
 end

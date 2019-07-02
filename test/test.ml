@@ -393,6 +393,36 @@ module RMD160 = struct
     @ [million ~expect:expect_million]
 end
 
+let str = Alcotest.testable (fun ppf -> Fmt.pf ppf "%S") String.equal
+
+let blake2s_spe digest_size =
+  Alcotest.test_case (Fmt.strf "BLAKE2S (digest-size: %d)" digest_size) `Quick @@ fun () ->
+  let module Hash = Digestif.Make_BLAKE2S(struct let digest_size = digest_size end) in
+  Fmt.epr ">>> Use digest_string\n%!" ;
+  let hash0 = Hash.digest_string "" in
+  Fmt.epr ">>> Use feed_string\n%!" ;
+  let hash1 = Hash.get (Hash.feed_string Hash.empty "") in
+  let raw_hash0 = Hash.to_raw_string hash0 in
+  let raw_hash1 = Hash.to_raw_string hash1 in
+  Alcotest.(check int) "raw length" digest_size (String.length raw_hash0) ;
+  Alcotest.(check int) "raw length" digest_size (String.length raw_hash1) ;
+  let hash = Alcotest.testable Hash.pp Hash.equal in
+  Alcotest.(check hash) "hash" hash0 hash1 ;
+  Alcotest.(check str) "raw hash" raw_hash0 raw_hash1
+
+let blake2b_spe digest_size =
+  Alcotest.test_case (Fmt.strf "BLAKE2B (digest-size: %d)" digest_size) `Quick @@ fun () ->
+  let module Hash = Digestif.Make_BLAKE2B(struct let digest_size = digest_size end) in
+  let hash0 = Hash.digest_string "" in
+  let hash1 = Hash.get (Hash.feed_string Hash.empty "") in
+  let raw_hash0 = Hash.to_raw_string hash0 in
+  let raw_hash1 = Hash.to_raw_string hash1 in
+  Alcotest.(check int) "raw length" digest_size (String.length raw_hash0) ;
+  Alcotest.(check int) "raw length" digest_size (String.length raw_hash1) ;
+  let hash = Alcotest.testable Hash.pp Hash.equal in
+  Alcotest.(check hash) "hash" hash0 hash1 ;
+  Alcotest.(check str) "raw hash" raw_hash0 raw_hash1
+
 let tests () =
   Alcotest.run "digestif"
     [ "md5", makes ~name:"md5" bytes Digestif.md5 keys_by inputs_by results_md5
@@ -458,6 +488,12 @@ let tests () =
           keys_bi inputs_bi results_blake2s )
     ; "blake2s (keyed, input file)", BLAKE2.tests_blake2s
     ; "blake2b (keyed, input file)", BLAKE2.tests_blake2b
+    ; "blake2s (specialization)", [ blake2s_spe 32
+                                  ; blake2s_spe 64
+                                  ; blake2s_spe 128 ]
+    ; "blake2b (specialization)", [ blake2b_spe 32
+                                  ; blake2b_spe 64
+                                  ; blake2b_spe 128 ]
     ; "ripemd160", RMD160.tests ]
 
 let () = tests ()

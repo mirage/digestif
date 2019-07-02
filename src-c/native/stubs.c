@@ -12,6 +12,8 @@
 #include <caml/memory.h>
 #include <string.h>
 
+#include <stdio.h>
+
 #ifndef Bytes_val
 #define Bytes_val(x) String_val(x)
 #endif
