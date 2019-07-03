@@ -114,8 +114,9 @@ module Unsafe (F : Foreign) (D : Desc) = struct
     let t = By.create ctx_size in
     F.Bytes.init t ; t
 
-  let empty = Bytes.create ctx_size
-  let () = ignore @@ F.Bytes.init empty
+  let empty =
+    let buf = Bytes.create ctx_size in
+    F.Bytes.init buf ; buf
 
   let unsafe_feed_bytes t ?off ?len buf =
     let off, len =
