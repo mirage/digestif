@@ -215,12 +215,6 @@ void digestif_blake2b_finalize( struct blake2b_ctx *ctx, uint8_t *out )
     store64(buffer + sizeof( ctx->h[i] ) * i, ctx->h[i]);
 
   secure_zero_memory( out, ctx->outlen * sizeof(uint8_t) );
-
-#define MIN(a, b) (((a) < (b)) ? (a) : (b))
-
-  memcpy( out, buffer, MIN(ctx->outlen, BLAKE2B_OUTBYTES) );
-
-#undef MIN
-
+  memcpy( out, buffer, (ctx->outlen < BLAKE2B_OUTBYTES) ? ctx->outlen : BLAKE2B_OUTBYTES );
   secure_zero_memory( buffer, sizeof(buffer) );
 }
