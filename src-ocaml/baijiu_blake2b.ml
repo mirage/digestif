@@ -41,6 +41,7 @@ module type S = sig
   val unsafe_feed_bigstring : ctx -> Bi.t -> int -> int -> unit
   val unsafe_get : ctx -> By.t
   val dup : ctx -> ctx
+  val max_outlen : int
 end
 
 module Unsafe : S = struct
@@ -148,8 +149,10 @@ module Unsafe : S = struct
     in
     By.init 64 (fun i -> Char.unsafe_chr arr.(i))
 
+  let max_outlen = 64
+
   let default_param =
-    { digest_length= 64
+    { digest_length= max_outlen
     ; key_length= 0
     ; fanout= 1
     ; depth= 1
@@ -335,7 +338,7 @@ module Unsafe : S = struct
     with_outlen_and_key ~blit:By.blit_from_bigstring outlen key off len
 
   let unsafe_get ctx =
-    let res = By.make 64 '\x00' in
+    let res = By.make default_param.digest_length '\x00' in
     increment_counter ctx (Int64.of_int ctx.buflen) ;
     set_lastblock ctx ;
     By.fill ctx.buf ctx.buflen (128 - ctx.buflen) '\x00' ;
@@ -343,5 +346,11 @@ module Unsafe : S = struct
     for i = 0 to 7 do
       By.cpu_to_le64 res (i * 8) ctx.h.(i)
     done ;
-    By.sub res 0 ctx.outlen
+    if ctx.outlen < default_param.digest_length
+    then By.sub res 0 ctx.outlen
+    (* XXX(dinosaure): should never appear! *)
+    else if ctx.outlen > default_param.digest_length
+    then ( let res' = By.make ctx.outlen '\x00' in
+           By.blit res 0 res' 0 default_param.digest_length ; res' )
+    else res
 end

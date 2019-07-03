@@ -206,7 +206,8 @@ void digestif_blake2s_finalize( struct blake2s_ctx *ctx, uint8_t *out )
   for( i = 0; i < 8; ++i )
     store32(buffer + sizeof( ctx->h[i] ) * i, ctx->h[i]);
 
-  memcpy( out, buffer, ctx->outlen );
+  secure_zero_memory( out, ctx->outlen * sizeof(uint8_t) );
+  memcpy( out, buffer, (ctx->outlen < BLAKE2S_OUTBYTES) ? ctx->outlen : BLAKE2S_OUTBYTES );
   secure_zero_memory( buffer, sizeof(buffer) );
 }
 

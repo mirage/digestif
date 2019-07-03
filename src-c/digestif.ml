@@ -13,6 +13,8 @@ module Eq = Digestif_eq
 module Hash = Digestif_hash
 module Conv = Digestif_conv
 
+let failwith fmt = Format.ksprintf failwith fmt
+
 module type S = sig
   val digest_size : int
 
@@ -112,8 +114,9 @@ module Unsafe (F : Foreign) (D : Desc) = struct
     let t = By.create ctx_size in
     F.Bytes.init t ; t
 
-  let empty = Bytes.create ctx_size
-  let () = F.Bytes.init empty
+  let empty =
+    let buf = Bytes.create ctx_size in
+    F.Bytes.init buf ; buf
 
   let unsafe_feed_bytes t ?off ?len buf =
     let off, len =
@@ -144,6 +147,7 @@ module Unsafe (F : Foreign) (D : Desc) = struct
 
   let unsafe_get t =
     let res = By.create digest_size in
+    By.fill res 0 digest_size '\000' ;
     F.Bytes.finalize t res 0 ; res
 end
 
@@ -300,25 +304,45 @@ module type Foreign_BLAKE2 = sig
   type kind
 
   module Bigstring : sig
-    val init : ctx -> unit
     val update : ctx -> ba -> int -> int -> unit
     val finalize : ctx -> ba -> int -> unit
     val with_outlen_and_key : ctx -> int -> ba -> int -> int -> unit
   end
 
   module Bytes : sig
-    val init : ctx -> unit
     val update : ctx -> st -> int -> int -> unit
     val finalize : ctx -> st -> int -> unit
     val with_outlen_and_key : ctx -> int -> st -> int -> int -> unit
   end
 
+  val max_outlen : unit -> int
   val ctx_size : unit -> int
   val key_size : unit -> int
 end
 
 module Make_BLAKE2 (F : Foreign_BLAKE2) (D : Desc) = struct
-  include Make (F) (D)
+  let () =
+    if D.digest_size > F.max_outlen ()
+    then failwith "Invalid digest_size:%d to make a BLAKE2{S,B} implementation" D.digest_size
+
+  include Make (struct
+      type kind = F.kind
+
+      module Bigstring = struct
+        let init ctx =
+          F.Bigstring.with_outlen_and_key ctx D.digest_size Bi.empty 0 0
+        let update = F.Bigstring.update
+        let finalize = F.Bigstring.finalize
+      end
+
+      module Bytes = struct
+        let init ctx =
+          F.Bytes.with_outlen_and_key ctx D.digest_size By.empty 0 0
+        let update = F.Bytes.update
+        let finalize = F.Bytes.finalize
+      end
+
+      let ctx_size () = F.ctx_size () end) (D)
 
   type outer = t
 
