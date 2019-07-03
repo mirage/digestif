@@ -148,7 +148,6 @@ module Unsafe (F : Foreign) (D : Desc) = struct
   let unsafe_get t =
     let res = By.create digest_size in
     By.fill res 0 digest_size '\000' ;
-    Format.eprintf "(OCaml) Finalize\n%!" ;
     F.Bytes.finalize t res 0 ; res
 end
 
