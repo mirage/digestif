@@ -298,7 +298,7 @@ module Unsafe : S = struct
     with_outlen_and_key ~blit:By.blit_from_bigstring outlen key off len
 
   let unsafe_get ctx =
-    let res = By.make 32 '\x00' in
+    let res = By.make default_param.digest_length '\x00' in
     increment_counter ctx (Int32.of_int ctx.buflen) ;
     set_lastblock ctx ;
     By.fill ctx.buf ctx.buflen (64 - ctx.buflen) '\x00' ;
@@ -311,6 +311,6 @@ module Unsafe : S = struct
     (* XXX(dinosaure): should never appear! *)
     else if ctx.outlen > default_param.digest_length
     then ( let res' = By.make ctx.outlen '\x00' in
-           By.blit res 0 res' 0 32 ; res' )
+           By.blit res 0 res' 0 default_param.digest_length ; res' )
     else res
 end
