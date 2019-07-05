@@ -1,6 +1,8 @@
 module By = Digestif_by
 module Bi = Digestif_bi
 
+let failwith fmt = Format.kasprintf failwith fmt
+
 module Int32 = struct
   include Int32
 
@@ -309,6 +311,7 @@ module Unsafe : S = struct
     feed ~blit:By.blit_from_bigstring ~le64_to_cpu:Bi.le64_to_cpu
 
   let with_outlen_and_key ~blit outlen key off len =
+    if outlen > max_outlen then failwith "out length can not be upper than %d (out length: %d)" max_outlen outlen ;
     let buf = By.make 128 '\x00' in
     let ctx =
       { buflen= 0
@@ -348,9 +351,8 @@ module Unsafe : S = struct
     done ;
     if ctx.outlen < default_param.digest_length
     then By.sub res 0 ctx.outlen
-    (* XXX(dinosaure): should never appear! *)
     else if ctx.outlen > default_param.digest_length
-    then ( let res' = By.make ctx.outlen '\x00' in
-           By.blit res 0 res' 0 default_param.digest_length ; res' )
+    then assert false
+    (* XXX(dinosaure): [ctx] can not be initialized with [outlen > digest_length = max_outlen]. *)
     else res
 end
