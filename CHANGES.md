@@ -1,3 +1,8 @@
+### v0.7.3 2019-07-09 Paris (France)
+
+- Fix bug about specialization of BLAKE2{B,S} (#85, #86)
+  reported by @samoht, fixed by @dinosaure, reviewed by @hannes and @cfcs
+
 ### v0.7.2 2019-05-16 Paris (France)
 
 - Add conflict with `< mirage-xen-posix.3.1.0` packages (@hannesm)
