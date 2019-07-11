@@ -5,4 +5,4 @@
  (wrapped     false)
  (virtual_modules digestif)
  (default_implementation digestif.c)
- (libraries   eqaf))
+ (libraries   eqaf bigarray-compat))

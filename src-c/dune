@@ -2,7 +2,7 @@
  (name        digestif_c)
  (public_name digestif.c)
  (implements  digestif)
- (libraries   bigarray eqaf digestif.rakia)
+ (libraries   bigarray-compat eqaf digestif.rakia)
  (private_modules digestif_native
                   digestif_hash
                   digestif_eq
