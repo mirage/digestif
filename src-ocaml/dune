@@ -2,7 +2,7 @@
  (name        digestif_ocaml)
  (public_name digestif.ocaml)
  (implements  digestif)
- (libraries   bigarray eqaf)
+ (libraries   bigarray-compat eqaf)
  (private_modules xor
                   digestif_hash
                   digestif_eq
