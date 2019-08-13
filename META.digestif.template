@@ -1,0 +1,4 @@
+# DUNE_GEN
+
+xen_linkopts = "-l:rakia/xen/librakia_xen_stubs.a"
+freestanding_linkopts = "-l:rakia/freestanding/librakia_freestanding_stubs.a"

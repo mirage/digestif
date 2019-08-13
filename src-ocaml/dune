@@ -1,7 +1,7 @@
 (library
  (name        digestif_ocaml)
  (public_name digestif.ocaml)
- (implements  digestif)
+ (wrapped     false)
  (libraries   bigarray-compat eqaf)
  (private_modules xor
                   digestif_hash
@@ -21,6 +21,7 @@
                   baijiu_blake2b)
  (flags       (:standard -no-keep-locs)))
 
+(rule (copy# ../src/digestif.mli     digestif.mli))
 (rule (copy# ../src/digestif_bi.ml   digestif_bi.ml))
 (rule (copy# ../src/digestif_by.ml   digestif_by.ml))
 (rule (copy# ../src/digestif_eq.ml   digestif_eq.ml))
