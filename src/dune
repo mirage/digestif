@@ -4,4 +4,5 @@
  (modules     digestif)
  (wrapped     false)
  (modules_without_implementation digestif)
+ (flags       (:standard -no-keep-locs))
  (libraries   eqaf bigarray-compat))
