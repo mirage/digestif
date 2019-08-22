@@ -1,3 +1,7 @@
+### v0.7.4 2019-08-22 Berlin (German)
+
+- Compatibility version with MirageOS 3
+
 ### v0.7.3 2019-07-09 Paris (France)
 
 - Fix bug about specialization of BLAKE2{B,S} (#85, #86)
