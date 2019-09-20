@@ -1,3 +1,9 @@
+### v0.8.0 2019-20-09 Saint Louis (Sénégal)
+
+- Fake version to prioritize dune's variants instead of
+  old linking trick
+- Use `stdlib-shims` to keep compatibility with < ocaml.4.07.0
+
 ### v0.7.3 2019-07-09 Paris (France)
 
 - Fix bug about specialization of BLAKE2{B,S} (#85, #86)
