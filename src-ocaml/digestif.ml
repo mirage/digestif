@@ -199,7 +199,7 @@ module Make (H : Hash) (D : Desc) = struct
   let bytes_ipad = By.init block_size (fun _ -> '\x36')
 
   let rec norm_bytes key =
-    match Pervasives.compare (By.length key) block_size with
+    match Stdlib.compare (By.length key) block_size with
     | 1 -> norm_bytes (By.unsafe_of_string (digest_bytes key))
     | -1 -> By.rpad key block_size '\000'
     | _ -> key

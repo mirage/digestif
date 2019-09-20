@@ -217,7 +217,7 @@ module Make (F : Foreign) (D : Desc) = struct
   let bytes_ipad = By.make block_size '\x36'
 
   let rec norm_bytes key =
-    match Pervasives.compare (String.length key) block_size with
+    match Stdlib.compare (String.length key) block_size with
     | 1 -> norm_bytes (digest_string key)
     | -1 -> By.rpad (By.unsafe_of_string key) block_size '\000'
     | _ -> By.of_string key
