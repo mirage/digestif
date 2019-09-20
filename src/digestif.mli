@@ -59,7 +59,7 @@ module type S = sig
       [digest_bytes msg = get (feed_bytes empty msg)]. *)
 
   val digest_string : ?off:int -> ?len:int -> String.t -> t
-  (** Same as {!digest_bytes} but for a {String.t}. *)
+  (** Same as {!digest_bytes} but for a {!String.t}. *)
 
   val digest_bigstring : ?off:int -> ?len:int -> bigstring -> t
   (** Same as {!digest_bytes} but for a {!bigstring}. *)
