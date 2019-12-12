@@ -1,0 +1,23 @@
+(library
+ (name        rakia_xen)
+ (public_name digestif.rakia.xen)
+ (variant     xen)
+ (modules     rakia)
+ (implements  rakia)
+ (optional)
+ (libraries   bigarray-compat mirage-xen-posix)
+ (c_names     blake2b blake2s md5 ripemd160 sha1 sha256 sha512 whirlpool misc stubs)
+ (c_flags     (:standard -I../native) (:include cflags.sexp)))
+
+(rule (copy# ../native/blake2b.c blake2b.c))
+(rule (copy# ../native/blake2s.c blake2s.c))
+(rule (copy# ../native/md5.c md5.c))
+(rule (copy# ../native/ripemd160.c ripemd160.c))
+(rule (copy# ../native/sha1.c sha1.c))
+(rule (copy# ../native/sha256.c sha256.c))
+(rule (copy# ../native/sha512.c sha512.c))
+(rule (copy# ../native/whirlpool.c whirlpool.c))
+(rule (copy# ../native/misc.c misc.c))
+(rule (copy# ../native/stubs.c stubs.c))
+
+(rule (with-stdout-to cflags.sexp (run ./cflags.sh)))
