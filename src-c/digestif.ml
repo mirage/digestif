@@ -6,7 +6,7 @@ type 'a compare = 'a -> 'a -> int
 type 'a equal = 'a -> 'a -> bool
 type 'a pp = Format.formatter -> 'a -> unit
 
-module Native = Digestif_native
+module Native = Rakia
 module By = Digestif_by
 module Bi = Digestif_bi
 module Eq = Digestif_eq
@@ -111,7 +111,7 @@ module Unsafe (F : Foreign) (D : Desc) = struct
   and ctx_size = F.ctx_size ()
 
   let init () =
-    let t = By.create ctx_size in
+    let t = Bytes.create ctx_size in
     F.Bytes.init t ; t
 
   let empty =
@@ -122,11 +122,11 @@ module Unsafe (F : Foreign) (D : Desc) = struct
     let off, len =
       match off, len with
       | Some off, Some len -> off, len
-      | Some off, None -> off, By.length buf - off
+      | Some off, None -> off, Bytes.length buf - off
       | None, Some len -> 0, len
-      | None, None -> 0, By.length buf
+      | None, None -> 0, Bytes.length buf
     in
-    if off < 0 || len < 0 || off > By.length buf - len then
+    if off < 0 || len < 0 || off > Bytes.length buf - len then
       invalid_arg "offset out of bounds"
     else F.Bytes.update t buf off len
 
@@ -146,8 +146,8 @@ module Unsafe (F : Foreign) (D : Desc) = struct
     else F.Bigstring.update t buf off len
 
   let unsafe_get t =
-    let res = By.create digest_size in
-    By.fill res 0 digest_size '\000' ;
+    let res = Bytes.create digest_size in
+    Bytes.fill res 0 digest_size '\000' ;
     F.Bytes.finalize t res 0 ; res
 end
 
@@ -164,7 +164,7 @@ module Core (F : Foreign) (D : Desc) = struct
 
   let get t =
     let t = Native.dup t in
-    unsafe_get t |> By.unsafe_to_string
+    unsafe_get t |> Bytes.unsafe_to_string
 
   let feed_bytes t ?off ?len buf =
     let t = Native.dup t in
@@ -213,14 +213,14 @@ end
 module Make (F : Foreign) (D : Desc) = struct
   include Core (F) (D)
 
-  let bytes_opad = By.make block_size '\x5c'
-  let bytes_ipad = By.make block_size '\x36'
+  let bytes_opad = Bytes.make block_size '\x5c'
+  let bytes_ipad = Bytes.make block_size '\x36'
 
   let rec norm_bytes key =
     match Stdlib.compare (String.length key) block_size with
     | 1 -> norm_bytes (digest_string key)
-    | -1 -> By.rpad (By.unsafe_of_string key) block_size '\000'
-    | _ -> By.of_string key
+    | -1 -> By.rpad (Bytes.unsafe_of_string key) block_size '\000'
+    | _ -> Bytes.of_string key
 
   let bigstring_opad = Bi.init block_size (fun _ -> '\x5c')
   let bigstring_ipad = Bi.init block_size (fun _ -> '\x36')
@@ -228,18 +228,18 @@ module Make (F : Foreign) (D : Desc) = struct
   let norm_bigstring key =
     let key = Bi.to_string key in
     let res0 = norm_bytes key in
-    let res1 = Bi.create (By.length res0) in
-    Bi.blit_from_bytes res0 0 res1 0 (By.length res0) ;
+    let res1 = Bi.create (Bytes.length res0) in
+    Bi.blit_from_bytes res0 0 res1 0 (Bytes.length res0) ;
     res1
 
   let hmaci_bytes ~key iter =
-    let key = norm_bytes (By.unsafe_to_string key) in
+    let key = norm_bytes (Bytes.unsafe_to_string key) in
     let outer = Native.XOR.Bytes.xor key bytes_opad in
     let inner = Native.XOR.Bytes.xor key bytes_ipad in
     let res = digesti_bytes (fun f -> f inner ; iter f) in
     digesti_bytes (fun f ->
         f outer ;
-        f (By.unsafe_of_string res) )
+        f (Bytes.unsafe_of_string res) )
 
   let hmaci_string ~key iter =
     let key = norm_bytes key in
@@ -262,9 +262,9 @@ module Make (F : Foreign) (D : Desc) = struct
   let hmac_bytes ~key ?off ?len buf =
     let buf =
       match off, len with
-      | Some off, Some len -> By.sub buf off len
-      | Some off, None -> By.sub buf off (By.length buf - off)
-      | None, Some len -> By.sub buf 0 len
+      | Some off, Some len -> Bytes.sub buf off len
+      | Some off, None -> Bytes.sub buf off (Bytes.length buf - off)
+      | None, Some len -> Bytes.sub buf 0 len
       | None, None -> buf
     in
     hmaci_bytes ~key (fun f -> f buf)
@@ -337,7 +337,7 @@ module Make_BLAKE2 (F : Foreign_BLAKE2) (D : Desc) = struct
 
       module Bytes = struct
         let init ctx =
-          F.Bytes.with_outlen_and_key ctx D.digest_size By.empty 0 0
+          F.Bytes.with_outlen_and_key ctx D.digest_size Bytes.empty 0 0
         let update = F.Bytes.update
         let finalize = F.Bytes.finalize
       end
@@ -352,33 +352,33 @@ module Make_BLAKE2 (F : Foreign_BLAKE2) (D : Desc) = struct
     let key_size = F.key_size ()
 
     let maci_bytes ~key iter : t =
-      if By.length key > key_size then
+      if Bytes.length key > key_size then
         invalid_arg "BLAKE2{S,B}.Keyed.maci_bytes: invalid key" ;
-      let ctx = By.create ctx_size in
-      F.Bytes.with_outlen_and_key ctx digest_size key 0 (By.length key) ;
+      let ctx = Bytes.create ctx_size in
+      F.Bytes.with_outlen_and_key ctx digest_size key 0 (Bytes.length key) ;
       feedi_bytes ctx iter |> get
 
     let maci_string ~key iter =
       if String.length key > key_size then
         invalid_arg "BLAKE2{S,B}.Keyed.maci_string: invalid key" ;
-      let ctx = By.create ctx_size in
-      F.Bytes.with_outlen_and_key ctx digest_size (By.unsafe_of_string key) 0
+      let ctx = Bytes.create ctx_size in
+      F.Bytes.with_outlen_and_key ctx digest_size (Bytes.unsafe_of_string key) 0
         (String.length key) ;
       feedi_string ctx iter |> get
 
     let maci_bigstring ~key iter =
       if Bi.length key > key_size then
         invalid_arg "BLAKE2{S,B}.Keyed.maci_bigstring: invalid key" ;
-      let ctx = By.create ctx_size in
+      let ctx = Bytes.create ctx_size in
       F.Bigstring.with_outlen_and_key ctx digest_size key 0 (Bi.length key) ;
       feedi_bigstring ctx iter |> get
 
     let mac_bytes ~key ?off ?len buf : t =
       let buf =
         match off, len with
-        | Some off, Some len -> By.sub buf off len
-        | Some off, None -> By.sub buf off (By.length buf - off)
-        | None, Some len -> By.sub buf 0 len
+        | Some off, Some len -> Bytes.sub buf off len
+        | Some off, None -> Bytes.sub buf off (Bytes.length buf - off)
+        | None, Some len -> Bytes.sub buf 0 len
         | None, None -> buf
       in
       maci_bytes ~key (fun f -> f buf)
