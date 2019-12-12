@@ -1,0 +1,8 @@
+(library
+ (name        rakia)
+ (public_name digestif.rakia)
+ (modules     rakia)
+ (libraries   bigarray-compat)
+ (wrapped     false)
+ (virtual_modules rakia)
+ (default_implementation digestif.rakia.unix))
