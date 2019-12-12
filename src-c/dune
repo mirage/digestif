@@ -1,14 +1,15 @@
 (library
  (name        digestif_c)
  (public_name digestif.c)
+ (variant     c)
  (implements  digestif)
- (libraries   stdlib-shims bigarray-compat eqaf digestif.rakia)
- (private_modules digestif_native
-                  digestif_hash
-                  digestif_eq
-                  digestif_conv
-                  digestif_by
-                  digestif_bi)
+ (libraries   bigarray-compat eqaf digestif.rakia)
+ (modules digestif
+          digestif_hash
+          digestif_eq
+          digestif_conv
+          digestif_by
+          digestif_bi)
  (flags       (:standard -no-keep-locs)))
 
 (rule (copy# ../src/digestif_bi.ml   digestif_bi.ml))
