@@ -3,7 +3,7 @@
  (public_name digestif.ocaml)
  (variant     ocaml)
  (implements  digestif)
- (libraries   bigarray-compat eqaf)
+ (libraries   stdlib-shims bigarray-compat eqaf)
  (modules     digestif
               xor
               digestif_hash
