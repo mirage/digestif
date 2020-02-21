@@ -98,12 +98,12 @@ let test_consistent_hex_iso i random_input =
 
 let tests () =
   Alcotest.run "digestif"
-    [ "of_hex", List.mapi test_hex_success consistent_hex
-    ; "consistent_of_hex", List.mapi test_consistent_hex_success consistent_hex
-    ; "of_hex", List.mapi test_hex_success spaces_hex
-    ; "consistent_of_hex", List.mapi test_consistent_hex_success spaces_hex
-    ; "of_hex", List.mapi test_hex_success inconsistent_hex
-    ; "consistent_of_hex", List.mapi test_consistent_hex_fail inconsistent_hex
+    [ "of_hex (with consistent values)", List.mapi test_hex_success consistent_hex
+    ; "consistent_of_hex (with consistent values)", List.mapi test_consistent_hex_success consistent_hex
+    ; "of_hex (with spaces)", List.mapi test_hex_success spaces_hex
+    ; "consistent_of_hex (with spaces)", List.mapi test_consistent_hex_success spaces_hex
+    ; "of_hex (with inconsistent value)", List.mapi test_hex_success inconsistent_hex
+    ; "consistent_of_hex (with inconsistent values)", List.mapi test_consistent_hex_fail inconsistent_hex
     ; ( "iso of_hex"
       , List.mapi test_hex_iso
           (list_init (random_string Digestif.SHA1.digest_size) 64) )
