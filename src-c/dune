@@ -3,7 +3,7 @@
  (public_name digestif.c)
  (variant     c)
  (implements  digestif)
- (libraries   bigarray-compat eqaf digestif.rakia)
+ (libraries   stdlib-shims bigarray-compat eqaf digestif.rakia)
  (modules digestif
           digestif_hash
           digestif_eq
