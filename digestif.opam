@@ -31,8 +31,8 @@ build: [
   [ "dune" "build" "-p" name "-j" jobs ]
   [ "sh" "-exc" "echo xen_linkopts = \"-l:rakia/xen/librakia_xen_stubs.a\" >> _build/default/META.digestif" ]
   [ "sh" "-exc" "echo freestanding_linkopts = \"-l:rakia/freestanding/librakia_freestanding_stubs.a\" >> _build/default/META.digestif" ]
+  [ "dune" "runtest" "-p" name "-j" jobs ] {with-test}
 ]
-run-test: [ "dune" "runtest" "-p" name "-j" jobs ]
 
 depends: [
   "ocaml"          {>= "4.03.0"}
