@@ -124,10 +124,10 @@ let query target lib =
 
 let run () =
   ( exists "mirage-xen-posix" >>= function
-  | true -> query "xen" "digestif.rakia" >>= parse_lL_args >>= libraries_exist
+  | true -> query "xen" "digestif" >>= parse_lL_args >>= libraries_exist
   | false -> R.ok () ) >>= fun () ->
   ( exists "ocaml-freestanding" >>= function
-  | true -> query "freestanding" "digestif.rakia" >>= parse_lL_args >>= libraries_exist
+  | true -> query "freestanding" "digestif" >>= parse_lL_args >>= libraries_exist
   | false -> R.ok () ) >>= fun () ->
   R.ok ()
 
