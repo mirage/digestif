@@ -48,6 +48,10 @@ depends: [
   "stdlib-shims"
   "fmt"            {with-test}
   "alcotest"       {with-test}
+  "bos"            {with-test}
+  "fpath"          {with-test}
+  "rresult"        {with-test}
+  "ocamlfind"      {with-test}
 ]
 
 depopts: [
