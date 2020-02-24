@@ -29,9 +29,14 @@ We provides implementation of:
 
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]
-  [ "sh" "-exc" "echo xen_linkopts = \"-l:rakia/xen/librakia_xen_stubs.a\" >> _build/default/META.digestif" ]
-  [ "sh" "-exc" "echo freestanding_linkopts = \"-l:rakia/freestanding/librakia_freestanding_stubs.a\" >> _build/default/META.digestif" ]
+  [ "sh" "-exc" "echo \"xen_linkopts = \\\"-l:rakia/xen/librakia_xen_stubs.a\\\"\" >> _build/default/META.digestif" ]
+  [ "sh" "-exc" "echo \"freestanding_linkopts = \\\"-l:rakia/freestanding/librakia_freestanding_stubs.a\\\"\" >> _build/default/META.digestif" ]
   [ "dune" "runtest" "-p" name "-j" jobs ] {with-test}
+]
+
+install: [
+  [ "dune" "install" "-p" name ]
+  [ "./test/test_runes.ml" ]
 ]
 
 depends: [
