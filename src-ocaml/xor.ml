@@ -1,14 +1,20 @@
-module Nat = struct include Nativeint
+module Nat = struct
+  include Nativeint
 
-                    let ( lxor ) = Nativeint.logxor end
+  let ( lxor ) = Nativeint.logxor
+end
 
 module type BUFFER = sig
   type t
 
   val length : t -> int
+
   val sub : t -> int -> int -> t
+
   val copy : t -> t
+
   val benat_to_cpu : t -> int -> nativeint
+
   val cpu_to_benat : t -> int -> nativeint -> unit
 end
 
@@ -40,14 +46,15 @@ module Make (B : BUFFER) = struct
     done
 
   let xor_into a b n =
-    if n > imin (B.length a) (B.length b) then
-      raise (Invalid_argument "Baijiu.Xor.xor_inrot: buffers to small")
+    if n > imin (B.length a) (B.length b)
+    then raise (Invalid_argument "Baijiu.Xor.xor_inrot: buffers to small")
     else xor_into a 0 b 0 n
 
   let xor a b =
     let l = imin (B.length a) (B.length b) in
     let r = B.copy (B.sub b 0 l) in
-    xor_into a r l ; r
+    xor_into a r l ;
+    r
 end
 
 module Bytes = Make (Digestif_by)

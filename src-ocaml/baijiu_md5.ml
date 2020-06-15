@@ -5,14 +5,23 @@ module Int32 = struct
   include Int32
 
   let ( lsl ) = Int32.shift_left
+
   let ( lsr ) = Int32.shift_right
+
   let srl = Int32.shift_right_logical
+
   let ( lor ) = Int32.logor
+
   let ( lxor ) = Int32.logxor
+
   let ( land ) = Int32.logand
+
   let lnot = Int32.lognot
+
   let ( + ) = Int32.add
+
   let rol32 a n = (a lsl n) lor srl a (32 - n)
+
   let ror32 a n = srl a n lor (a lsl (32 - n))
 end
 
@@ -20,41 +29,54 @@ module Int64 = struct
   include Int64
 
   let ( land ) = Int64.logand
+
   let ( lsl ) = Int64.shift_left
 end
 
 module type S = sig
-  type kind = [`MD5]
-  type ctx = {mutable size: int64; b: Bytes.t; h: int32 array}
+  type kind = [ `MD5 ]
+
+  type ctx = { mutable size : int64; b : Bytes.t; h : int32 array }
 
   val init : unit -> ctx
+
   val unsafe_feed_bytes : ctx -> By.t -> int -> int -> unit
+
   val unsafe_feed_bigstring : ctx -> Bi.t -> int -> int -> unit
+
   val unsafe_get : ctx -> By.t
+
   val dup : ctx -> ctx
 end
 
 module Unsafe : S = struct
-  type kind = [`MD5]
-  type ctx = {mutable size: int64; b: Bytes.t; h: int32 array}
+  type kind = [ `MD5 ]
 
-  let dup ctx = {size= ctx.size; b= By.copy ctx.b; h= Array.copy ctx.h}
+  type ctx = { mutable size : int64; b : Bytes.t; h : int32 array }
+
+  let dup ctx = { size = ctx.size; b = By.copy ctx.b; h = Array.copy ctx.h }
 
   let init () =
     let b = By.make 64 '\x00' in
-    {size= 0L; b; h= [|0x67452301l; 0xefcdab89l; 0x98badcfel; 0x10325476l|]}
+    {
+      size = 0L;
+      b;
+      h = [| 0x67452301l; 0xefcdab89l; 0x98badcfel; 0x10325476l |];
+    }
 
   let f1 x y z = Int32.(z lxor (x land (y lxor z)))
+
   let f2 x y z = f1 z x y
+
   let f3 x y z = Int32.(x lxor y lxor z)
+
   let f4 x y z = Int32.(y lxor (x lor lnot z))
 
-  let md5_do_chunk : type a.
-      le32_to_cpu:(a -> int -> int32) -> ctx -> a -> int -> unit =
+  let md5_do_chunk :
+      type a. le32_to_cpu:(a -> int -> int32) -> ctx -> a -> int -> unit =
    fun ~le32_to_cpu ctx buf off ->
     let a, b, c, d =
-      ref ctx.h.(0), ref ctx.h.(1), ref ctx.h.(2), ref ctx.h.(3)
-    in
+      (ref ctx.h.(0), ref ctx.h.(1), ref ctx.h.(2), ref ctx.h.(3)) in
     let w = Array.make 16 0l in
     for i = 0 to 15 do
       w.(i) <- le32_to_cpu buf (off + (i * 4))
@@ -63,8 +85,7 @@ module Unsafe : S = struct
       let open Int32 in
       a := !a + f !b !c !d + w.(i) + k ;
       a := rol32 !a s ;
-      a := !a + !b
-    in
+      a := !a + !b in
     round f1 a b c d 0 0xd76aa478l 7 ;
     round f1 d a b c 1 0xe8c7b756l 12 ;
     round f1 c d a b 2 0x242070dbl 17 ;
@@ -136,26 +157,28 @@ module Unsafe : S = struct
     ctx.h.(3) <- ctx.h.(3) + !d ;
     ()
 
-  let feed : type a.
-         blit:(a -> int -> By.t -> int -> int -> unit)
-      -> le32_to_cpu:(a -> int -> int32)
-      -> ctx
-      -> a
-      -> int
-      -> int
-      -> unit =
+  let feed :
+      type a.
+      blit:(a -> int -> By.t -> int -> int -> unit) ->
+      le32_to_cpu:(a -> int -> int32) ->
+      ctx ->
+      a ->
+      int ->
+      int ->
+      unit =
    fun ~blit ~le32_to_cpu ctx buf off len ->
     let idx = ref Int64.(to_int (ctx.size land 0x3FL)) in
     let len = ref len in
     let off = ref off in
     let to_fill = 64 - !idx in
     ctx.size <- Int64.add ctx.size (Int64.of_int !len) ;
-    if !idx <> 0 && !len >= to_fill then (
+    if !idx <> 0 && !len >= to_fill
+    then (
       blit buf !off ctx.b !idx to_fill ;
       md5_do_chunk ~le32_to_cpu:By.le32_to_cpu ctx ctx.b 0 ;
       len := !len - to_fill ;
       off := !off + to_fill ;
-      idx := 0 ) ;
+      idx := 0) ;
     while !len >= 64 do
       md5_do_chunk ~le32_to_cpu ctx buf !off ;
       len := !len - 64 ;

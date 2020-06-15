@@ -3,12 +3,17 @@ module Bi = Digestif_bi
 
 module type S = sig
   type ctx
-  type kind = [`RMD160]
+
+  type kind = [ `RMD160 ]
 
   val init : unit -> ctx
+
   val unsafe_feed_bytes : ctx -> By.t -> int -> int -> unit
+
   val unsafe_feed_bigstring : ctx -> Bi.t -> int -> int -> unit
+
   val unsafe_get : ctx -> By.t
+
   val dup : ctx -> ctx
 end
 
@@ -16,14 +21,23 @@ module Int32 = struct
   include Int32
 
   let ( lsl ) = Int32.shift_left
+
   let ( lsr ) = Int32.shift_right
+
   let srl = Int32.shift_right_logical
+
   let ( lor ) = Int32.logor
+
   let ( lxor ) = Int32.logxor
+
   let ( land ) = Int32.logand
+
   let lnot = Int32.lognot
+
   let ( + ) = Int32.add
+
   let rol32 a n = (a lsl n) lor srl a (32 - n)
+
   let ror32 a n = srl a n lor (a lsl (32 - n))
 end
 
@@ -31,27 +45,35 @@ module Int64 = struct
   include Int64
 
   let ( land ) = Int64.logand
+
   let ( lsl ) = Int64.shift_left
 end
 
 module Unsafe : S = struct
-  type kind = [`RMD160]
-  type ctx = {s: int32 array; mutable n: int; h: int32 array; b: Bytes.t}
+  type kind = [ `RMD160 ]
+
+  type ctx = { s : int32 array; mutable n : int; h : int32 array; b : Bytes.t }
 
   let dup ctx =
-    {s= Array.copy ctx.s; n= ctx.n; h= Array.copy ctx.h; b= By.copy ctx.b}
+    { s = Array.copy ctx.s; n = ctx.n; h = Array.copy ctx.h; b = By.copy ctx.b }
 
   let init () =
     let b = By.make 64 '\x00' in
-    { s= [|0l; 0l|]
-    ; n= 0
-    ; b
-    ; h= [|0x67452301l; 0xefcdab89l; 0x98badcfel; 0x10325476l; 0xc3d2e1f0l|] }
+    {
+      s = [| 0l; 0l |];
+      n = 0;
+      b;
+      h = [| 0x67452301l; 0xefcdab89l; 0x98badcfel; 0x10325476l; 0xc3d2e1f0l |];
+    }
 
   let f x y z = Int32.(x lxor y lxor z)
+
   let g x y z = Int32.(x land y lor (lnot x land z))
+
   let h x y z = Int32.(x lor lnot y lxor z)
+
   let i x y z = Int32.(x land z lor (y land lnot z))
+
   let j x y z = Int32.(x lxor (y lor lnot z))
 
   let ff a b c d e x s =
@@ -114,21 +136,20 @@ module Unsafe : S = struct
     a := rol32 !a s + !e ;
     c := rol32 !c 10
 
-  let rmd160_do_chunk : type a.
-      le32_to_cpu:(a -> int -> int32) -> ctx -> a -> int -> unit =
+  let rmd160_do_chunk :
+      type a. le32_to_cpu:(a -> int -> int32) -> ctx -> a -> int -> unit =
    fun ~le32_to_cpu ctx buff off ->
     let aa, bb, cc, dd, ee, aaa, bbb, ccc, ddd, eee =
-      ( ref ctx.h.(0)
-      , ref ctx.h.(1)
-      , ref ctx.h.(2)
-      , ref ctx.h.(3)
-      , ref ctx.h.(4)
-      , ref ctx.h.(0)
-      , ref ctx.h.(1)
-      , ref ctx.h.(2)
-      , ref ctx.h.(3)
-      , ref ctx.h.(4) )
-    in
+      ( ref ctx.h.(0),
+        ref ctx.h.(1),
+        ref ctx.h.(2),
+        ref ctx.h.(3),
+        ref ctx.h.(4),
+        ref ctx.h.(0),
+        ref ctx.h.(1),
+        ref ctx.h.(2),
+        ref ctx.h.(3),
+        ref ctx.h.(4) ) in
     let w = Array.make 16 0l in
     for i = 0 to 15 do
       w.(i) <- le32_to_cpu buff (off + (i * 4))
@@ -305,14 +326,15 @@ module Unsafe : S = struct
 
   exception Leave
 
-  let feed : type a.
-         le32_to_cpu:(a -> int -> int32)
-      -> blit:(a -> int -> By.t -> int -> int -> unit)
-      -> ctx
-      -> a
-      -> int
-      -> int
-      -> unit =
+  let feed :
+      type a.
+      le32_to_cpu:(a -> int -> int32) ->
+      blit:(a -> int -> By.t -> int -> int -> unit) ->
+      ctx ->
+      a ->
+      int ->
+      int ->
+      unit =
    fun ~le32_to_cpu ~blit ctx buf off len ->
     let t = ref ctx.s.(0) in
     let off = ref off in
@@ -321,16 +343,18 @@ module Unsafe : S = struct
     if ctx.s.(0) < !t then ctx.s.(1) <- Int32.(ctx.s.(1) + 1l) ;
     ctx.s.(1) <- Int32.add ctx.s.(1) (Int32.of_int (!len lsr 29)) ;
     try
-      if ctx.n <> 0 then (
+      if ctx.n <> 0
+      then (
         let t = 64 - ctx.n in
-        if !len < t then (
+        if !len < t
+        then (
           blit buf !off ctx.b ctx.n !len ;
           ctx.n <- ctx.n + !len ;
-          raise Leave ) ;
+          raise Leave) ;
         blit buf !off ctx.b ctx.n t ;
         rmd160_do_chunk ~le32_to_cpu:By.le32_to_cpu ctx ctx.b 0 ;
         off := !off + t ;
-        len := !len - t ) ;
+        len := !len - t) ;
       while !len >= 64 do
         rmd160_do_chunk ~le32_to_cpu ctx buf !off ;
         off := !off + 64 ;
@@ -351,10 +375,11 @@ module Unsafe : S = struct
     let i = ref (ctx.n + 1) in
     let res = By.create (5 * 4) in
     By.set ctx.b ctx.n '\x80' ;
-    if !i > 56 then (
+    if !i > 56
+    then (
       By.fill ctx.b !i (64 - !i) '\x00' ;
       rmd160_do_chunk ~le32_to_cpu:By.le32_to_cpu ctx ctx.b 0 ;
-      i := 0 ) ;
+      i := 0) ;
     By.fill ctx.b !i (56 - !i) '\x00' ;
     By.cpu_to_le32 ctx.b 56 ctx.s.(0) ;
     By.cpu_to_le32 ctx.b 60 ctx.s.(1) ;
