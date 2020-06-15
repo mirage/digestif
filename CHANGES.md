@@ -1,3 +1,9 @@
+### v0.8.1 2020-06-15 Paris (France)
+
+- Move to `dune.2.6.0` (#97)
+- Apply `ocamlformat.0.14.2` (#97)
+- Fix tests according `alcotest.1.0.0` (#95)
+
 ### v0.8.0 2019-20-09 Saint Louis (Sénégal)
 
 - Fake version to prioritize dune's variants instead of
