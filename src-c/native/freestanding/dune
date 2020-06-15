@@ -3,8 +3,10 @@
  (public_name digestif.rakia.freestanding)
  (optional)
  (libraries   bigarray-compat ocaml-freestanding)
- (c_names     blake2b blake2s md5 ripemd160 sha1 sha256 sha512 whirlpool misc stubs)
- (c_flags     (:include cflags.sexp)))
+ (foreign_stubs
+  (language c)
+  (names blake2b blake2s md5 ripemd160 sha1 sha256 sha512 whirlpool misc stubs)
+  (flags (:include cflags.sexp))))
 
 (rule (copy# ../blake2b.c blake2b.c))
 (rule (copy# ../blake2s.c blake2s.c))

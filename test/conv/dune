@@ -3,6 +3,6 @@
  (modules   test_conv)
  (libraries digestif.c fmt alcotest))
 
-(alias
- (name   runtest)
+(rule
+ (alias   runtest)
  (action (run ./test_conv.exe --color=always)))

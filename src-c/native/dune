@@ -1,5 +1,7 @@
 (library
  (name        rakia)
  (public_name digestif.rakia)
- (c_names     blake2b blake2s md5 ripemd160 sha1 sha256 sha512 whirlpool misc stubs)
- (c_flags     (:standard -I.)))
+ (foreign_stubs
+  (language c)
+  (names blake2b blake2s md5 ripemd160 sha1 sha256 sha512 whirlpool misc stubs)
+  (flags (:standard -I.))))
