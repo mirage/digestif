@@ -5,12 +5,19 @@ module Int32 = struct
   include Int32
 
   let ( lsl ) = Int32.shift_left
+
   let ( lsr ) = Int32.shift_right
+
   let srl = Int32.shift_right_logical
+
   let ( lor ) = Int32.logor
+
   let ( lxor ) = Int32.logxor
+
   let ( land ) = Int32.logand
+
   let ( + ) = Int32.add
+
   let rol32 a n = (a lsl n) lor srl a (32 - n)
 end
 
@@ -18,43 +25,59 @@ module Int64 = struct
   include Int64
 
   let ( land ) = Int64.logand
+
   let ( lsl ) = Int64.shift_left
 end
 
 module type S = sig
   type ctx
-  type kind = [`SHA1]
+
+  type kind = [ `SHA1 ]
 
   val init : unit -> ctx
+
   val unsafe_feed_bytes : ctx -> By.t -> int -> int -> unit
+
   val unsafe_feed_bigstring : ctx -> Bi.t -> int -> int -> unit
+
   val unsafe_get : ctx -> By.t
+
   val dup : ctx -> ctx
 end
 
 module Unsafe : S = struct
-  type kind = [`SHA1]
-  type ctx = {mutable size: int64; b: Bytes.t; h: int32 array}
+  type kind = [ `SHA1 ]
 
-  let dup ctx = {size= ctx.size; b= By.copy ctx.b; h= Array.copy ctx.h}
+  type ctx = { mutable size : int64; b : Bytes.t; h : int32 array }
+
+  let dup ctx = { size = ctx.size; b = By.copy ctx.b; h = Array.copy ctx.h }
 
   let init () =
     let b = By.make 64 '\x00' in
-    { size= 0L
-    ; b
-    ; h= [|0x67452301l; 0xefcdab89l; 0x98badcfel; 0x10325476l; 0xc3d2e1f0l|] }
+    {
+      size = 0L;
+      b;
+      h = [| 0x67452301l; 0xefcdab89l; 0x98badcfel; 0x10325476l; 0xc3d2e1f0l |];
+    }
 
   let f1 x y z = Int32.(z lxor (x land (y lxor z)))
+
   let f2 x y z = Int32.(x lxor y lxor z)
+
   let f3 x y z = Int32.((x land y) + (z land (x lxor y)))
+
   let f4 = f2
+
   let k1 = 0x5a827999l
+
   let k2 = 0x6ed9eba1l
+
   let k3 = 0x8f1bbcdcl
+
   let k4 = 0xca62c1d6l
 
-  let sha1_do_chunk : type a.
-      be32_to_cpu:(a -> int -> int32) -> ctx -> a -> int -> unit =
+  let sha1_do_chunk :
+      type a. be32_to_cpu:(a -> int -> int32) -> ctx -> a -> int -> unit =
    fun ~be32_to_cpu ctx buf off ->
     let a = ref ctx.h.(0) in
     let b = ref ctx.h.(1) in
@@ -68,19 +91,16 @@ module Unsafe : S = struct
       let v =
         Int32.(
           rol32
-            ( w.(i && 0x0F)
+            (w.(i && 0x0F)
             lxor w.((i -- 14) && 0x0F)
             lxor w.((i -- 8) && 0x0F)
-            lxor w.((i -- 3) && 0x0F) )
-            1)
-      in
+            lxor w.((i -- 3) && 0x0F))
+            1) in
       w.(i land 0x0F) <- v ;
-      w.(i land 0x0F)
-    in
+      w.(i land 0x0F) in
     let round a b c d e f k w =
       (e := Int32.(!e + rol32 !a 5 + f !b !c !d + k + w)) ;
-      b := Int32.(rol32 !b 30)
-    in
+      b := Int32.(rol32 !b 30) in
     for i = 0 to 15 do
       w.(i) <- be32_to_cpu buf (off + (i * 4))
     done ;
@@ -171,26 +191,28 @@ module Unsafe : S = struct
     ctx.h.(4) <- Int32.add ctx.h.(4) !e ;
     ()
 
-  let feed : type a.
-         blit:(a -> int -> By.t -> int -> int -> unit)
-      -> be32_to_cpu:(a -> int -> int32)
-      -> ctx
-      -> a
-      -> int
-      -> int
-      -> unit =
+  let feed :
+      type a.
+      blit:(a -> int -> By.t -> int -> int -> unit) ->
+      be32_to_cpu:(a -> int -> int32) ->
+      ctx ->
+      a ->
+      int ->
+      int ->
+      unit =
    fun ~blit ~be32_to_cpu ctx buf off len ->
     let idx = ref Int64.(to_int (ctx.size land 0x3FL)) in
     let len = ref len in
     let off = ref off in
     let to_fill = 64 - !idx in
     ctx.size <- Int64.add ctx.size (Int64.of_int !len) ;
-    if !idx <> 0 && !len >= to_fill then (
+    if !idx <> 0 && !len >= to_fill
+    then (
       blit buf !off ctx.b !idx to_fill ;
       sha1_do_chunk ~be32_to_cpu:By.be32_to_cpu ctx ctx.b 0 ;
       len := !len - to_fill ;
       off := !off + to_fill ;
-      idx := 0 ) ;
+      idx := 0) ;
     while !len >= 64 do
       sha1_do_chunk ~be32_to_cpu ctx buf !off ;
       len := !len - 64 ;

@@ -3,9 +3,14 @@
  (modules test)
  (libraries fmt alcotest digestif.ocaml))
 
-(alias
- (name runtest)
- (deps (:test test.exe) ../blake2b.test ../blake2s.test)
- (action (run %{test} --color=always)))
+(rule
+ (alias runtest)
+ (deps
+  (:test test.exe)
+  ../blake2b.test
+  ../blake2s.test)
+ (action
+  (run %{test} --color=always)))
 
-(rule (copy# ../test.ml test.ml))
+(rule
+ (copy# ../test.ml test.ml))

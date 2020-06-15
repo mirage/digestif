@@ -1,16 +1,21 @@
 type bigstring =
-  (char, Bigarray_compat.int8_unsigned_elt, Bigarray_compat.c_layout) Bigarray_compat.Array1.t
+  ( char,
+    Bigarray_compat.int8_unsigned_elt,
+    Bigarray_compat.c_layout )
+  Bigarray_compat.Array1.t
 
-(** A general (inner) iterator. It applies the provided function to a
-    collection of elements. For instance:
-
-    {ul {- [let iter_k : 'a -> 'a iter = fun x f -> f x]} {- [let iter_pair :
-    'a * 'a -> 'a iter = fun (x, y) -> f x; f y]} {- [let iter_list : 'a list
-    -> 'a iter = fun l f -> List.iter f l]}} *)
 type 'a iter = ('a -> unit) -> unit
+(** A general (inner) iterator. It applies the provided function to a collection
+    of elements. For instance:
+
+    - [let iter_k : 'a -> 'a iter = fun x f -> f x]
+    - [let iter_pair : 'a * 'a -> 'a iter = fun (x, y) -> f x; f y]
+    - [let iter_list : 'a list -> 'a iter = fun l f -> List.iter f l] *)
 
 type 'a compare = 'a -> 'a -> int
+
 type 'a equal = 'a -> 'a -> bool
+
 type 'a pp = Format.formatter -> 'a -> unit
 
 module type S = sig
@@ -18,7 +23,9 @@ module type S = sig
   (** Size of hash results, in bytes. *)
 
   type ctx
+
   type kind
+
   type t
 
   val kind : kind
@@ -41,8 +48,8 @@ module type S = sig
   (** Same as {!feed_bytes} but for {!bigstring}. *)
 
   val feedi_bytes : ctx -> Bytes.t iter -> ctx
-  (** [feedi_bytes t iter = let r = ref t in iter (fun msg -> r := feed !r
-      msg); !r] *)
+  (** [feedi_bytes t iter = let r = ref t in iter (fun msg -> r := feed !r msg);
+      !r] *)
 
   val feedi_string : ctx -> String.t iter -> ctx
   (** Same as {!feed_bytes} but for {!String.t}. *)
@@ -85,8 +92,8 @@ module type S = sig
 
   val hmac_bytes : key:Bytes.t -> ?off:int -> ?len:int -> Bytes.t -> t
   (** [hmac_bytes ~key bytes] is the authentication code for {!Bytes.t} under
-      the secret [key], generated using the standard HMAC construction over
-      this hash algorithm. *)
+      the secret [key], generated using the standard HMAC construction over this
+      hash algorithm. *)
 
   val hmac_string : key:String.t -> ?off:int -> ?len:int -> String.t -> t
   (** Same as {!hmac_bytes} but for {!String.t}. *)
@@ -147,8 +154,8 @@ module type S = sig
 
   val consistent_of_hex_opt : string -> t option
   (** [consistent_of_hex_opt] tries to parse an hexadecimal representation of
-      {!t}. [consistent_of_hex] returns [None] when input is malformed.
-      However, instead {!of_hex}, [consistent_of_hex] expects exactly
+      {!t}. [consistent_of_hex] returns [None] when input is malformed. However,
+      instead {!of_hex}, [consistent_of_hex] expects exactly
       [{!digest_size} * 2] hexadecimal values (but continues to ignore
       whitespaces). *)
 
@@ -173,13 +180,21 @@ module type MAC = sig
   type t
 
   val mac_bytes : key:Bytes.t -> ?off:int -> ?len:int -> Bytes.t -> t
+
   val mac_string : key:String.t -> ?off:int -> ?len:int -> String.t -> t
+
   val mac_bigstring : key:bigstring -> ?off:int -> ?len:int -> bigstring -> t
+
   val maci_bytes : key:Bytes.t -> Bytes.t iter -> t
+
   val maci_string : key:String.t -> String.t iter -> t
+
   val maci_bigstring : key:bigstring -> bigstring iter -> t
+
   val macv_bytes : key:Bytes.t -> Bytes.t list -> t
+
   val macv_string : key:String.t -> String.t list -> t
+
   val macv_bigstring : key:bigstring -> bigstring list -> t
 end
 
@@ -196,90 +211,136 @@ type kind =
   | `BLAKE2S ]
 
 type 'k hash =
-  | MD5 : [`MD5] hash
-  | SHA1 : [`SHA1] hash
-  | RMD160 : [`RMD160] hash
-  | SHA224 : [`SHA224] hash
-  | SHA256 : [`SHA256] hash
-  | SHA384 : [`SHA384] hash
-  | SHA512 : [`SHA512] hash
-  | WHIRLPOOL : [`WHIRLPOOL] hash
-  | BLAKE2B : int -> [`BLAKE2B] hash
-  | BLAKE2S : int -> [`BLAKE2S] hash
+  | MD5 : [ `MD5 ] hash
+  | SHA1 : [ `SHA1 ] hash
+  | RMD160 : [ `RMD160 ] hash
+  | SHA224 : [ `SHA224 ] hash
+  | SHA256 : [ `SHA256 ] hash
+  | SHA384 : [ `SHA384 ] hash
+  | SHA512 : [ `SHA512 ] hash
+  | WHIRLPOOL : [ `WHIRLPOOL ] hash
+  | BLAKE2B : int -> [ `BLAKE2B ] hash
+  | BLAKE2S : int -> [ `BLAKE2S ] hash
 
-module MD5 : S with type kind = [`MD5]
-module SHA1 : S with type kind = [`SHA1]
-module SHA224 : S with type kind = [`SHA224]
-module SHA256 : S with type kind = [`SHA256]
-module SHA384 : S with type kind = [`SHA384]
-module SHA512 : S with type kind = [`SHA512]
-module WHIRLPOOL : S with type kind = [`WHIRLPOOL]
+module MD5 : S with type kind = [ `MD5 ]
+
+module SHA1 : S with type kind = [ `SHA1 ]
+
+module SHA224 : S with type kind = [ `SHA224 ]
+
+module SHA256 : S with type kind = [ `SHA256 ]
+
+module SHA384 : S with type kind = [ `SHA384 ]
+
+module SHA512 : S with type kind = [ `SHA512 ]
+
+module WHIRLPOOL : S with type kind = [ `WHIRLPOOL ]
 
 module BLAKE2B : sig
-  include S with type kind = [`BLAKE2B]
+  include S with type kind = [ `BLAKE2B ]
+
   module Keyed : MAC with type t = t
 end
 
 module BLAKE2S : sig
-  include S with type kind = [`BLAKE2S]
+  include S with type kind = [ `BLAKE2S ]
+
   module Keyed : MAC with type t = t
 end
 
-module RMD160 : S with type kind = [`RMD160]
+module RMD160 : S with type kind = [ `RMD160 ]
 
 module Make_BLAKE2B (D : sig
   val digest_size : int
-end) : S with type kind = [`BLAKE2B]
+end) : S with type kind = [ `BLAKE2B ]
 
 module Make_BLAKE2S (D : sig
   val digest_size : int
-end) : S with type kind = [`BLAKE2S]
+end) : S with type kind = [ `BLAKE2S ]
 
-val md5 : [`MD5] hash
-val sha1 : [`SHA1] hash
-val rmd160 : [`RMD160] hash
-val sha224 : [`SHA224] hash
-val sha256 : [`SHA256] hash
-val sha384 : [`SHA384] hash
-val sha512 : [`SHA512] hash
-val whirlpool : [`WHIRLPOOL] hash
-val blake2b : int -> [`BLAKE2B] hash
-val blake2s : int -> [`BLAKE2S] hash
+val md5 : [ `MD5 ] hash
+
+val sha1 : [ `SHA1 ] hash
+
+val rmd160 : [ `RMD160 ] hash
+
+val sha224 : [ `SHA224 ] hash
+
+val sha256 : [ `SHA256 ] hash
+
+val sha384 : [ `SHA384 ] hash
+
+val sha512 : [ `SHA512 ] hash
+
+val whirlpool : [ `WHIRLPOOL ] hash
+
+val blake2b : int -> [ `BLAKE2B ] hash
+
+val blake2s : int -> [ `BLAKE2S ] hash
 
 type 'kind t
 
 val module_of : 'k hash -> (module S with type kind = 'k)
+
 val digest_bytes : 'k hash -> Bytes.t -> 'k t
+
 val digest_string : 'k hash -> String.t -> 'k t
+
 val digest_bigstring : 'k hash -> bigstring -> 'k t
+
 val digesti_bytes : 'k hash -> Bytes.t iter -> 'k t
+
 val digesti_string : 'k hash -> String.t iter -> 'k t
+
 val digesti_bigstring : 'k hash -> bigstring iter -> 'k t
+
 val hmaci_bytes : 'k hash -> key:Bytes.t -> Bytes.t iter -> 'k t
+
 val hmaci_string : 'k hash -> key:String.t -> String.t iter -> 'k t
+
 val hmaci_bigstring : 'k hash -> key:bigstring -> bigstring iter -> 'k t
+
 val pp : 'k hash -> 'k t pp
+
 val equal : 'k hash -> 'k t equal
+
 val unsafe_compare : 'k hash -> 'k t compare
+
 val to_hex : 'k hash -> 'k t -> string
+
 val of_hex : 'k hash -> string -> 'k t
+
 val of_hex_opt : 'k hash -> string -> 'k t option
+
 val consistent_of_hex : 'k hash -> string -> 'k t
+
 val consistent_of_hex_opt : 'k hash -> string -> 'k t option
+
 val of_raw_string : 'k hash -> string -> 'k t
+
 val of_raw_string_opt : 'k hash -> string -> 'k t option
+
 val to_raw_string : 'k hash -> 'k t -> string
 
 val of_digest :
   (module S with type t = 'hash and type kind = 'k) -> 'hash -> 'k t
 
-val of_md5 : MD5.t -> [`MD5] t
-val of_sha1 : SHA1.t -> [`SHA1] t
-val of_rmd160 : RMD160.t -> [`RMD160] t
-val of_sha224 : SHA224.t -> [`SHA224] t
-val of_sha256 : SHA256.t -> [`SHA256] t
-val of_sha384 : SHA384.t -> [`SHA384] t
-val of_sha512 : SHA512.t -> [`SHA512] t
-val of_whirlpool : WHIRLPOOL.t -> [`WHIRLPOOL] t
-val of_blake2b : BLAKE2B.t -> [`BLAKE2B] t
-val of_blake2s : BLAKE2S.t -> [`BLAKE2S] t
+val of_md5 : MD5.t -> [ `MD5 ] t
+
+val of_sha1 : SHA1.t -> [ `SHA1 ] t
+
+val of_rmd160 : RMD160.t -> [ `RMD160 ] t
+
+val of_sha224 : SHA224.t -> [ `SHA224 ] t
+
+val of_sha256 : SHA256.t -> [ `SHA256 ] t
+
+val of_sha384 : SHA384.t -> [ `SHA384 ] t
+
+val of_sha512 : SHA512.t -> [ `SHA512 ] t
+
+val of_whirlpool : WHIRLPOOL.t -> [ `WHIRLPOOL ] t
+
+val of_blake2b : BLAKE2B.t -> [ `BLAKE2B ] t
+
+val of_blake2s : BLAKE2S.t -> [ `BLAKE2S ] t

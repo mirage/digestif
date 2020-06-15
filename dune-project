@@ -1,3 +1,2 @@
-(lang dune 1.7)
-(using library_variants 0.1)
+(lang dune 2.6)
 (name digestif)

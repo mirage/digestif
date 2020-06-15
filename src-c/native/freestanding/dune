@@ -1,20 +1,46 @@
 (library
- (name        rakia_freestanding)
+ (name rakia_freestanding)
  (public_name digestif.rakia.freestanding)
  (optional)
- (libraries   bigarray-compat ocaml-freestanding)
- (c_names     blake2b blake2s md5 ripemd160 sha1 sha256 sha512 whirlpool misc stubs)
- (c_flags     (:include cflags.sexp)))
+ (libraries bigarray-compat ocaml-freestanding)
+ (foreign_stubs
+  (language c)
+  (names blake2b blake2s md5 ripemd160 sha1 sha256 sha512 whirlpool misc
+    stubs)
+  (flags
+   (:include cflags.sexp))))
 
-(rule (copy# ../blake2b.c blake2b.c))
-(rule (copy# ../blake2s.c blake2s.c))
-(rule (copy# ../md5.c md5.c))
-(rule (copy# ../ripemd160.c ripemd160.c))
-(rule (copy# ../sha1.c sha1.c))
-(rule (copy# ../sha256.c sha256.c))
-(rule (copy# ../sha512.c sha512.c))
-(rule (copy# ../whirlpool.c whirlpool.c))
-(rule (copy# ../misc.c misc.c))
-(rule (copy# ../stubs.c stubs.c))
+(rule
+ (copy# ../blake2b.c blake2b.c))
 
-(rule (with-stdout-to cflags.sexp (run ./cflags.sh)))
+(rule
+ (copy# ../blake2s.c blake2s.c))
+
+(rule
+ (copy# ../md5.c md5.c))
+
+(rule
+ (copy# ../ripemd160.c ripemd160.c))
+
+(rule
+ (copy# ../sha1.c sha1.c))
+
+(rule
+ (copy# ../sha256.c sha256.c))
+
+(rule
+ (copy# ../sha512.c sha512.c))
+
+(rule
+ (copy# ../whirlpool.c whirlpool.c))
+
+(rule
+ (copy# ../misc.c misc.c))
+
+(rule
+ (copy# ../stubs.c stubs.c))
+
+(rule
+ (with-stdout-to
+  cflags.sexp
+  (run ./cflags.sh)))
