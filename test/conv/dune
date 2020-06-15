@@ -1,8 +1,9 @@
 (executable
- (name      test_conv)
- (modules   test_conv)
+ (name test_conv)
+ (modules test_conv)
  (libraries digestif.c fmt alcotest))
 
 (rule
- (alias   runtest)
- (action (run ./test_conv.exe --color=always)))
+ (alias runtest)
+ (action
+  (run ./test_conv.exe --color=always)))
