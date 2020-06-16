@@ -27,8 +27,15 @@ We provides implementation of:
  * RIPEMD160
 """
 
-build: [ "dune" "build" "-p" name "-j" jobs ]
-run-test: [ "dune" "runtest" "-p" name "-j" jobs ]
+build: [
+  [ "dune" "build" "-p" name "-j" jobs ]
+  [ "./install/install.ml" ]
+  [ "dune" "runtest" "-p" name "-j" jobs ] {with-test}
+]
+install:  [
+  [ "dune" "install" "-p" name ] {with-test}
+  [ "./test/test_runes.ml" ] {with-test}
+]
 
 depends: [
   "ocaml"          {>= "4.03.0"}
@@ -39,6 +46,11 @@ depends: [
   "stdlib-shims"
   "fmt"            {with-test}
   "alcotest"       {with-test}
+  "bos"            {with-test}
+  "astring"        {with-test}
+  "fpath"          {with-test}
+  "rresult"        {with-test}
+  "ocamlfind"      {build & with-test}
 ]
 
 depopts: [
@@ -49,5 +61,4 @@ depopts: [
 conflicts: [
   "mirage-xen-posix" {< "3.1.0"}
   "ocaml-freestanding" {< "0.4.3"}
-  "mirage-runtime" {< "4.0.0"}
 ]
