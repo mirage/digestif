@@ -5,7 +5,7 @@
  (libraries bigarray-compat ocaml-freestanding)
  (foreign_stubs
   (language c)
-  (names blake2b blake2s md5 ripemd160 sha1 sha256 sha512 whirlpool misc
+  (names blake2b blake2s md5 ripemd160 sha1 sha256 sha512 sha3 whirlpool misc
     stubs)
   (flags
    (:include cflags.sexp))))
@@ -30,6 +30,9 @@
 
 (rule
  (copy# ../sha512.c sha512.c))
+
+(rule
+ (copy# ../sha3.c sha3.c))
 
 (rule
  (copy# ../whirlpool.c whirlpool.c))

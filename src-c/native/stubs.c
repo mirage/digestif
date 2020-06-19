@@ -4,6 +4,7 @@
 #include "sha1.h"
 #include "sha256.h"
 #include "sha512.h"
+#include "sha3.h"
 #include "whirlpool.h"
 #include "blake2b.h"
 #include "blake2s.h"
@@ -79,6 +80,7 @@ __define_hash (sha224, SHA224)
 __define_hash (sha256, SHA256)
 __define_hash (sha384, SHA384)
 __define_hash (sha512, SHA512)
+__define_hash (sha3, SHA3)
 __define_hash (whirlpool, WHIRLPOOL)
 __define_hash (blake2b, BLAKE2B)
 __define_hash (blake2s, BLAKE2S)
