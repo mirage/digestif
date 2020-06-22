@@ -573,7 +573,7 @@ module SHA3 : S with type kind = [ `SHA3 ] =
   Make
     (Native.SHA3)
     (struct
-      let digest_size, block_size = (64, 71)
+      let digest_size, block_size = (64, 72)
 
       type kind = [ `SHA3 ]
 

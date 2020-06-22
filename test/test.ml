@@ -22,6 +22,7 @@ let title : type a k. [ `HMAC | `Digest ] -> k Digestif.hash -> a s -> string =
     | Digestif.SHA256 -> Fmt.string ppf "sha256"
     | Digestif.SHA384 -> Fmt.string ppf "sha384"
     | Digestif.SHA512 -> Fmt.string ppf "sha512"
+    | Digestif.SHA3 -> Fmt.string ppf "sha3"
     | Digestif.WHIRLPOOL -> Fmt.string ppf "whirlpool"
     | Digestif.BLAKE2B _ -> Fmt.string ppf "blake2b"
     | Digestif.BLAKE2S _ -> Fmt.string ppf "blake2s" in
@@ -212,6 +213,15 @@ let results_sha512 =
     "f6ecfca37d2abcff4b362f1919629e784c4b618af77e1061bb992c11d7f518716f5df5978b0a1455d68ceeb10ced9251306d2f26181407be76a219d48c36b592";
   ]
   |> List.map (Digestif.of_hex Digestif.sha512)
+
+let results_sha3 =
+  [ "c2f4417c4dbc86cea2054beb755029c29c8dbed7781595fc9d5222214538a6975afc23f2f9e96683d33f547ea0df897bd1ca766fbb2c4ea674b9b9484e9e782a"
+  ; "5a4bfeab6166427c7a3647b747292b8384537cdb89afb3bf5665e4c5e709350b287baec921fd7ca0ee7a0c31d022a95e1fc92ba9d77df883960275beb4e62024"
+  ; "967c75d948f8b1efc263c4581287186500bf38daecda304fe68f34dacd622f299218ad47a4a112db5eedd5c8a30b03fefa17d20ddc3a735848f08fdc2d7ae592"
+  ; "ba3d37e455183ac5a9af109512d97bcc5e34daa5e10796625db8661519a4027b2cf89d282302bd8a620b8813ee98f781a9388e4f479e189899d820c1dcd50b8c"
+  ; "ce4a9d6e2b98b7fbb9ea668cd21b18c361d1d929fc6914192069b8c2672682a36ece8a6de07b17d4448afbc701b460264994ae9c79f26cfdd14a8fdc108d62a1"
+  ]
+  |> List.map (Digestif.of_hex Digestif.sha3)
 
 let results_whirlpool =
   [
@@ -497,6 +507,12 @@ let tests () =
       ( "sha512 (bigstring)",
         makes ~name:"sha512" bigstring Digestif.sha512 keys_bi inputs_bi
           results_sha512 );
+      ( "sha3",
+        makes ~name:"sha3" bytes Digestif.sha3 keys_by inputs_by
+          results_sha3 );
+      ( "sha3 (bigstring)",
+        makes ~name:"sha3" bigstring Digestif.sha3 keys_bi inputs_bi
+          results_sha3 );
       ( "whirlpool",
         makes ~name:"whirlpool" bytes Digestif.whirlpool keys_by inputs_by
           results_whirlpool );
