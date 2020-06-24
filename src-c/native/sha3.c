@@ -104,15 +104,13 @@ void sha3_keccakf(uint64_t st[25])
 
 // Initialize the context for SHA3
 
-void digestif_sha3_init(struct sha3_ctx *ctx/*, int mdlen*/)
+void digestif_sha3_init(struct sha3_ctx *ctx, int mdlen)
 {
     int i;
-    /*to change*/
-    int mdlen = 64;
     for (i = 0; i < 25; i++)
         ctx->st.q[i] = 0;
-    ctx->mdlen = mdlen;
-    ctx->rsiz = 200 - 2 * mdlen;
+    ctx->mdlen = mdlen/8;
+    ctx->rsiz = 200 - 2 * ctx->mdlen;
     ctx->pt = 0;
 
     return;
@@ -150,9 +148,8 @@ void digestif_sha3_finalize(struct sha3_ctx *ctx, uint8_t *md)
 
     //call f on the last block
     sha3_keccakf(ctx->st.q);
-
     for (i = 0; i < ctx->mdlen; i++) {
-        md[i] = ctx->st.b[i];
+      md[i] = ctx->st.b[i];
     }
 
     return;

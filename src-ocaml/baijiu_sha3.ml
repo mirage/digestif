@@ -23,35 +23,13 @@ module Int64 = struct
   let rol64 a n = (a lsl n) lor (a asr (64 - n))
 end
 
-module type S = sig
-  type kind = [ `SHA3 ]
-
+module Unsafe = struct
   type ctx = {
     st : int64 array;
     rsize : int;
+    (* block size *)
     mdlen : int;
-    mutable pt : int;
-    data : Bytes.t;
-  }
-
-  val init : unit -> ctx
-
-  val unsafe_feed_bytes : ctx -> By.t -> int -> int -> unit
-
-  val unsafe_feed_bigstring : ctx -> Bi.t -> int -> int -> unit
-
-  val unsafe_get : ctx -> By.t
-
-  val dup : ctx -> ctx
-end
-
-module Unsafe : S = struct
-  type kind = [ `SHA3 ]
-
-  type ctx = {
-    st : int64 array;
-    rsize : int;
-    mdlen : int;
+    (* output size *)
     mutable pt : int;
     data : Bytes.t;
   }
@@ -65,10 +43,7 @@ module Unsafe : S = struct
       data = Bytes.copy ctx.data;
     }
 
-  let init () =
-    (* mdlen should be a parameter *)
-    let mdlen = 64 in
-    (* bloc size *)
+  let init mdlen =
     let rsize = 200 - (2 * mdlen) in
     {
       st = Array.make 25 0L;
@@ -251,7 +226,8 @@ module Unsafe : S = struct
 
   let unsafe_feed_bytes = feed ~blit:By.blit
 
-  let unsafe_feed_bigstring = feed ~blit:By.blit_from_bigstring
+  let unsafe_feed_bigstring : ctx -> Bi.t -> int -> int -> unit =
+    feed ~blit:By.blit_from_bigstring
 
   let unsafe_get ctx =
     let ( lxor ) = Int64.( lxor ) in
@@ -271,10 +247,18 @@ module Unsafe : S = struct
     sha3_keccakf ctx.st ;
 
     (* Get hash *)
-    let hash = By.create ctx.mdlen in
-    for i = 0 to (ctx.mdlen / 8) - 1 do
+    (* if the hash size in bytes is not a multiple of 8 (meaning it is
+       not composed of whole int64 words, like for sha3_224), we
+       extract the whole last int64 word from the state [ctx.st] and
+       cut the hash at the right size after conversion to bytes. *)
+    let n =
+      let r = ctx.mdlen mod 8 in
+      ctx.mdlen + if r = 0 then 0 else 8 - r in
+
+    let hash = By.create n in
+    for i = 0 to (n / 8) - 1 do
       By.unsafe_set_64 hash (i * 8) ctx.st.(i)
     done ;
 
-    hash
+    By.sub hash 0 ctx.mdlen
 end

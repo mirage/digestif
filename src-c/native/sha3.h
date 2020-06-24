@@ -15,11 +15,9 @@ struct sha3_ctx
   int pt, rsiz, mdlen;                    // these don't overflow
 };
 
-
-#define SHA3_DIGEST_SIZE	64
 #define SHA3_CTX_SIZE		sizeof(struct sha3_ctx)
 
-void digestif_sha3_init(struct sha3_ctx *ctx);
+void digestif_sha3_init(struct sha3_ctx *ctx, int mdlen);
 void digestif_sha3_update(struct sha3_ctx *ctx, uint8_t *data, uint32_t len);
 void digestif_sha3_finalize(struct sha3_ctx *ctx, uint8_t *out);
 
