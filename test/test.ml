@@ -505,6 +505,82 @@ let blake2b_spe digest_size =
   Alcotest.(check hash) "hash" hash0 hash1 ;
   Alcotest.(check str) "raw hash" raw_hash0 raw_hash1
 
+type kind = V : 'a Digestif.hash -> kind
+
+let ( <.> ) f g x = f (g x)
+
+let code x =
+  match x with
+  | '0' .. '9' -> Char.code x - Char.code '0'
+  | 'A' .. 'F' -> Char.code x - Char.code 'A' + 10
+  | 'a' .. 'f' -> Char.code x - Char.code 'a' + 10
+  | _ -> Fmt.invalid_arg "of_hex: %02X" (Char.code x)
+
+let decode chr1 chr2 = Char.chr ((code chr1 lsl 4) lor code chr2)
+
+let of_hex hex =
+  let offset = ref 0 in
+  let rec go have_first idx =
+    if !offset + idx >= String.length hex
+    then '\x00'
+    else
+      match hex.[!offset + idx] with
+      | ' ' | '\t' | '\r' | '\n' ->
+          incr offset ;
+          go have_first idx
+      | chr2 when have_first -> chr2
+      | chr1 ->
+          incr offset ;
+          let chr2 = go true idx in
+          if chr2 <> '\x00'
+          then decode chr1 chr2
+          else invalid_arg "of_hex: odd number of hex characters" in
+  String.init (String.length hex / 2) (go false)
+
+let sha3_of_name str =
+  match Astring.String.cut ~sep:":" str with
+  | None -> Fmt.invalid_arg "Invalid line: %S" str
+  | Some (_name, value) -> (
+      let value = Astring.String.trim value in
+      match value with
+      | "SHA3-224" -> V Digestif.sha3_224
+      | "SHA3-256" -> V Digestif.sha3_256
+      | "SHA3-384" -> V Digestif.sha3_384
+      | "SHA3-512" -> V Digestif.sha3_512
+      | v -> Fmt.invalid_arg "Invalid kind of hash: %s" v)
+
+let parse_field str =
+  match Astring.String.cut ~sep:":" str with
+  | Some (_key, v) -> Astring.String.trim v
+  | None -> Fmt.invalid_arg "Invalid line: %S" str
+
+let empty = "\"\""
+
+let sha3_vector_tests filename =
+  Alcotest.test_case filename `Quick @@ fun () ->
+  let ic = open_in filename in
+  let _algorithm_type = input_line ic in
+  let _source = input_line ic in
+  let (V hash) = sha3_of_name (input_line ic) in
+  let rec go () =
+    try
+      let comment = parse_field (input_line ic) in
+      let message = parse_field (input_line ic) in
+      Fmt.epr ">>> %S.\n%!" comment ;
+      Fmt.epr ">>> %S.\n%!" (if message = empty then "" else of_hex message) ;
+      let digest = (Digestif.of_hex hash <.> parse_field <.> input_line) ic in
+      let _verify = input_line ic in
+      let result =
+        if message = empty
+        then Digestif.digest_string hash ""
+        else Digestif.digest_string hash (of_hex message) in
+      Alcotest.(check (testable (Digestif.pp hash) (Digestif.equal hash)))
+        comment digest result ;
+      go ()
+    with End_of_file -> () in
+  go () ;
+  close_in ic
+
 let tests () =
   Alcotest.run "digestif"
     [
@@ -600,6 +676,13 @@ let tests () =
       ( "blake2b (specialization)",
         [ blake2b_spe 32; blake2b_spe 64; blake2b_spe 16 ] );
       ("ripemd160", RMD160.tests);
+      ( "sha3 (vector tests)",
+        [
+          sha3_vector_tests "../sha3_224_fips_202.txt";
+          sha3_vector_tests "../sha3_256_fips_202.txt";
+          sha3_vector_tests "../sha3_384_fips_202.txt";
+          sha3_vector_tests "../sha3_512_fips_202.txt";
+        ] );
     ]
 
 let () = tests ()
