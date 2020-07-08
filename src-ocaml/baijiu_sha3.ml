@@ -25,33 +25,20 @@ end
 
 module Unsafe = struct
   type ctx = {
-    st : int64 array;
+    q : int64 array;
     rsize : int;
     (* block size *)
     mdlen : int;
     (* output size *)
     mutable pt : int;
-    data : Bytes.t;
   }
 
   let dup ctx =
-    {
-      st = Array.copy ctx.st;
-      rsize = ctx.rsize;
-      mdlen = ctx.mdlen;
-      pt = ctx.pt;
-      data = Bytes.copy ctx.data;
-    }
+    { q = Array.copy ctx.q; rsize = ctx.rsize; mdlen = ctx.mdlen; pt = ctx.pt }
 
   let init mdlen =
     let rsize = 200 - (2 * mdlen) in
-    {
-      st = Array.make 25 0L;
-      rsize;
-      mdlen;
-      pt = 0;
-      data = Bytes.make rsize '\x00';
-    }
+    { q = Array.make 25 0L; rsize; mdlen; pt = 0 }
 
   let keccakf_rounds = 24
 
@@ -141,8 +128,8 @@ module Unsafe = struct
 
   let swap64 = if Sys.big_endian then By.swap64 else fun x -> x
 
-  let sha3_keccakf (st : int64 array) =
-    if Sys.big_endian then Array.iteri (fun i sti -> st.(i) <- swap64 sti) st ;
+  let sha3_keccakf (q : int64 array) =
+    if Sys.big_endian then Array.iteri (fun i sti -> q.(i) <- swap64 sti) q ;
 
     for r = 0 to keccakf_rounds - 1 do
       let ( lxor ) = Int64.( lxor ) in
@@ -151,100 +138,108 @@ module Unsafe = struct
       (* Theta *)
       let bc =
         Array.init 5 (fun i ->
-            st.(i)
-            lxor st.(i + 5)
-            lxor st.(i + 10)
-            lxor st.(i + 15)
-            lxor st.(i + 20)) in
+            q.(i) lxor q.(i + 5) lxor q.(i + 10) lxor q.(i + 15) lxor q.(i + 20))
+      in
       for i = 0 to 4 do
         let t = bc.((i + 4) mod 5) lxor Int64.rol64 bc.((i + 1) mod 5) 1 in
         for k = 0 to 4 do
           let j = k * 5 in
-          st.(j + i) <- st.(j + i) lxor t
+          q.(j + i) <- q.(j + i) lxor t
         done
       done ;
 
-      (* Rho Pi*)
-      let t = ref st.(1) in
+      (* Rho Pi *)
+      let t = ref q.(1) in
       let _ =
         Array.iteri
           (fun i rotc ->
             let j = keccakf_piln.(i) in
-            bc.(0) <- st.(j) ;
-            st.(j) <- Int64.rol64 !t rotc ;
+            bc.(0) <- q.(j) ;
+            q.(j) <- Int64.rol64 !t rotc ;
             t := bc.(0))
           keccaft_rotc in
 
       (* Chi *)
       for k = 0 to 4 do
         let j = k * 5 in
-        let bc = Array.init 5 (fun i -> st.(j + i)) in
+        let bc = Array.init 5 (fun i -> q.(j + i)) in
         for i = 0 to 4 do
-          st.(j + i) <-
-            st.(j + i) lxor (lnot bc.((i + 1) mod 5) land bc.((i + 2) mod 5))
+          q.(j + i) <-
+            q.(j + i) lxor (lnot bc.((i + 1) mod 5) land bc.((i + 2) mod 5))
         done
       done ;
 
       (* Iota *)
-      st.(0) <- st.(0) lxor keccaft_rndc.(r)
+      q.(0) <- q.(0) lxor keccaft_rndc.(r)
     done ;
 
-    if Sys.big_endian then Array.iteri (fun i sti -> st.(i) <- swap64 sti) st
+    if Sys.big_endian then Array.iteri (fun i sti -> q.(i) <- swap64 sti) q
+
+  let masks =
+    [|
+      0xffffffffffffff00L;
+      0xffffffffffff00ffL;
+      0xffffffffff00ffffL;
+      0xffffffff00ffffffL;
+      0xffffff00ffffffffL;
+      0xffff00ffffffffffL;
+      0xff00ffffffffffffL;
+      0x00ffffffffffffffL;
+    |]
 
   let feed :
-      type a.
-      blit:(a -> int -> By.t -> int -> int -> unit) ->
-      ctx ->
-      a ->
-      int ->
-      int ->
-      unit =
-   fun ~blit ctx buf off len ->
+      type a. get_uint8:(a -> int -> int) -> ctx -> a -> int -> int -> unit =
+   fun ~get_uint8 ctx buf off len ->
+    let ( && ) = ( land ) in
+
     let ( lxor ) = Int64.( lxor ) in
-    let len = ref len in
-    let off = ref off in
+    let ( land ) = Int64.( land ) in
+    let ( lor ) = Int64.( lor ) in
+    let ( lsr ) = Int64.( lsr ) in
+    let ( lsl ) = Int64.( lsl ) in
 
-    try
-      while true do
-        let to_fill = ctx.rsize - ctx.pt in
-        if to_fill > !len
-        then (
-          blit buf !off ctx.data ctx.pt !len ;
-          ctx.pt <- ctx.pt + !len ;
-          raise Exit)
-        else (
-          blit buf !off ctx.data ctx.pt to_fill ;
-          for i = 0 to (ctx.rsize / 8) - 1 do
-            ctx.st.(i) <- ctx.st.(i) lxor By.unsafe_get_64 ctx.data (i * 8)
-          done ;
-          sha3_keccakf ctx.st ;
-          ctx.pt <- 0 ;
-          off := !off + to_fill ;
-          len := !len - to_fill)
-      done
-    with Exit -> ()
+    let j = ref ctx.pt in
 
-  let unsafe_feed_bytes = feed ~blit:By.blit
+    for i = 0 to len - 1 do
+      let v =
+        (ctx.q.(!j / 8) land (0xffL lsl ((!j && 0x7) * 8))) lsr ((!j && 0x7) * 8)
+      in
+      let v = v lxor Int64.of_int (get_uint8 buf (off + i)) in
+      ctx.q.(!j / 8) <-
+        ctx.q.(!j / 8) land masks.(!j && 0x7) lor (v lsl ((!j && 0x7) * 8)) ;
+      incr j ;
+      if !j >= ctx.rsize
+      then (
+        sha3_keccakf ctx.q ;
+        j := 0)
+    done ;
+
+    ctx.pt <- !j
+
+  let unsafe_feed_bytes ctx buf off len =
+    let get_uint8 buf off = Char.code (By.get buf off) in
+    feed ~get_uint8 ctx buf off len
 
   let unsafe_feed_bigstring : ctx -> Bi.t -> int -> int -> unit =
-    feed ~blit:By.blit_from_bigstring
+   fun ctx buf off len ->
+    let get_uint8 buf off = Char.code (Bi.get buf off) in
+    feed ~get_uint8 ctx buf off len
 
   let unsafe_get ctx =
+    let ( && ) = ( land ) in
+
     let ( lxor ) = Int64.( lxor ) in
+    let ( lsl ) = Int64.( lsl ) in
 
-    (* Padding *)
-    Bytes.set ctx.data ctx.pt '\x06' ;
-    for i = ctx.pt + 1 to ctx.rsize - 2 do
-      Bytes.set ctx.data i '\x00'
-    done ;
-    Bytes.set ctx.data (ctx.rsize - 1) '\x80' ;
+    let v = ctx.q.(ctx.pt / 8) in
+    let v = v lxor (0x6L lsl ((ctx.pt && 0x7) * 8)) in
+    ctx.q.(ctx.pt / 8) <- v ;
 
-    (* Call sha3_keccaft on the last block *)
-    for i = 0 to (ctx.rsize / 8) - 1 do
-      ctx.st.(i) <- ctx.st.(i) lxor By.unsafe_get_64 ctx.data (i * 8)
-    done ;
+    let v = ctx.q.((ctx.rsize - 1) / 8) in
+    let v = v lxor (0x80L lsl (((ctx.rsize - 1) && 0x7) * 8)) in
+    ctx.q.((ctx.rsize - 1) / 8) <- v ;
 
-    sha3_keccakf ctx.st ;
+    sha3_keccakf ctx.q ;
 
     (* Get hash *)
     (* if the hash size in bytes is not a multiple of 8 (meaning it is
@@ -257,7 +252,7 @@ module Unsafe = struct
 
     let hash = By.create n in
     for i = 0 to (n / 8) - 1 do
-      By.unsafe_set_64 hash (i * 8) ctx.st.(i)
+      By.unsafe_set_64 hash (i * 8) ctx.q.(i)
     done ;
 
     By.sub hash 0 ctx.mdlen
