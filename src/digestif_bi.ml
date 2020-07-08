@@ -10,6 +10,8 @@ let sub = Array1.sub
 
 let empty = Array1.create Char c_layout 0
 
+let get = Array1.get
+
 let copy t =
   let r = create (length t) in
   Array1.blit t r ;
