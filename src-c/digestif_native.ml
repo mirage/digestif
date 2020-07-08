@@ -201,6 +201,126 @@ module SHA512 = struct
   external ctx_size : unit -> int = "caml_digestif_sha512_ctx_size" [@@noalloc]
 end
 
+module SHA3_224 = struct
+  type kind = [ `SHA3_224 ]
+
+  module Bigstring = struct
+    external init : ctx -> unit = "caml_digestif_sha3_224_ba_init" [@@noalloc]
+
+    external update : ctx -> ba -> off -> size -> unit
+      = "caml_digestif_sha3_224_ba_update"
+
+    external finalize : ctx -> ba -> off -> unit
+      = "caml_digestif_sha3_224_ba_finalize"
+      [@@noalloc]
+  end
+
+  module Bytes = struct
+    external init : ctx -> unit = "caml_digestif_sha3_224_st_init" [@@noalloc]
+
+    external update : ctx -> st -> off -> size -> unit
+      = "caml_digestif_sha3_224_st_update"
+      [@@noalloc]
+
+    external finalize : ctx -> st -> off -> unit
+      = "caml_digestif_sha3_224_st_finalize"
+      [@@noalloc]
+  end
+
+  external ctx_size : unit -> int = "caml_digestif_sha3_224_ctx_size"
+    [@@noalloc]
+end
+
+module SHA3_256 = struct
+  type kind = [ `SHA3_256 ]
+
+  module Bigstring = struct
+    external init : ctx -> unit = "caml_digestif_sha3_256_ba_init" [@@noalloc]
+
+    external update : ctx -> ba -> off -> size -> unit
+      = "caml_digestif_sha3_256_ba_update"
+
+    external finalize : ctx -> ba -> off -> unit
+      = "caml_digestif_sha3_256_ba_finalize"
+      [@@noalloc]
+  end
+
+  module Bytes = struct
+    external init : ctx -> unit = "caml_digestif_sha3_256_st_init" [@@noalloc]
+
+    external update : ctx -> st -> off -> size -> unit
+      = "caml_digestif_sha3_256_st_update"
+      [@@noalloc]
+
+    external finalize : ctx -> st -> off -> unit
+      = "caml_digestif_sha3_256_st_finalize"
+      [@@noalloc]
+  end
+
+  external ctx_size : unit -> int = "caml_digestif_sha3_256_ctx_size"
+    [@@noalloc]
+end
+
+module SHA3_384 = struct
+  type kind = [ `SHA3_384 ]
+
+  module Bigstring = struct
+    external init : ctx -> unit = "caml_digestif_sha3_384_ba_init" [@@noalloc]
+
+    external update : ctx -> ba -> off -> size -> unit
+      = "caml_digestif_sha3_384_ba_update"
+
+    external finalize : ctx -> ba -> off -> unit
+      = "caml_digestif_sha3_384_ba_finalize"
+      [@@noalloc]
+  end
+
+  module Bytes = struct
+    external init : ctx -> unit = "caml_digestif_sha3_384_st_init" [@@noalloc]
+
+    external update : ctx -> st -> off -> size -> unit
+      = "caml_digestif_sha3_384_st_update"
+      [@@noalloc]
+
+    external finalize : ctx -> st -> off -> unit
+      = "caml_digestif_sha3_384_st_finalize"
+      [@@noalloc]
+  end
+
+  external ctx_size : unit -> int = "caml_digestif_sha3_384_ctx_size"
+    [@@noalloc]
+end
+
+module SHA3_512 = struct
+  type kind = [ `SHA3_512 ]
+
+  module Bigstring = struct
+    external init : ctx -> unit = "caml_digestif_sha3_512_ba_init" [@@noalloc]
+
+    external update : ctx -> ba -> off -> size -> unit
+      = "caml_digestif_sha3_512_ba_update"
+
+    external finalize : ctx -> ba -> off -> unit
+      = "caml_digestif_sha3_512_ba_finalize"
+      [@@noalloc]
+  end
+
+  module Bytes = struct
+    external init : ctx -> unit = "caml_digestif_sha3_512_st_init" [@@noalloc]
+
+    external update : ctx -> st -> off -> size -> unit
+      = "caml_digestif_sha3_512_st_update"
+      [@@noalloc]
+
+    external finalize : ctx -> st -> off -> unit
+      = "caml_digestif_sha3_512_st_finalize"
+      [@@noalloc]
+  end
+
+  external ctx_size : unit -> int = "caml_digestif_sha3_512_ctx_size"
+    [@@noalloc]
+end
+
 module WHIRLPOOL = struct
   type kind = [ `WHIRLPOOL ]
 

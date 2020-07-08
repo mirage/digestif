@@ -206,6 +206,10 @@ type kind =
   | `SHA256
   | `SHA384
   | `SHA512
+  | `SHA3_224
+  | `SHA3_256
+  | `SHA3_384
+  | `SHA3_512
   | `WHIRLPOOL
   | `BLAKE2B
   | `BLAKE2S ]
@@ -218,6 +222,10 @@ type 'k hash =
   | SHA256 : [ `SHA256 ] hash
   | SHA384 : [ `SHA384 ] hash
   | SHA512 : [ `SHA512 ] hash
+  | SHA3_224 : [ `SHA3_224 ] hash
+  | SHA3_256 : [ `SHA3_256 ] hash
+  | SHA3_384 : [ `SHA3_384 ] hash
+  | SHA3_512 : [ `SHA3_512 ] hash
   | WHIRLPOOL : [ `WHIRLPOOL ] hash
   | BLAKE2B : int -> [ `BLAKE2B ] hash
   | BLAKE2S : int -> [ `BLAKE2S ] hash
@@ -233,6 +241,14 @@ module SHA256 : S with type kind = [ `SHA256 ]
 module SHA384 : S with type kind = [ `SHA384 ]
 
 module SHA512 : S with type kind = [ `SHA512 ]
+
+module SHA3_224 : S with type kind = [ `SHA3_224 ]
+
+module SHA3_256 : S with type kind = [ `SHA3_256 ]
+
+module SHA3_384 : S with type kind = [ `SHA3_384 ]
+
+module SHA3_512 : S with type kind = [ `SHA3_512 ]
 
 module WHIRLPOOL : S with type kind = [ `WHIRLPOOL ]
 
@@ -271,6 +287,14 @@ val sha256 : [ `SHA256 ] hash
 val sha384 : [ `SHA384 ] hash
 
 val sha512 : [ `SHA512 ] hash
+
+val sha3_224 : [ `SHA3_224 ] hash
+
+val sha3_256 : [ `SHA3_256 ] hash
+
+val sha3_384 : [ `SHA3_384 ] hash
+
+val sha3_512 : [ `SHA3_512 ] hash
 
 val whirlpool : [ `WHIRLPOOL ] hash
 
@@ -338,6 +362,14 @@ val of_sha256 : SHA256.t -> [ `SHA256 ] t
 val of_sha384 : SHA384.t -> [ `SHA384 ] t
 
 val of_sha512 : SHA512.t -> [ `SHA512 ] t
+
+val of_sha3_224 : SHA3_224.t -> [ `SHA3_224 ] t
+
+val of_sha3_256 : SHA3_256.t -> [ `SHA3_256 ] t
+
+val of_sha3_384 : SHA3_384.t -> [ `SHA3_384 ] t
+
+val of_sha3_512 : SHA3_512.t -> [ `SHA3_512 ] t
 
 val of_whirlpool : WHIRLPOOL.t -> [ `WHIRLPOOL ] t
 

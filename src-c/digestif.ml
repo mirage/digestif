@@ -569,6 +569,50 @@ module SHA512 : S with type kind = [ `SHA512 ] =
       let kind = `SHA512
     end)
 
+module SHA3_224 : S with type kind = [ `SHA3_224 ] =
+  Make
+    (Native.SHA3_224)
+    (struct
+      let digest_size, block_size = (28, 144)
+
+      type kind = [ `SHA3_224 ]
+
+      let kind = `SHA3_224
+    end)
+
+module SHA3_256 : S with type kind = [ `SHA3_256 ] =
+  Make
+    (Native.SHA3_256)
+    (struct
+      let digest_size, block_size = (32, 136)
+
+      type kind = [ `SHA3_256 ]
+
+      let kind = `SHA3_256
+    end)
+
+module SHA3_384 : S with type kind = [ `SHA3_384 ] =
+  Make
+    (Native.SHA3_384)
+    (struct
+      let digest_size, block_size = (48, 104)
+
+      type kind = [ `SHA3_384 ]
+
+      let kind = `SHA3_384
+    end)
+
+module SHA3_512 : S with type kind = [ `SHA3_512 ] =
+  Make
+    (Native.SHA3_512)
+    (struct
+      let digest_size, block_size = (64, 72)
+
+      type kind = [ `SHA3_512 ]
+
+      let kind = `SHA3_512
+    end)
+
 module WHIRLPOOL : S with type kind = [ `WHIRLPOOL ] =
   Make
     (Native.WHIRLPOOL)
@@ -667,6 +711,10 @@ let module_of : type k. k hash -> (module S with type kind = k) =
   | SHA256 -> (module SHA256)
   | SHA384 -> (module SHA384)
   | SHA512 -> (module SHA512)
+  | SHA3_224 -> (module SHA3_224)
+  | SHA3_256 -> (module SHA3_256)
+  | SHA3_384 -> (module SHA3_384)
+  | SHA3_512 -> (module SHA3_512)
   | WHIRLPOOL -> (module WHIRLPOOL)
   | BLAKE2B digest_size -> (
       match Hashtbl.find b2b digest_size with
@@ -822,6 +870,14 @@ let of_sha256 hash = of_raw_string sha256 (SHA256.to_raw_string hash)
 let of_sha384 hash = of_raw_string sha384 (SHA384.to_raw_string hash)
 
 let of_sha512 hash = of_raw_string sha512 (SHA512.to_raw_string hash)
+
+let of_sha3_224 hash = of_raw_string sha3_224 (SHA3_224.to_raw_string hash)
+
+let of_sha3_256 hash = of_raw_string sha3_256 (SHA3_256.to_raw_string hash)
+
+let of_sha3_384 hash = of_raw_string sha3_384 (SHA3_384.to_raw_string hash)
+
+let of_sha3_512 hash = of_raw_string sha3_512 (SHA3_512.to_raw_string hash)
 
 let of_whirlpool hash = of_raw_string whirlpool (WHIRLPOOL.to_raw_string hash)
 

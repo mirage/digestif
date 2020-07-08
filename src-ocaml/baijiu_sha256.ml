@@ -6,9 +6,9 @@ module Int32 = struct
 
   let ( lsl ) = Int32.shift_left
 
-  let ( lsr ) = Int32.shift_right
+  let ( lsr ) = Int32.shift_right_logical
 
-  let srl = Int32.shift_right_logical
+  let ( asr ) = Int32.shift_right
 
   let ( lor ) = Int32.logor
 
@@ -18,9 +18,9 @@ module Int32 = struct
 
   let ( + ) = Int32.add
 
-  let rol32 a n = (a lsl n) lor srl a (32 - n)
+  let rol32 a n = (a lsl n) lor (a lsr (32 - n))
 
-  let ror32 a n = srl a n lor (a lsl (32 - n))
+  let ror32 a n = (a lsr n) lor (a lsl (32 - n))
 end
 
 module Int64 = struct
@@ -144,9 +144,9 @@ module Unsafe : S = struct
 
   let e1 x = Int32.(ror32 x 6 lxor ror32 x 11 lxor ror32 x 25)
 
-  let s0 x = Int32.(ror32 x 7 lxor ror32 x 18 lxor srl x 3)
+  let s0 x = Int32.(ror32 x 7 lxor ror32 x 18 lxor (x lsr 3))
 
-  let s1 x = Int32.(ror32 x 17 lxor ror32 x 19 lxor srl x 10)
+  let s1 x = Int32.(ror32 x 17 lxor ror32 x 19 lxor (x lsr 10))
 
   let sha256_do_chunk :
       type a. be32_to_cpu:(a -> int -> int32) -> ctx -> a -> int -> unit =

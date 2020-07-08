@@ -22,6 +22,10 @@ let title : type a k. [ `HMAC | `Digest ] -> k Digestif.hash -> a s -> string =
     | Digestif.SHA256 -> Fmt.string ppf "sha256"
     | Digestif.SHA384 -> Fmt.string ppf "sha384"
     | Digestif.SHA512 -> Fmt.string ppf "sha512"
+    | Digestif.SHA3_224 -> Fmt.string ppf "sha3_224"
+    | Digestif.SHA3_256 -> Fmt.string ppf "sha3_256"
+    | Digestif.SHA3_384 -> Fmt.string ppf "sha3_384"
+    | Digestif.SHA3_512 -> Fmt.string ppf "sha3_512"
     | Digestif.WHIRLPOOL -> Fmt.string ppf "whirlpool"
     | Digestif.BLAKE2B _ -> Fmt.string ppf "blake2b"
     | Digestif.BLAKE2S _ -> Fmt.string ppf "blake2s" in
@@ -212,6 +216,46 @@ let results_sha512 =
     "f6ecfca37d2abcff4b362f1919629e784c4b618af77e1061bb992c11d7f518716f5df5978b0a1455d68ceeb10ced9251306d2f26181407be76a219d48c36b592";
   ]
   |> List.map (Digestif.of_hex Digestif.sha512)
+
+let results_sha3_224 =
+  [
+    "27d199d761adfa5530313acdf7e1680fbdea09236ac6395b43c4a0e6";
+    "7fdb8dd88bd2f60d1b798634ad386811c2cfc85bfaf5d52bbace5e66";
+    "179895b711ca2bebf420a2e7255564d4cb2217ea3ac8b2d45f29d127";
+    "5bc718d440729ba7d857543eed04cbec3374eb835da33e99f8e0561f";
+    "0f44044cd2cb5a02ec3b7dff4367c54a1ace6cb7d602e005684aee7c";
+  ]
+  |> List.map (Digestif.of_hex Digestif.sha3_224)
+
+let results_sha3_256 =
+  [
+    "bb25b6f7672dab6734313c8c63aab800b2c451c81833509c1afdb986be9bdea3";
+    "c7d4072e788877ae3596bbb0da73b887c9171f93095b294ae857fbe2645e1ba5";
+    "f58a4c9641f87ead6c16525906857f5fce149bb822c4fe7a2abcaebe823d9e0f";
+    "1dcc5f9bcfb9fa35349d51c40672b2bd971afc32f9cf5e478ec442d6d90be4ce";
+    "8d1de07fd2312402f94d061a88b02dc1e0173e9d89750284b78d2bb004e9d3c1";
+  ]
+  |> List.map (Digestif.of_hex Digestif.sha3_256)
+
+let results_sha3_384 =
+  [
+    "fddae4c273e970a5f530cc737b15c1f0546caf0900e29fdf0ce57512a4c6898ca38931d1d3d9827cf16712c52da814e6";
+    "f1101f8cbf9766fd6764d2ed61903f21ca9b18f57cf3e1a23ca13508a93243ce48c045dc007f26a21b3f5e0e9df4c20a";
+    "ba546a5edbd7cdf49f2669553241e9867af842eb508432e8191d64282a9bb6e856311be49c8e673d72f212d446d0bee9";
+    "f8d65fe91fe24a009263e9aee0267c48cafbe422b899a76763eb7ec095b6f0293033a504925a345ec70a3d984f98540d";
+    "2485a07f2b1585572d492db2dcfffcc30a35e019ad6490af3bef94e514b66f90913fb11a9a365e42d2d03e3cad28b847";
+  ]
+  |> List.map (Digestif.of_hex Digestif.sha3_384)
+
+let results_sha3_512 =
+  [
+    "c2f4417c4dbc86cea2054beb755029c29c8dbed7781595fc9d5222214538a6975afc23f2f9e96683d33f547ea0df897bd1ca766fbb2c4ea674b9b9484e9e782a";
+    "5a4bfeab6166427c7a3647b747292b8384537cdb89afb3bf5665e4c5e709350b287baec921fd7ca0ee7a0c31d022a95e1fc92ba9d77df883960275beb4e62024";
+    "967c75d948f8b1efc263c4581287186500bf38daecda304fe68f34dacd622f299218ad47a4a112db5eedd5c8a30b03fefa17d20ddc3a735848f08fdc2d7ae592";
+    "ba3d37e455183ac5a9af109512d97bcc5e34daa5e10796625db8661519a4027b2cf89d282302bd8a620b8813ee98f781a9388e4f479e189899d820c1dcd50b8c";
+    "ce4a9d6e2b98b7fbb9ea668cd21b18c361d1d929fc6914192069b8c2672682a36ece8a6de07b17d4448afbc701b460264994ae9c79f26cfdd14a8fdc108d62a1";
+  ]
+  |> List.map (Digestif.of_hex Digestif.sha3_512)
 
 let results_whirlpool =
   [
@@ -461,6 +505,82 @@ let blake2b_spe digest_size =
   Alcotest.(check hash) "hash" hash0 hash1 ;
   Alcotest.(check str) "raw hash" raw_hash0 raw_hash1
 
+type kind = V : 'a Digestif.hash -> kind
+
+let ( <.> ) f g x = f (g x)
+
+let code x =
+  match x with
+  | '0' .. '9' -> Char.code x - Char.code '0'
+  | 'A' .. 'F' -> Char.code x - Char.code 'A' + 10
+  | 'a' .. 'f' -> Char.code x - Char.code 'a' + 10
+  | _ -> Fmt.invalid_arg "of_hex: %02X" (Char.code x)
+
+let decode chr1 chr2 = Char.chr ((code chr1 lsl 4) lor code chr2)
+
+let of_hex hex =
+  let offset = ref 0 in
+  let rec go have_first idx =
+    if !offset + idx >= String.length hex
+    then '\x00'
+    else
+      match hex.[!offset + idx] with
+      | ' ' | '\t' | '\r' | '\n' ->
+          incr offset ;
+          go have_first idx
+      | chr2 when have_first -> chr2
+      | chr1 ->
+          incr offset ;
+          let chr2 = go true idx in
+          if chr2 <> '\x00'
+          then decode chr1 chr2
+          else invalid_arg "of_hex: odd number of hex characters" in
+  String.init (String.length hex / 2) (go false)
+
+let sha3_of_name str =
+  match Astring.String.cut ~sep:":" str with
+  | None -> Fmt.invalid_arg "Invalid line: %S" str
+  | Some (_name, value) -> (
+      let value = Astring.String.trim value in
+      match value with
+      | "SHA3-224" -> V Digestif.sha3_224
+      | "SHA3-256" -> V Digestif.sha3_256
+      | "SHA3-384" -> V Digestif.sha3_384
+      | "SHA3-512" -> V Digestif.sha3_512
+      | v -> Fmt.invalid_arg "Invalid kind of hash: %s" v)
+
+let parse_field str =
+  match Astring.String.cut ~sep:":" str with
+  | Some (_key, v) -> Astring.String.trim v
+  | None -> Fmt.invalid_arg "Invalid line: %S" str
+
+let empty = "\"\""
+
+let sha3_vector_tests filename =
+  Alcotest.test_case filename `Quick @@ fun () ->
+  let ic = open_in filename in
+  let _algorithm_type = input_line ic in
+  let _source = input_line ic in
+  let (V hash) = sha3_of_name (input_line ic) in
+  let rec go () =
+    try
+      let comment = parse_field (input_line ic) in
+      let message = parse_field (input_line ic) in
+      Fmt.epr ">>> %S.\n%!" comment ;
+      Fmt.epr ">>> %S.\n%!" (if message = empty then "" else of_hex message) ;
+      let digest = (Digestif.of_hex hash <.> parse_field <.> input_line) ic in
+      let _verify = input_line ic in
+      let result =
+        if message = empty
+        then Digestif.digest_string hash ""
+        else Digestif.digest_string hash (of_hex message) in
+      Alcotest.(check (testable (Digestif.pp hash) (Digestif.equal hash)))
+        comment digest result ;
+      go ()
+    with End_of_file -> () in
+  go () ;
+  close_in ic
+
 let tests () =
   Alcotest.run "digestif"
     [
@@ -497,6 +617,30 @@ let tests () =
       ( "sha512 (bigstring)",
         makes ~name:"sha512" bigstring Digestif.sha512 keys_bi inputs_bi
           results_sha512 );
+      ( "sha3_224",
+        makes ~name:"sha3_224" bytes Digestif.sha3_224 keys_by inputs_by
+          results_sha3_224 );
+      ( "sha3_224 (bigstring)",
+        makes ~name:"sha3_224" bigstring Digestif.sha3_224 keys_bi inputs_bi
+          results_sha3_224 );
+      ( "sha3_256",
+        makes ~name:"sha3_256" bytes Digestif.sha3_256 keys_by inputs_by
+          results_sha3_256 );
+      ( "sha3_256 (bigstring)",
+        makes ~name:"sha3_256" bigstring Digestif.sha3_256 keys_bi inputs_bi
+          results_sha3_256 );
+      ( "sha3_384",
+        makes ~name:"sha3_384" bytes Digestif.sha3_384 keys_by inputs_by
+          results_sha3_384 );
+      ( "sha3_384 (bigstring)",
+        makes ~name:"sha3_384" bigstring Digestif.sha3_384 keys_bi inputs_bi
+          results_sha3_384 );
+      ( "sha3_512",
+        makes ~name:"sha3_512" bytes Digestif.sha3_512 keys_by inputs_by
+          results_sha3_512 );
+      ( "sha3_512 (bigstring)",
+        makes ~name:"sha3_512" bigstring Digestif.sha3_512 keys_bi inputs_bi
+          results_sha3_512 );
       ( "whirlpool",
         makes ~name:"whirlpool" bytes Digestif.whirlpool keys_by inputs_by
           results_whirlpool );
@@ -532,6 +676,13 @@ let tests () =
       ( "blake2b (specialization)",
         [ blake2b_spe 32; blake2b_spe 64; blake2b_spe 16 ] );
       ("ripemd160", RMD160.tests);
+      ( "sha3 (vector tests)",
+        [
+          sha3_vector_tests "../sha3_224_fips_202.txt";
+          sha3_vector_tests "../sha3_256_fips_202.txt";
+          sha3_vector_tests "../sha3_384_fips_202.txt";
+          sha3_vector_tests "../sha3_512_fips_202.txt";
+        ] );
     ]
 
 let () = tests ()
