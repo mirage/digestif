@@ -6,9 +6,9 @@ module Int64 = struct
 
   let ( lsl ) = Int64.shift_left
 
-  let ( lsr ) = Int64.shift_right
+  let ( lsr ) = Int64.shift_right_logical
 
-  let ( asr ) = Int64.shift_right_logical
+  let ( asr ) = Int64.shift_right
 
   let ( lor ) = Int64.logor
 
@@ -18,9 +18,9 @@ module Int64 = struct
 
   let ( + ) = Int64.add
 
-  let ror64 a n = (a asr n) lor (a lsl (64 - n))
+  let ror64 a n = (a lsr n) lor (a lsl (64 - n))
 
-  let rol64 a n = (a lsl n) lor (a asr (64 - n))
+  let rol64 a n = (a lsl n) lor (a lsr (64 - n))
 end
 
 module type S = sig
@@ -153,9 +153,9 @@ module Unsafe : S = struct
 
   let e1 x = Int64.(ror64 x 14 lxor ror64 x 18 lxor ror64 x 41)
 
-  let s0 x = Int64.(ror64 x 1 lxor ror64 x 8 lxor (x asr 7))
+  let s0 x = Int64.(ror64 x 1 lxor ror64 x 8 lxor (x lsr 7))
 
-  let s1 x = Int64.(ror64 x 19 lxor ror64 x 61 lxor (x asr 6))
+  let s1 x = Int64.(ror64 x 19 lxor ror64 x 61 lxor (x lsr 6))
 
   let sha512_do_chunk :
       type a. be64_to_cpu:(a -> int -> int64) -> ctx -> a -> int -> unit =

@@ -6,9 +6,9 @@ module Int32 = struct
 
   let ( lsl ) = Int32.shift_left
 
-  let ( lsr ) = Int32.shift_right
+  let ( lsr ) = Int32.shift_right_logical
 
-  let srl = Int32.shift_right_logical
+  let ( asr ) = Int32.shift_right
 
   let ( lor ) = Int32.logor
 
@@ -18,7 +18,7 @@ module Int32 = struct
 
   let ( + ) = Int32.add
 
-  let rol32 a n = (a lsl n) lor srl a (32 - n)
+  let rol32 a n = (a lsl n) lor (a lsr (32 - n))
 end
 
 module Int64 = struct
