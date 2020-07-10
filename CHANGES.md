@@ -1,3 +1,7 @@
+### v0.9.0 2020-07-10 Paris (France)
+
+- Add sha3 implementation (#98), @lyrm, @dinosaure, @hannesm and @cfcs
+
 ### v0.8.1 2020-06-15 Paris (France)
 
 - Move to `dune.2.6.0` (#97)
