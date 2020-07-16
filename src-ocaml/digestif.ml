@@ -277,10 +277,6 @@ module Make (H : Hash) (D : Desc) = struct
     | -1 -> By.rpad (Bytes.unsafe_of_string key) block_size '\000'
     | _ -> By.of_string key
 
-  let bigstring_opad = Bi.init block_size (fun _ -> '\x5c')
-
-  let bigstring_ipad = Bi.init block_size (fun _ -> '\x36')
-
   let hmaci_bytes ~key iter =
     let key = norm_bytes key in
     let outer = Xor.Bytes.xor key bytes_opad in
