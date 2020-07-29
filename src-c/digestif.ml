@@ -16,7 +16,6 @@ module Native = Digestif_native
 module By = Digestif_by
 module Bi = Digestif_bi
 module Eq = Digestif_eq
-module Hash = Digestif_hash
 module Conv = Digestif_conv
 
 let failwith fmt = Format.ksprintf failwith fmt
@@ -26,11 +25,7 @@ module type S = sig
 
   type ctx
 
-  type kind
-
   type t
-
-  val kind : kind
 
   val empty : ctx
 
@@ -134,8 +129,6 @@ end
 module type Foreign = sig
   open Native
 
-  type kind
-
   module Bigstring : sig
     val init : ctx -> unit
 
@@ -156,13 +149,9 @@ module type Foreign = sig
 end
 
 module type Desc = sig
-  type kind
-
   val block_size : int
 
   val digest_size : int
-
-  val kind : kind
 end
 
 module Unsafe (F : Foreign) (D : Desc) = struct
@@ -219,13 +208,9 @@ module Core (F : Foreign) (D : Desc) = struct
 
   type ctx = Native.ctx
 
-  type kind = F.kind
-
   include Unsafe (F) (D)
   include Conv.Make (D)
   include Eq.Make (D)
-
-  let kind = D.kind
 
   let get t =
     let t = Native.dup t in
@@ -364,8 +349,6 @@ end
 module type Foreign_BLAKE2 = sig
   open Native
 
-  type kind
-
   module Bigstring : sig
     val update : ctx -> ba -> int -> int -> unit
 
@@ -398,8 +381,6 @@ module Make_BLAKE2 (F : Foreign_BLAKE2) (D : Desc) = struct
 
   include Make
             (struct
-              type kind = F.kind
-
               module Bigstring = struct
                 let init ctx =
                   F.Bigstring.with_outlen_and_key ctx D.digest_size Bi.empty 0 0
@@ -489,129 +470,85 @@ module Make_BLAKE2 (F : Foreign_BLAKE2) (D : Desc) = struct
   end
 end
 
-module MD5 : S with type kind = [ `MD5 ] =
+module MD5 : S =
   Make
     (Native.MD5)
     (struct
       let digest_size, block_size = (16, 64)
-
-      type kind = [ `MD5 ]
-
-      let kind = `MD5
     end)
 
-module SHA1 : S with type kind = [ `SHA1 ] =
+module SHA1 : S =
   Make
     (Native.SHA1)
     (struct
       let digest_size, block_size = (20, 64)
-
-      type kind = [ `SHA1 ]
-
-      let kind = `SHA1
     end)
 
-module SHA224 : S with type kind = [ `SHA224 ] =
+module SHA224 : S =
   Make
     (Native.SHA224)
     (struct
       let digest_size, block_size = (28, 64)
-
-      type kind = [ `SHA224 ]
-
-      let kind = `SHA224
     end)
 
-module SHA256 : S with type kind = [ `SHA256 ] =
+module SHA256 : S =
   Make
     (Native.SHA256)
     (struct
       let digest_size, block_size = (32, 64)
-
-      type kind = [ `SHA256 ]
-
-      let kind = `SHA256
     end)
 
-module SHA384 : S with type kind = [ `SHA384 ] =
+module SHA384 : S =
   Make
     (Native.SHA384)
     (struct
       let digest_size, block_size = (48, 128)
-
-      type kind = [ `SHA384 ]
-
-      let kind = `SHA384
     end)
 
-module SHA512 : S with type kind = [ `SHA512 ] =
+module SHA512 : S =
   Make
     (Native.SHA512)
     (struct
       let digest_size, block_size = (64, 128)
-
-      type kind = [ `SHA512 ]
-
-      let kind = `SHA512
     end)
 
-module SHA3_224 : S with type kind = [ `SHA3_224 ] =
+module SHA3_224 : S =
   Make
     (Native.SHA3_224)
     (struct
       let digest_size, block_size = (28, 144)
-
-      type kind = [ `SHA3_224 ]
-
-      let kind = `SHA3_224
     end)
 
-module SHA3_256 : S with type kind = [ `SHA3_256 ] =
+module SHA3_256 : S =
   Make
     (Native.SHA3_256)
     (struct
       let digest_size, block_size = (32, 136)
-
-      type kind = [ `SHA3_256 ]
-
-      let kind = `SHA3_256
     end)
 
-module SHA3_384 : S with type kind = [ `SHA3_384 ] =
+module SHA3_384 : S =
   Make
     (Native.SHA3_384)
     (struct
       let digest_size, block_size = (48, 104)
-
-      type kind = [ `SHA3_384 ]
-
-      let kind = `SHA3_384
     end)
 
-module SHA3_512 : S with type kind = [ `SHA3_512 ] =
+module SHA3_512 : S =
   Make
     (Native.SHA3_512)
     (struct
       let digest_size, block_size = (64, 72)
-
-      type kind = [ `SHA3_512 ]
-
-      let kind = `SHA3_512
     end)
 
-module WHIRLPOOL : S with type kind = [ `WHIRLPOOL ] =
+module WHIRLPOOL : S =
   Make
     (Native.WHIRLPOOL)
     (struct
       let digest_size, block_size = (64, 64)
-
-      type kind = [ `WHIRLPOOL ]
-
-      let kind = `WHIRLPOOL
     end)
 
 module BLAKE2B : sig
-  include S with type kind = [ `BLAKE2B ]
+  include S
 
   module Keyed : MAC with type t = t
 end =
@@ -619,14 +556,10 @@ end =
     (Native.BLAKE2B)
     (struct
       let digest_size, block_size = (64, 128)
-
-      type kind = [ `BLAKE2B ]
-
-      let kind = `BLAKE2B
     end)
 
 module BLAKE2S : sig
-  include S with type kind = [ `BLAKE2S ]
+  include S
 
   module Keyed : MAC with type t = t
 end =
@@ -634,62 +567,80 @@ end =
     (Native.BLAKE2S)
     (struct
       let digest_size, block_size = (32, 64)
-
-      type kind = [ `BLAKE2S ]
-
-      let kind = `BLAKE2S
     end)
 
-module RMD160 : S with type kind = [ `RMD160 ] =
+module RMD160 : S =
   Make
     (Native.RMD160)
     (struct
       let digest_size, block_size = (20, 64)
-
-      type kind = [ `RMD160 ]
-
-      let kind = `RMD160
     end)
 
 module Make_BLAKE2B (D : sig
   val digest_size : int
-end) : S with type kind = [ `BLAKE2B ] = struct
+end) : S = struct
   include Make_BLAKE2
             (Native.BLAKE2B)
             (struct
               let digest_size, block_size = (D.digest_size, 128)
-
-              type kind = [ `BLAKE2B ]
-
-              let kind = `BLAKE2B
             end)
 end
 
 module Make_BLAKE2S (D : sig
   val digest_size : int
-end) : S with type kind = [ `BLAKE2S ] = struct
+end) : S = struct
   include Make_BLAKE2
             (Native.BLAKE2S)
             (struct
               let digest_size, block_size = (D.digest_size, 64)
-
-              type kind = [ `BLAKE2S ]
-
-              let kind = `BLAKE2S
             end)
 end
 
-include Hash
+type 'k hash =
+  | MD5 : MD5.t hash
+  | SHA1 : SHA1.t hash
+  | RMD160 : RMD160.t hash
+  | SHA224 : SHA224.t hash
+  | SHA256 : SHA256.t hash
+  | SHA384 : SHA384.t hash
+  | SHA512 : SHA512.t hash
+  | SHA3_224 : SHA3_224.t hash
+  | SHA3_256 : SHA3_256.t hash
+  | SHA3_384 : SHA3_384.t hash
+  | SHA3_512 : SHA3_512.t hash
+  | WHIRLPOOL : WHIRLPOOL.t hash
+  | BLAKE2B : BLAKE2B.t hash
+  | BLAKE2S : BLAKE2S.t hash
 
-type blake2b = (module S with type kind = [ `BLAKE2B ])
+let md5 = MD5
 
-type blake2s = (module S with type kind = [ `BLAKE2S ])
+let sha1 = SHA1
 
-let module_of : type k. k hash -> (module S with type kind = k) =
- fun hash ->
-  let b2b : (int, blake2b) Hashtbl.t = Hashtbl.create 13 in
-  let b2s : (int, blake2s) Hashtbl.t = Hashtbl.create 13 in
-  match hash with
+let rmd160 = RMD160
+
+let sha224 = SHA224
+
+let sha256 = SHA256
+
+let sha384 = SHA384
+
+let sha512 = SHA512
+
+let sha3_224 = SHA3_224
+
+let sha3_256 = SHA3_256
+
+let sha3_384 = SHA3_384
+
+let sha3_512 = SHA3_512
+
+let whirlpool = WHIRLPOOL
+
+let blake2b = BLAKE2B
+
+let blake2s = BLAKE2S
+
+let module_of : type k. k hash -> (module S with type t = k) = function
   | MD5 -> (module MD5)
   | SHA1 -> (module SHA1)
   | RMD160 -> (module RMD160)
@@ -702,173 +653,141 @@ let module_of : type k. k hash -> (module S with type kind = k) =
   | SHA3_384 -> (module SHA3_384)
   | SHA3_512 -> (module SHA3_512)
   | WHIRLPOOL -> (module WHIRLPOOL)
-  | BLAKE2B digest_size -> (
-      match Hashtbl.find b2b digest_size with
-      | exception Not_found ->
-          let m : (module S with type kind = [ `BLAKE2B ]) =
-            (module Make_BLAKE2B (struct
-              let digest_size = digest_size
-            end) : S
-              with type kind = [ `BLAKE2B ]) in
-          Hashtbl.replace b2b digest_size m ;
-          m
-      | m -> m)
-  | BLAKE2S digest_size ->
-  match Hashtbl.find b2s digest_size with
-  | exception Not_found ->
-      let m =
-        (module Make_BLAKE2S (struct
-          let digest_size = digest_size
-        end) : S
-          with type kind = [ `BLAKE2S ]) in
-      Hashtbl.replace b2s digest_size m ;
-      m
-  | m -> m
+  | BLAKE2B -> (module BLAKE2B)
+  | BLAKE2S -> (module BLAKE2S)
 
-type 'kind t = string
+type 'hash t = 'hash
 
 let digest_bytes : type k. k hash -> Bytes.t -> k t =
  fun hash buf ->
   let module H = (val module_of hash) in
-  (H.to_raw_string (H.digest_bytes buf) : H.kind t)
+  H.digest_bytes buf
 
 let digest_string : type k. k hash -> String.t -> k t =
  fun hash buf ->
   let module H = (val module_of hash) in
-  (H.to_raw_string (H.digest_string buf) : H.kind t)
+  H.digest_string buf
 
 let digest_bigstring : type k. k hash -> bigstring -> k t =
  fun hash buf ->
   let module H = (val module_of hash) in
-  (H.to_raw_string (H.digest_bigstring buf) : H.kind t)
+  H.digest_bigstring buf
 
 let digesti_bytes : type k. k hash -> Bytes.t iter -> k t =
  fun hash iter ->
   let module H = (val module_of hash) in
-  (H.to_raw_string (H.digesti_bytes iter) : H.kind t)
+  H.digesti_bytes iter
 
 let digesti_string : type k. k hash -> String.t iter -> k t =
  fun hash iter ->
   let module H = (val module_of hash) in
-  (H.to_raw_string (H.digesti_string iter) : H.kind t)
+  H.digesti_string iter
 
 let digesti_bigstring : type k. k hash -> bigstring iter -> k t =
  fun hash iter ->
   let module H = (val module_of hash) in
-  (H.to_raw_string (H.digesti_bigstring iter) : H.kind t)
+  H.digesti_bigstring iter
 
 let hmaci_bytes : type k. k hash -> key:string -> Bytes.t iter -> k t =
  fun hash ~key iter ->
   let module H = (val module_of hash) in
-  (H.to_raw_string (H.hmaci_bytes ~key iter) : H.kind t)
+  H.hmaci_bytes ~key iter
 
 let hmaci_string : type k. k hash -> key:string -> String.t iter -> k t =
  fun hash ~key iter ->
   let module H = (val module_of hash) in
-  (H.to_raw_string (H.hmaci_string ~key iter) : H.kind t)
+  H.hmaci_string ~key iter
 
 let hmaci_bigstring : type k. k hash -> key:string -> bigstring iter -> k t =
  fun hash ~key iter ->
   let module H = (val module_of hash) in
-  (H.to_raw_string (H.hmaci_bigstring ~key iter) : H.kind t)
+  H.hmaci_bigstring ~key iter
 
 (* XXX(dinosaure): unsafe part to avoid overhead. *)
 
 let unsafe_compare : type k. k hash -> k t -> k t -> int =
  fun hash a b ->
   let module H = (val module_of hash) in
-  let unsafe : 'k t -> H.t = H.of_raw_string in
-  H.unsafe_compare (unsafe a) (unsafe b)
+  H.unsafe_compare a b
 
 let equal : type k. k hash -> k t equal =
  fun hash a b ->
   let module H = (val module_of hash) in
-  let unsafe : 'k t -> H.t = H.of_raw_string in
-  H.equal (unsafe a) (unsafe b)
+  H.equal a b
 
 let pp : type k. k hash -> k t pp =
  fun hash ppf t ->
   let module H = (val module_of hash) in
-  let unsafe : 'k t -> H.t = H.of_raw_string in
-  H.pp ppf (unsafe t)
+  H.pp ppf t
 
 let consistent_of_hex : type k. k hash -> string -> k t =
  fun hash hex ->
   let module H = (val module_of hash) in
-  H.to_raw_string (H.consistent_of_hex hex)
+  H.consistent_of_hex hex
 
 let consistent_of_hex_opt : type k. k hash -> string -> k t option =
  fun hash hex ->
   let module H = (val module_of hash) in
-  match H.consistent_of_hex_opt hex with
-  | None -> None
-  | Some digest -> Some (H.to_raw_string digest)
+  H.consistent_of_hex_opt hex
 
 let of_hex : type k. k hash -> string -> k t =
  fun hash hex ->
   let module H = (val module_of hash) in
-  H.to_raw_string (H.of_hex hex)
+  H.of_hex hex
 
 let of_hex_opt : type k. k hash -> string -> k t option =
  fun hash hex ->
   let module H = (val module_of hash) in
-  match H.of_hex_opt hex with
-  | None -> None
-  | Some digest -> Some (H.to_raw_string digest)
+  H.of_hex_opt hex
 
 let to_hex : type k. k hash -> k t -> string =
  fun hash t ->
   let module H = (val module_of hash) in
-  let unsafe : 'k t -> H.t = H.of_raw_string in
-  H.to_hex (unsafe t)
+  H.to_hex t
 
 let of_raw_string : type k. k hash -> string -> k t =
  fun hash s ->
   let module H = (val module_of hash) in
-  let unsafe : H.t -> 'k t = H.to_raw_string in
-  unsafe (H.of_raw_string s)
+  H.of_raw_string s
 
 let of_raw_string_opt : type k. k hash -> string -> k t option =
  fun hash s ->
   let module H = (val module_of hash) in
-  let unsafe : H.t -> 'k t = H.to_raw_string in
-  match H.of_raw_string_opt s with
-  | None -> None
-  | Some digest -> Some (unsafe digest)
+  H.of_raw_string_opt s
 
-let to_raw_string : type k. k hash -> k t -> string = fun _ t -> t
+let to_raw_string : type k. k hash -> k t -> string =
+ fun hash t ->
+  let module H = (val module_of hash) in
+  H.to_raw_string t
 
-let of_digest (type hash kind)
-    (module H : S with type t = hash and type kind = kind) (hash : H.t) : kind t
-    =
-  H.to_raw_string hash
+let of_digest (type hash) (module H : S with type t = hash) (hash : H.t) :
+    hash t =
+  hash
 
-let of_md5 hash = of_raw_string md5 (MD5.to_raw_string hash)
+let of_md5 hash = hash
 
-let of_sha1 hash = of_raw_string sha1 (SHA1.to_raw_string hash)
+let of_sha1 hash = hash
 
-let of_rmd160 hash = of_raw_string rmd160 (RMD160.to_raw_string hash)
+let of_rmd160 hash = hash
 
-let of_sha224 hash = of_raw_string sha224 (SHA224.to_raw_string hash)
+let of_sha224 hash = hash
 
-let of_sha256 hash = of_raw_string sha256 (SHA256.to_raw_string hash)
+let of_sha256 hash = hash
 
-let of_sha384 hash = of_raw_string sha384 (SHA384.to_raw_string hash)
+let of_sha384 hash = hash
 
-let of_sha512 hash = of_raw_string sha512 (SHA512.to_raw_string hash)
+let of_sha512 hash = hash
 
-let of_sha3_224 hash = of_raw_string sha3_224 (SHA3_224.to_raw_string hash)
+let of_sha3_224 hash = hash
 
-let of_sha3_256 hash = of_raw_string sha3_256 (SHA3_256.to_raw_string hash)
+let of_sha3_256 hash = hash
 
-let of_sha3_384 hash = of_raw_string sha3_384 (SHA3_384.to_raw_string hash)
+let of_sha3_384 hash = hash
 
-let of_sha3_512 hash = of_raw_string sha3_512 (SHA3_512.to_raw_string hash)
+let of_sha3_512 hash = hash
 
-let of_whirlpool hash = of_raw_string whirlpool (WHIRLPOOL.to_raw_string hash)
+let of_whirlpool hash = hash
 
-let of_blake2b hash =
-  of_raw_string (blake2b BLAKE2B.digest_size) (BLAKE2B.to_raw_string hash)
+let of_blake2b hash = hash
 
-let of_blake2s hash =
-  of_raw_string (blake2s BLAKE2S.digest_size) (BLAKE2S.to_raw_string hash)
+let of_blake2s hash = hash

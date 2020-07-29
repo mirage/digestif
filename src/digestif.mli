@@ -24,12 +24,7 @@ module type S = sig
 
   type ctx
 
-  type kind
-
   type t
-
-  val kind : kind
-  (** The kind of hash. *)
 
   val empty : ctx
   (** An empty hash context. *)
@@ -198,113 +193,97 @@ module type MAC = sig
   val macv_bigstring : key:string -> bigstring list -> t
 end
 
-type kind =
-  [ `MD5
-  | `SHA1
-  | `RMD160
-  | `SHA224
-  | `SHA256
-  | `SHA384
-  | `SHA512
-  | `SHA3_224
-  | `SHA3_256
-  | `SHA3_384
-  | `SHA3_512
-  | `WHIRLPOOL
-  | `BLAKE2B
-  | `BLAKE2S ]
+module MD5 : S
 
-type 'k hash =
-  | MD5 : [ `MD5 ] hash
-  | SHA1 : [ `SHA1 ] hash
-  | RMD160 : [ `RMD160 ] hash
-  | SHA224 : [ `SHA224 ] hash
-  | SHA256 : [ `SHA256 ] hash
-  | SHA384 : [ `SHA384 ] hash
-  | SHA512 : [ `SHA512 ] hash
-  | SHA3_224 : [ `SHA3_224 ] hash
-  | SHA3_256 : [ `SHA3_256 ] hash
-  | SHA3_384 : [ `SHA3_384 ] hash
-  | SHA3_512 : [ `SHA3_512 ] hash
-  | WHIRLPOOL : [ `WHIRLPOOL ] hash
-  | BLAKE2B : int -> [ `BLAKE2B ] hash
-  | BLAKE2S : int -> [ `BLAKE2S ] hash
+module SHA1 : S
 
-module MD5 : S with type kind = [ `MD5 ]
+module SHA224 : S
 
-module SHA1 : S with type kind = [ `SHA1 ]
+module SHA256 : S
 
-module SHA224 : S with type kind = [ `SHA224 ]
+module SHA384 : S
 
-module SHA256 : S with type kind = [ `SHA256 ]
+module SHA512 : S
 
-module SHA384 : S with type kind = [ `SHA384 ]
+module SHA3_224 : S
 
-module SHA512 : S with type kind = [ `SHA512 ]
+module SHA3_256 : S
 
-module SHA3_224 : S with type kind = [ `SHA3_224 ]
+module SHA3_384 : S
 
-module SHA3_256 : S with type kind = [ `SHA3_256 ]
+module SHA3_512 : S
 
-module SHA3_384 : S with type kind = [ `SHA3_384 ]
-
-module SHA3_512 : S with type kind = [ `SHA3_512 ]
-
-module WHIRLPOOL : S with type kind = [ `WHIRLPOOL ]
+module WHIRLPOOL : S
 
 module BLAKE2B : sig
-  include S with type kind = [ `BLAKE2B ]
+  include S
 
   module Keyed : MAC with type t = t
 end
 
 module BLAKE2S : sig
-  include S with type kind = [ `BLAKE2S ]
+  include S
 
   module Keyed : MAC with type t = t
 end
 
-module RMD160 : S with type kind = [ `RMD160 ]
+module RMD160 : S
 
 module Make_BLAKE2B (D : sig
   val digest_size : int
-end) : S with type kind = [ `BLAKE2B ]
+end) : S
 
 module Make_BLAKE2S (D : sig
   val digest_size : int
-end) : S with type kind = [ `BLAKE2S ]
+end) : S
 
-val md5 : [ `MD5 ] hash
+type 'k hash =
+  | MD5 : MD5.t hash
+  | SHA1 : SHA1.t hash
+  | RMD160 : RMD160.t hash
+  | SHA224 : SHA224.t hash
+  | SHA256 : SHA256.t hash
+  | SHA384 : SHA384.t hash
+  | SHA512 : SHA512.t hash
+  | SHA3_224 : SHA3_224.t hash
+  | SHA3_256 : SHA3_256.t hash
+  | SHA3_384 : SHA3_384.t hash
+  | SHA3_512 : SHA3_512.t hash
+  | WHIRLPOOL : WHIRLPOOL.t hash
+  | BLAKE2B : BLAKE2B.t hash
+  | BLAKE2S : BLAKE2S.t hash
 
-val sha1 : [ `SHA1 ] hash
+val md5 : MD5.t hash
 
-val rmd160 : [ `RMD160 ] hash
+val sha1 : SHA1.t hash
 
-val sha224 : [ `SHA224 ] hash
+val rmd160 : RMD160.t hash
 
-val sha256 : [ `SHA256 ] hash
+val sha224 : SHA224.t hash
 
-val sha384 : [ `SHA384 ] hash
+val sha256 : SHA256.t hash
 
-val sha512 : [ `SHA512 ] hash
+val sha384 : SHA384.t hash
 
-val sha3_224 : [ `SHA3_224 ] hash
+val sha512 : SHA512.t hash
 
-val sha3_256 : [ `SHA3_256 ] hash
+val sha3_224 : SHA3_224.t hash
 
-val sha3_384 : [ `SHA3_384 ] hash
+val sha3_256 : SHA3_256.t hash
 
-val sha3_512 : [ `SHA3_512 ] hash
+val sha3_384 : SHA3_384.t hash
 
-val whirlpool : [ `WHIRLPOOL ] hash
+val sha3_512 : SHA3_512.t hash
 
-val blake2b : int -> [ `BLAKE2B ] hash
+val whirlpool : WHIRLPOOL.t hash
 
-val blake2s : int -> [ `BLAKE2S ] hash
+val blake2b : BLAKE2B.t hash
+
+val blake2s : BLAKE2S.t hash
 
 type 'kind t
 
-val module_of : 'k hash -> (module S with type kind = 'k)
+val module_of : 'k hash -> (module S with type t = 'k)
 
 val digest_bytes : 'k hash -> Bytes.t -> 'k t
 
@@ -346,33 +325,32 @@ val of_raw_string_opt : 'k hash -> string -> 'k t option
 
 val to_raw_string : 'k hash -> 'k t -> string
 
-val of_digest :
-  (module S with type t = 'hash and type kind = 'k) -> 'hash -> 'k t
+val of_digest : (module S with type t = 'hash) -> 'hash -> 'hash t
 
-val of_md5 : MD5.t -> [ `MD5 ] t
+val of_md5 : MD5.t -> MD5.t t
 
-val of_sha1 : SHA1.t -> [ `SHA1 ] t
+val of_sha1 : SHA1.t -> SHA1.t t
 
-val of_rmd160 : RMD160.t -> [ `RMD160 ] t
+val of_rmd160 : RMD160.t -> RMD160.t t
 
-val of_sha224 : SHA224.t -> [ `SHA224 ] t
+val of_sha224 : SHA224.t -> SHA224.t t
 
-val of_sha256 : SHA256.t -> [ `SHA256 ] t
+val of_sha256 : SHA256.t -> SHA256.t t
 
-val of_sha384 : SHA384.t -> [ `SHA384 ] t
+val of_sha384 : SHA384.t -> SHA384.t t
 
-val of_sha512 : SHA512.t -> [ `SHA512 ] t
+val of_sha512 : SHA512.t -> SHA512.t t
 
-val of_sha3_224 : SHA3_224.t -> [ `SHA3_224 ] t
+val of_sha3_224 : SHA3_224.t -> SHA3_224.t t
 
-val of_sha3_256 : SHA3_256.t -> [ `SHA3_256 ] t
+val of_sha3_256 : SHA3_256.t -> SHA3_256.t t
 
-val of_sha3_384 : SHA3_384.t -> [ `SHA3_384 ] t
+val of_sha3_384 : SHA3_384.t -> SHA3_384.t t
 
-val of_sha3_512 : SHA3_512.t -> [ `SHA3_512 ] t
+val of_sha3_512 : SHA3_512.t -> SHA3_512.t t
 
-val of_whirlpool : WHIRLPOOL.t -> [ `WHIRLPOOL ] t
+val of_whirlpool : WHIRLPOOL.t -> WHIRLPOOL.t t
 
-val of_blake2b : BLAKE2B.t -> [ `BLAKE2B ] t
+val of_blake2b : BLAKE2B.t -> BLAKE2B.t t
 
-val of_blake2s : BLAKE2S.t -> [ `BLAKE2S ] t
+val of_blake2s : BLAKE2S.t -> BLAKE2S.t t

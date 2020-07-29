@@ -25,8 +25,8 @@ let title : type a k. [ `HMAC | `Digest ] -> k Digestif.hash -> a s -> string =
     | Digestif.SHA3_384 -> Fmt.string ppf "sha3_384"
     | Digestif.SHA3_512 -> Fmt.string ppf "sha3_512"
     | Digestif.WHIRLPOOL -> Fmt.string ppf "whirlpool"
-    | Digestif.BLAKE2B _ -> Fmt.string ppf "blake2b"
-    | Digestif.BLAKE2S _ -> Fmt.string ppf "blake2s" in
+    | Digestif.BLAKE2B -> Fmt.string ppf "blake2b"
+    | Digestif.BLAKE2S -> Fmt.string ppf "blake2s" in
   let pp_input : type a. a s Fmt.t =
    fun ppf -> function
     | Bytes -> Fmt.string ppf "bytes"
@@ -273,7 +273,7 @@ let results_blake2b =
     "4abf562dc64f4062ea59ae9b4e2061a7a6c1a75af74b3663fd05aa4437420b8deea657e395a7dbac02aef7b7d70dc8b8a8db99aa8db028961a5ee66bac22b0f0";
     "69f9e4236cd0c50204e4f8b86dc1751d37cc195835e9db25c9b366f41e1d86cdeec6a8702dfed1bc0ed0d6a1e2c5af275c331ec91f884c979021fb64021915de";
   ]
-  |> List.map (Digestif.of_hex (Digestif.blake2b Digestif.BLAKE2B.digest_size))
+  |> List.map (Digestif.of_hex Digestif.blake2b)
 
 let results_rmd160 =
   [
@@ -293,7 +293,7 @@ let results_blake2s =
     "6903efd2383b13adaa985d00ca271ccb420ab8f953841081c9c15a2dfebf866c";
     "b8e167de23a5f136dc26bf06da0d724ebf7310903c2f702403b66810a230d622";
   ]
-  |> List.map (Digestif.of_hex (Digestif.blake2s Digestif.BLAKE2S.digest_size))
+  |> List.map (Digestif.of_hex Digestif.blake2s)
 
 module BLAKE2 = struct
   let input_blake2b_file = "../blake2b.test"
@@ -403,16 +403,10 @@ module BLAKE2 = struct
       tests
 
   let tests_blake2s =
-    tests
-      (module Digestif.BLAKE2S.Keyed)
-      Digestif.(blake2s BLAKE2S.digest_size)
-      input_blake2s_file
+    tests (module Digestif.BLAKE2S.Keyed) Digestif.blake2s input_blake2s_file
 
   let tests_blake2b =
-    tests
-      (module Digestif.BLAKE2B.Keyed)
-      Digestif.(blake2b BLAKE2B.digest_size)
-      input_blake2b_file
+    tests (module Digestif.BLAKE2B.Keyed) Digestif.blake2b input_blake2b_file
 end
 
 module RMD160 = struct
@@ -440,7 +434,7 @@ module RMD160 = struct
       "9b752e45573d4b39f4dbd3323cab82bf63326bfb";
     ]
 
-  let million : expect:[ `RMD160 ] Digestif.t -> unit Alcotest.test_case =
+  let million : expect:Digestif.RMD160.t Digestif.t -> unit Alcotest.test_case =
    fun ~expect ->
     let iter n f =
       let rec go = function
@@ -646,13 +640,11 @@ let tests () =
         makes ~name:"whirlpool" bigstring Digestif.whirlpool keys_st inputs_bi
           results_whirlpool );
       ( "blake2b",
-        makes ~name:"blake2b" bytes
-          Digestif.(blake2b BLAKE2B.digest_size)
-          keys_st inputs_by results_blake2b );
+        makes ~name:"blake2b" bytes Digestif.blake2b keys_st inputs_by
+          results_blake2b );
       ( "blake2b (bigstring)",
-        makes ~name:"blake2b" bigstring
-          Digestif.(blake2b BLAKE2B.digest_size)
-          keys_st inputs_bi results_blake2b );
+        makes ~name:"blake2b" bigstring Digestif.blake2b keys_st inputs_bi
+          results_blake2b );
       ( "rmd160",
         makes ~name:"rmd160" bytes Digestif.rmd160 keys_st inputs_by
           results_rmd160 );
@@ -660,13 +652,11 @@ let tests () =
         makes ~name:"rmd160" bigstring Digestif.rmd160 keys_st inputs_bi
           results_rmd160 );
       ( "blake2s",
-        makes ~name:"blake2s" bytes
-          Digestif.(blake2s BLAKE2S.digest_size)
-          keys_st inputs_by results_blake2s );
+        makes ~name:"blake2s" bytes Digestif.blake2s keys_st inputs_by
+          results_blake2s );
       ( "blake2s (bigstring)",
-        makes ~name:"blake2s" bigstring
-          Digestif.(blake2s BLAKE2S.digest_size)
-          keys_st inputs_bi results_blake2s );
+        makes ~name:"blake2s" bigstring Digestif.blake2s keys_st inputs_bi
+          results_blake2s );
       ("blake2s (keyed, input file)", BLAKE2.tests_blake2s);
       ("blake2b (keyed, input file)", BLAKE2.tests_blake2b);
       ( "blake2s (specialization)",
