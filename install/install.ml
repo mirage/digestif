@@ -1,10 +1,17 @@
 #!/usr/bin/env ocaml
 
-#use "topfind" ;;
-#require "unix" ;;
+;;
+#use "topfind"
+
+;;
+#require "unix"
 
 let xen = "xen_linkopts = \"-l:rakia/xen/librakia_xen_stubs.a\""
-let freestanding = "freestanding_linkopts = \"-l:rakia/freestanding/librakia_freestanding_stubs.a\""
+
+let freestanding =
+  "freestanding_linkopts = \
+   \"-l:rakia/freestanding/librakia_freestanding_stubs.a\""
+
 let meta = "_build/default/META.digestif"
 
 let new_line = '\n'

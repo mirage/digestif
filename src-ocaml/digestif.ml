@@ -67,23 +67,23 @@ module type S = sig
 
   val digestv_bigstring : bigstring list -> t
 
-  val hmac_bytes : key:Bytes.t -> ?off:int -> ?len:int -> Bytes.t -> t
+  val hmac_bytes : key:string -> ?off:int -> ?len:int -> Bytes.t -> t
 
-  val hmac_string : key:String.t -> ?off:int -> ?len:int -> String.t -> t
+  val hmac_string : key:string -> ?off:int -> ?len:int -> String.t -> t
 
-  val hmac_bigstring : key:bigstring -> ?off:int -> ?len:int -> bigstring -> t
+  val hmac_bigstring : key:string -> ?off:int -> ?len:int -> bigstring -> t
 
-  val hmaci_bytes : key:Bytes.t -> Bytes.t iter -> t
+  val hmaci_bytes : key:string -> Bytes.t iter -> t
 
-  val hmaci_string : key:String.t -> String.t iter -> t
+  val hmaci_string : key:string -> String.t iter -> t
 
-  val hmaci_bigstring : key:bigstring -> bigstring iter -> t
+  val hmaci_bigstring : key:string -> bigstring iter -> t
 
-  val hmacv_bytes : key:Bytes.t -> Bytes.t list -> t
+  val hmacv_bytes : key:string -> Bytes.t list -> t
 
-  val hmacv_string : key:String.t -> String.t list -> t
+  val hmacv_string : key:string -> String.t list -> t
 
-  val hmacv_bigstring : key:bigstring -> bigstring list -> t
+  val hmacv_bigstring : key:string -> bigstring list -> t
 
   val unsafe_compare : t compare
 
@@ -111,23 +111,23 @@ end
 module type MAC = sig
   type t
 
-  val mac_bytes : key:Bytes.t -> ?off:int -> ?len:int -> Bytes.t -> t
+  val mac_bytes : key:string -> ?off:int -> ?len:int -> Bytes.t -> t
 
-  val mac_string : key:String.t -> ?off:int -> ?len:int -> String.t -> t
+  val mac_string : key:string -> ?off:int -> ?len:int -> String.t -> t
 
-  val mac_bigstring : key:bigstring -> ?off:int -> ?len:int -> bigstring -> t
+  val mac_bigstring : key:string -> ?off:int -> ?len:int -> bigstring -> t
 
-  val maci_bytes : key:Bytes.t -> Bytes.t iter -> t
+  val maci_bytes : key:string -> Bytes.t iter -> t
 
-  val maci_string : key:String.t -> String.t iter -> t
+  val maci_string : key:string -> String.t iter -> t
 
-  val maci_bigstring : key:bigstring -> bigstring iter -> t
+  val maci_bigstring : key:string -> bigstring iter -> t
 
-  val macv_bytes : key:Bytes.t -> Bytes.t list -> t
+  val macv_bytes : key:string -> Bytes.t list -> t
 
-  val macv_string : key:String.t -> String.t list -> t
+  val macv_string : key:string -> String.t list -> t
 
-  val macv_bigstring : key:bigstring -> bigstring list -> t
+  val macv_bigstring : key:string -> bigstring list -> t
 end
 
 module type Desc = sig
@@ -272,36 +272,22 @@ module Make (H : Hash) (D : Desc) = struct
   let bytes_ipad = By.init block_size (fun _ -> '\x36')
 
   let rec norm_bytes key =
-    match Stdlib.compare (By.length key) block_size with
-    | 1 -> norm_bytes (By.unsafe_of_string (digest_bytes key))
-    | -1 -> By.rpad key block_size '\000'
-    | _ -> key
-
-  let bigstring_opad = Bi.init block_size (fun _ -> '\x5c')
-
-  let bigstring_ipad = Bi.init block_size (fun _ -> '\x36')
-
-  let norm_bigstring key =
-    let key = Bi.to_string key in
-    let res0 = norm_bytes (By.unsafe_of_string key) in
-    let res1 = Bi.create (By.length res0) in
-    Bi.blit_from_bytes res0 0 res1 0 (By.length res0) ;
-    res1
+    match Stdlib.compare (String.length key) block_size with
+    | 1 -> norm_bytes (digest_string key)
+    | -1 -> By.rpad (Bytes.unsafe_of_string key) block_size '\000'
+    | _ -> By.of_string key
 
   let hmaci_bytes ~key iter =
     let key = norm_bytes key in
     let outer = Xor.Bytes.xor key bytes_opad in
     let inner = Xor.Bytes.xor key bytes_ipad in
-    let res =
-      digesti_bytes (fun f ->
-          f inner ;
-          iter f) in
-    digesti_bytes (fun f ->
-        f outer ;
-        f (By.unsafe_of_string res))
+    let ctx = feed_bytes empty inner in
+    let res = feedi_bytes ctx iter |> get in
+    let ctx = feed_bytes empty outer in
+    feed_string ctx (res :> string) |> get
 
   let hmaci_string ~key iter =
-    let key = norm_bytes (By.unsafe_of_string key) in
+    let key = norm_bytes key in
     (* XXX(dinosaure): safe, [rpad] and [digest] have a read-only access. *)
     let outer = Xor.Bytes.xor key bytes_opad in
     let inner = Xor.Bytes.xor key bytes_ipad in
@@ -311,14 +297,12 @@ module Make (H : Hash) (D : Desc) = struct
     feed_string ctx (res :> string) |> get
 
   let hmaci_bigstring ~key iter =
-    let key = norm_bigstring key in
-    let outer = Xor.Bigstring.xor key bigstring_opad in
-    let inner = Xor.Bigstring.xor key bigstring_ipad in
-    let res =
-      digesti_bigstring (fun f ->
-          f inner ;
-          iter f) in
-    let ctx = feed_bigstring empty outer in
+    let key = norm_bytes key in
+    let outer = Xor.Bytes.xor key bytes_opad in
+    let inner = Xor.Bytes.xor key bytes_ipad in
+    let ctx = feed_bytes empty inner in
+    let res = feedi_bigstring ctx iter |> get in
+    let ctx = feed_bytes empty outer in
     feed_string ctx (res :> string) |> get
 
   let hmac_bytes ~key ?off ?len buf =
@@ -363,8 +347,6 @@ module type Hash_BLAKE2 = sig
 
   val with_outlen_and_bytes_key : int -> By.t -> int -> int -> ctx
 
-  val with_outlen_and_bigstring_key : int -> Bi.t -> int -> int -> ctx
-
   val unsafe_feed_bytes : ctx -> By.t -> int -> int -> unit
 
   val unsafe_feed_bigstring : ctx -> Bi.t -> int -> int -> unit
@@ -408,18 +390,24 @@ module Make_BLAKE2 (H : Hash_BLAKE2) (D : Desc) = struct
     type t = outer
 
     let maci_bytes ~key iter =
-      let ctx = H.with_outlen_and_bytes_key digest_size key 0 (By.length key) in
+      let ctx =
+        H.with_outlen_and_bytes_key digest_size
+          (Bytes.unsafe_of_string key)
+          0 (String.length key) in
       feedi_bytes ctx iter |> get
 
     let maci_string ~key iter =
       let ctx =
-        H.with_outlen_and_bytes_key digest_size (By.unsafe_of_string key) 0
-          (String.length key) in
+        H.with_outlen_and_bytes_key digest_size
+          (Bytes.unsafe_of_string key)
+          0 (String.length key) in
       feedi_string ctx iter |> get
 
     let maci_bigstring ~key iter =
       let ctx =
-        H.with_outlen_and_bigstring_key digest_size key 0 (Bi.length key) in
+        H.with_outlen_and_bytes_key digest_size
+          (Bytes.unsafe_of_string key)
+          0 (String.length key) in
       feedi_bigstring ctx iter |> get
 
     let mac_bytes ~key ?off ?len buf : t =
@@ -726,17 +714,17 @@ let digesti_bigstring : type k. k hash -> bigstring iter -> k t =
   let module H = (val module_of hash) in
   (H.to_raw_string (H.digesti_bigstring iter) : H.kind t)
 
-let hmaci_bytes : type k. k hash -> key:Bytes.t -> Bytes.t iter -> k t =
+let hmaci_bytes : type k. k hash -> key:string -> Bytes.t iter -> k t =
  fun hash ~key iter ->
   let module H = (val module_of hash) in
   (H.to_raw_string (H.hmaci_bytes ~key iter) : H.kind t)
 
-let hmaci_string : type k. k hash -> key:String.t -> String.t iter -> k t =
+let hmaci_string : type k. k hash -> key:string -> String.t iter -> k t =
  fun hash ~key iter ->
   let module H = (val module_of hash) in
   (H.to_raw_string (H.hmaci_string ~key iter) : H.kind t)
 
-let hmaci_bigstring : type k. k hash -> key:bigstring -> bigstring iter -> k t =
+let hmaci_bigstring : type k. k hash -> key:string -> bigstring iter -> k t =
  fun hash ~key iter ->
   let module H = (val module_of hash) in
   (H.to_raw_string (H.hmaci_bigstring ~key iter) : H.kind t)

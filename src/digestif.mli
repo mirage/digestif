@@ -90,34 +90,34 @@ module type S = sig
   val digestv_bigstring : bigstring list -> t
   (** Same as {!digestv_bytes} but for {!bigstring}. *)
 
-  val hmac_bytes : key:Bytes.t -> ?off:int -> ?len:int -> Bytes.t -> t
+  val hmac_bytes : key:string -> ?off:int -> ?len:int -> Bytes.t -> t
   (** [hmac_bytes ~key bytes] is the authentication code for {!Bytes.t} under
       the secret [key], generated using the standard HMAC construction over this
       hash algorithm. *)
 
-  val hmac_string : key:String.t -> ?off:int -> ?len:int -> String.t -> t
+  val hmac_string : key:string -> ?off:int -> ?len:int -> String.t -> t
   (** Same as {!hmac_bytes} but for {!String.t}. *)
 
-  val hmac_bigstring : key:bigstring -> ?off:int -> ?len:int -> bigstring -> t
+  val hmac_bigstring : key:string -> ?off:int -> ?len:int -> bigstring -> t
   (** Same as {!hmac_bytes} but for {!bigstring}. *)
 
-  val hmaci_bytes : key:Bytes.t -> Bytes.t iter -> t
+  val hmaci_bytes : key:string -> Bytes.t iter -> t
   (** Authentication code under the secret [key] over a collection of
       {!Bytes.t}. *)
 
-  val hmaci_string : key:String.t -> String.t iter -> t
+  val hmaci_string : key:string -> String.t iter -> t
   (** Same as {!hmaci_bytes} but for {!String.t}. *)
 
-  val hmaci_bigstring : key:bigstring -> bigstring iter -> t
+  val hmaci_bigstring : key:string -> bigstring iter -> t
   (** Same as {!hmaci_bytes} but for {!bigstring}. *)
 
-  val hmacv_bytes : key:Bytes.t -> Bytes.t list -> t
+  val hmacv_bytes : key:string -> Bytes.t list -> t
   (** Specialization of {!hmaci_bytes} with a list of {!Bytes.t} (see {!iter}). *)
 
-  val hmacv_string : key:String.t -> String.t list -> t
+  val hmacv_string : key:string -> String.t list -> t
   (** Same as {!hmacv_bytes} but for {!String.t}. *)
 
-  val hmacv_bigstring : key:bigstring -> bigstring list -> t
+  val hmacv_bigstring : key:string -> bigstring list -> t
   (** Same as {!hmacv_bigstring} but for {!bigstring}. *)
 
   val unsafe_compare : t compare
@@ -179,23 +179,23 @@ end
 module type MAC = sig
   type t
 
-  val mac_bytes : key:Bytes.t -> ?off:int -> ?len:int -> Bytes.t -> t
+  val mac_bytes : key:string -> ?off:int -> ?len:int -> Bytes.t -> t
 
-  val mac_string : key:String.t -> ?off:int -> ?len:int -> String.t -> t
+  val mac_string : key:string -> ?off:int -> ?len:int -> String.t -> t
 
-  val mac_bigstring : key:bigstring -> ?off:int -> ?len:int -> bigstring -> t
+  val mac_bigstring : key:string -> ?off:int -> ?len:int -> bigstring -> t
 
-  val maci_bytes : key:Bytes.t -> Bytes.t iter -> t
+  val maci_bytes : key:string -> Bytes.t iter -> t
 
-  val maci_string : key:String.t -> String.t iter -> t
+  val maci_string : key:string -> String.t iter -> t
 
-  val maci_bigstring : key:bigstring -> bigstring iter -> t
+  val maci_bigstring : key:string -> bigstring iter -> t
 
-  val macv_bytes : key:Bytes.t -> Bytes.t list -> t
+  val macv_bytes : key:string -> Bytes.t list -> t
 
-  val macv_string : key:String.t -> String.t list -> t
+  val macv_string : key:string -> String.t list -> t
 
-  val macv_bigstring : key:bigstring -> bigstring list -> t
+  val macv_bigstring : key:string -> bigstring list -> t
 end
 
 type kind =
@@ -318,11 +318,11 @@ val digesti_string : 'k hash -> String.t iter -> 'k t
 
 val digesti_bigstring : 'k hash -> bigstring iter -> 'k t
 
-val hmaci_bytes : 'k hash -> key:Bytes.t -> Bytes.t iter -> 'k t
+val hmaci_bytes : 'k hash -> key:string -> Bytes.t iter -> 'k t
 
-val hmaci_string : 'k hash -> key:String.t -> String.t iter -> 'k t
+val hmaci_string : 'k hash -> key:string -> String.t iter -> 'k t
 
-val hmaci_bigstring : 'k hash -> key:bigstring -> bigstring iter -> 'k t
+val hmaci_bigstring : 'k hash -> key:string -> bigstring iter -> 'k t
 
 val pp : 'k hash -> 'k t pp
 

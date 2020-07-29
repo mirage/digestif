@@ -1,5 +1,3 @@
-let () = Printexc.record_backtrace true
-
 type _ s = Bytes : Bytes.t s | String : String.t s | Bigstring : bigstring s
 
 and bigstring =
@@ -43,7 +41,7 @@ let string = String
 let bigstring = Bigstring
 
 let test_hmac :
-    type k a. a s -> k Digestif.hash -> a -> a -> k Digestif.t -> unit =
+    type k a. a s -> k Digestif.hash -> string -> a -> k Digestif.t -> unit =
  fun kind hash key input expect ->
   let title = title `HMAC hash kind in
   let test_hash = Alcotest.testable (Digestif.pp hash) (Digestif.equal hash) in
@@ -79,7 +77,7 @@ let make_hmac :
     name:string ->
     a s ->
     k Digestif.hash ->
-    a ->
+    string ->
     a ->
     k Digestif.t ->
     unit Alcotest.test_case =
@@ -373,7 +371,7 @@ module BLAKE2 = struct
       a s ->
       k Digestif.hash ->
       (module Digestif.MAC) ->
-      a ->
+      string ->
       a ->
       k Digestif.t ->
       unit =
@@ -584,91 +582,91 @@ let sha3_vector_tests filename =
 let tests () =
   Alcotest.run "digestif"
     [
-      ("md5", makes ~name:"md5" bytes Digestif.md5 keys_by inputs_by results_md5);
+      ("md5", makes ~name:"md5" bytes Digestif.md5 keys_st inputs_by results_md5);
       ( "md5 (bigstring)",
-        makes ~name:"md5" bigstring Digestif.md5 keys_bi inputs_bi results_md5
+        makes ~name:"md5" bigstring Digestif.md5 keys_st inputs_bi results_md5
       );
       ( "sha1",
-        makes ~name:"sha1" bytes Digestif.sha1 keys_by inputs_by results_sha1 );
+        makes ~name:"sha1" bytes Digestif.sha1 keys_st inputs_by results_sha1 );
       ( "sha1 (bigstring)",
-        makes ~name:"sha1" bigstring Digestif.sha1 keys_bi inputs_bi
+        makes ~name:"sha1" bigstring Digestif.sha1 keys_st inputs_bi
           results_sha1 );
       ( "sha224",
-        makes ~name:"sha224" bytes Digestif.sha224 keys_by inputs_by
+        makes ~name:"sha224" bytes Digestif.sha224 keys_st inputs_by
           results_sha224 );
       ( "sha224 (bigstring)",
-        makes ~name:"sha224" bigstring Digestif.sha224 keys_bi inputs_bi
+        makes ~name:"sha224" bigstring Digestif.sha224 keys_st inputs_bi
           results_sha224 );
       ( "sha256",
-        makes ~name:"sha256" bytes Digestif.sha256 keys_by inputs_by
+        makes ~name:"sha256" bytes Digestif.sha256 keys_st inputs_by
           results_sha256 );
       ( "sha256 (bigstring)",
-        makes ~name:"sha256" bigstring Digestif.sha256 keys_bi inputs_bi
+        makes ~name:"sha256" bigstring Digestif.sha256 keys_st inputs_bi
           results_sha256 );
       ( "sha384",
-        makes ~name:"sha384" bytes Digestif.sha384 keys_by inputs_by
+        makes ~name:"sha384" bytes Digestif.sha384 keys_st inputs_by
           results_sha384 );
       ( "sha384 (bigstring)",
-        makes ~name:"sha384" bigstring Digestif.sha384 keys_bi inputs_bi
+        makes ~name:"sha384" bigstring Digestif.sha384 keys_st inputs_bi
           results_sha384 );
       ( "sha512",
-        makes ~name:"sha512" bytes Digestif.sha512 keys_by inputs_by
+        makes ~name:"sha512" bytes Digestif.sha512 keys_st inputs_by
           results_sha512 );
       ( "sha512 (bigstring)",
-        makes ~name:"sha512" bigstring Digestif.sha512 keys_bi inputs_bi
+        makes ~name:"sha512" bigstring Digestif.sha512 keys_st inputs_bi
           results_sha512 );
       ( "sha3_224",
-        makes ~name:"sha3_224" bytes Digestif.sha3_224 keys_by inputs_by
+        makes ~name:"sha3_224" bytes Digestif.sha3_224 keys_st inputs_by
           results_sha3_224 );
       ( "sha3_224 (bigstring)",
-        makes ~name:"sha3_224" bigstring Digestif.sha3_224 keys_bi inputs_bi
+        makes ~name:"sha3_224" bigstring Digestif.sha3_224 keys_st inputs_bi
           results_sha3_224 );
       ( "sha3_256",
-        makes ~name:"sha3_256" bytes Digestif.sha3_256 keys_by inputs_by
+        makes ~name:"sha3_256" bytes Digestif.sha3_256 keys_st inputs_by
           results_sha3_256 );
       ( "sha3_256 (bigstring)",
-        makes ~name:"sha3_256" bigstring Digestif.sha3_256 keys_bi inputs_bi
+        makes ~name:"sha3_256" bigstring Digestif.sha3_256 keys_st inputs_bi
           results_sha3_256 );
       ( "sha3_384",
-        makes ~name:"sha3_384" bytes Digestif.sha3_384 keys_by inputs_by
+        makes ~name:"sha3_384" bytes Digestif.sha3_384 keys_st inputs_by
           results_sha3_384 );
       ( "sha3_384 (bigstring)",
-        makes ~name:"sha3_384" bigstring Digestif.sha3_384 keys_bi inputs_bi
+        makes ~name:"sha3_384" bigstring Digestif.sha3_384 keys_st inputs_bi
           results_sha3_384 );
       ( "sha3_512",
-        makes ~name:"sha3_512" bytes Digestif.sha3_512 keys_by inputs_by
+        makes ~name:"sha3_512" bytes Digestif.sha3_512 keys_st inputs_by
           results_sha3_512 );
       ( "sha3_512 (bigstring)",
-        makes ~name:"sha3_512" bigstring Digestif.sha3_512 keys_bi inputs_bi
+        makes ~name:"sha3_512" bigstring Digestif.sha3_512 keys_st inputs_bi
           results_sha3_512 );
       ( "whirlpool",
-        makes ~name:"whirlpool" bytes Digestif.whirlpool keys_by inputs_by
+        makes ~name:"whirlpool" bytes Digestif.whirlpool keys_st inputs_by
           results_whirlpool );
       ( "whirlpool (bigstring)",
-        makes ~name:"whirlpool" bigstring Digestif.whirlpool keys_bi inputs_bi
+        makes ~name:"whirlpool" bigstring Digestif.whirlpool keys_st inputs_bi
           results_whirlpool );
       ( "blake2b",
         makes ~name:"blake2b" bytes
           Digestif.(blake2b BLAKE2B.digest_size)
-          keys_by inputs_by results_blake2b );
+          keys_st inputs_by results_blake2b );
       ( "blake2b (bigstring)",
         makes ~name:"blake2b" bigstring
           Digestif.(blake2b BLAKE2B.digest_size)
-          keys_bi inputs_bi results_blake2b );
+          keys_st inputs_bi results_blake2b );
       ( "rmd160",
-        makes ~name:"rmd160" bytes Digestif.rmd160 keys_by inputs_by
+        makes ~name:"rmd160" bytes Digestif.rmd160 keys_st inputs_by
           results_rmd160 );
       ( "rmd160 (bigstring)",
-        makes ~name:"rmd160" bigstring Digestif.rmd160 keys_bi inputs_bi
+        makes ~name:"rmd160" bigstring Digestif.rmd160 keys_st inputs_bi
           results_rmd160 );
       ( "blake2s",
         makes ~name:"blake2s" bytes
           Digestif.(blake2s BLAKE2S.digest_size)
-          keys_by inputs_by results_blake2s );
+          keys_st inputs_by results_blake2s );
       ( "blake2s (bigstring)",
         makes ~name:"blake2s" bigstring
           Digestif.(blake2s BLAKE2S.digest_size)
-          keys_bi inputs_bi results_blake2s );
+          keys_st inputs_bi results_blake2s );
       ("blake2s (keyed, input file)", BLAKE2.tests_blake2s);
       ("blake2b (keyed, input file)", BLAKE2.tests_blake2b);
       ( "blake2s (specialization)",
