@@ -10,9 +10,9 @@ let freestanding =
    \"-l:rakia/freestanding/librakia_freestanding_stubs.a\""
 
 let meta =
-  match Sys.getenv_opt "DUNE_BUILD_DIR" with
-  | Some _build -> _build ^ "/default/META.digestif"
-  | None -> "_build/default/META.digestif"
+  match Sys.getenv "DUNE_BUILD_DIR" with
+  | _build -> _build ^ "/default/META.digestif"
+  | exception Not_found -> "_build/default/META.digestif"
 
 let new_line = '\n'
 
