@@ -3,8 +3,8 @@
  (public_name digestif.c)
  (implements digestif)
  (libraries stdlib-shims bigarray-compat eqaf digestif.rakia)
- (private_modules digestif_native digestif_hash digestif_eq digestif_conv
-   digestif_by digestif_bi)
+ (private_modules digestif_native digestif_eq digestif_conv digestif_by
+   digestif_bi)
  (flags
   (:standard -no-keep-locs)))
 
@@ -19,6 +19,3 @@
 
 (rule
  (copy# ../src/digestif_conv.ml digestif_conv.ml))
-
-(rule
- (copy# ../src/digestif_hash.ml digestif_hash.ml))

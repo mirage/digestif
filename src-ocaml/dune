@@ -3,9 +3,9 @@
  (public_name digestif.ocaml)
  (implements digestif)
  (libraries stdlib-shims bigarray-compat eqaf)
- (private_modules xor digestif_hash digestif_eq digestif_conv digestif_by
-   digestif_bi baijiu_whirlpool baijiu_sha1 baijiu_sha256 baijiu_sha384
-   baijiu_sha224 baijiu_sha512 baijiu_sha3_224 baijiu_sha256 baijiu_sha3_384
+ (private_modules xor digestif_eq digestif_conv digestif_by digestif_bi
+   baijiu_whirlpool baijiu_sha1 baijiu_sha256 baijiu_sha384 baijiu_sha224
+   baijiu_sha512 baijiu_sha3_224 baijiu_sha256 baijiu_sha3_384
    baijiu_sha3_512 baijiu_rmd160 baijiu_md5 baijiu_blake2s baijiu_blake2b)
  (flags
   (:standard -no-keep-locs)))
@@ -21,6 +21,3 @@
 
 (rule
  (copy# ../src/digestif_conv.ml digestif_conv.ml))
-
-(rule
- (copy# ../src/digestif_hash.ml digestif_hash.ml))
