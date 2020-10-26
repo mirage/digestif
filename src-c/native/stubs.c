@@ -9,12 +9,67 @@
 #include "blake2b.h"
 #include "blake2s.h"
 #include "ripemd160.h"
-#include <caml/threads.h>
 #include <caml/memory.h>
 #include <string.h>
 
 #ifndef Bytes_val
 #define Bytes_val(x) String_val(x)
+#endif
+
+#ifdef __ocaml_freestanding__
+#define __define_ba_update(name)                                             \
+  CAMLprim value                                                             \
+  caml_digestif_ ## name ## _ba_update                                       \
+      (value ctx, value src, value off, value len) {                         \
+    digestif_ ## name ## _update (                                           \
+      (struct name ## _ctx *) String_val (ctx),                              \
+      _ba_uint8_off (src, off), Int_val (len));                              \
+    return Val_unit;                                                         \
+  }
+
+#define __define_sha3_ba_update(mdlen)                                       \
+  CAMLprim value                                                             \
+  caml_digestif_sha3_ ## mdlen ## _ba_update                                 \
+      (value ctx, value src, value off, value len) {                         \
+    digestif_sha3_update (                                                   \
+      (struct sha3_ctx *) String_val (ctx),                                  \
+      _ba_uint8_off (src, off), Int_val (len));                              \
+    return Val_unit;                                                         \
+  }
+#else
+#include <caml/threads.h>
+
+#define __define_ba_update(name)                                             \
+  CAMLprim value                                                             \
+  caml_digestif_ ## name ## _ba_update                                       \
+      (value ctx, value src, value off, value len) {                         \
+    CAMLparam4 (ctx, src, off, len);                                         \
+    uint8_t *off_ = ((uint8_t*) Caml_ba_data_val(src)) + Long_val (off);     \
+    uint32_t len_ = Long_val (len);                                          \
+    struct name ## _ctx ctx_;                                                \
+    memcpy(&ctx_, Bytes_val(ctx), sizeof(struct name ## _ctx));              \
+    caml_release_runtime_system();                                           \
+    digestif_ ## name ## _update (&ctx_, off_, len_);                        \
+    caml_acquire_runtime_system();                                           \
+    memcpy(Bytes_val(ctx), &ctx_, sizeof(struct name ## _ctx));              \
+    CAMLreturn (Val_unit);                                                   \
+  }
+
+#define __define_sha3_ba_update(mdlen)                                       \
+  CAMLprim value                                                             \
+  caml_digestif_sha3_ ## mdlen ## _ba_update                                 \
+      (value ctx, value src, value off, value len) {                         \
+    CAMLparam4 (ctx, src, off, len);                                         \
+    uint8_t *off_ = ((uint8_t*) Caml_ba_data_val(src)) + Long_val (off);     \
+    uint32_t len_ = Long_val (len);                                          \
+    struct sha3_ctx ctx_;                                                    \
+    memcpy(&ctx_, Bytes_val(ctx), sizeof(struct sha3_ctx));                  \
+    caml_release_runtime_system();                                           \
+    digestif_sha3_update (&ctx_, off_, len_);                                \
+    caml_acquire_runtime_system();                                           \
+    memcpy(Bytes_val(ctx), &ctx_, sizeof(struct sha3_ctx));                  \
+    CAMLreturn (Val_unit);                                                   \
+  }
 #endif
 
 #define __define_hash(name, upper)                                           \
@@ -31,22 +86,11 @@
     return Val_unit;                                                         \
   }                                                                          \
                                                                              \
-  CAMLprim value                                                             \
-  caml_digestif_ ## name ## _ba_update (value ctx, value src, value off, value len) { \
-    CAMLparam4 (ctx, src, off, len);                                         \
-    uint8_t *off_ = ((uint8_t*) Caml_ba_data_val(src)) + Long_val (off);     \
-    uint32_t len_ = Long_val (len);                                          \
-    struct name ## _ctx ctx_;                                                \
-    memcpy(&ctx_, Bytes_val(ctx), sizeof(struct name ## _ctx));                \
-    caml_release_runtime_system();                                           \
-    digestif_ ## name ## _update (&ctx_, off_, len_);                        \
-    caml_acquire_runtime_system();                                           \
-    memcpy(Bytes_val(ctx), &ctx_, sizeof(struct name ## _ctx));                \
-    CAMLreturn (Val_unit);                                                   \
-  }                                                                          \
+  __define_ba_update(name)                                                   \
                                                                              \
   CAMLprim value                                                             \
-  caml_digestif_ ## name ## _st_update (value ctx, value src, value off, value len) { \
+  caml_digestif_ ## name ## _st_update                                       \
+      (value ctx, value src, value off, value len) {                         \
     digestif_ ## name ## _update (                                           \
       (struct name ## _ctx *) String_val (ctx),                              \
       _st_uint8_off (src, off), Int_val (len));                              \
@@ -155,37 +199,25 @@ caml_digestif_blake2s_digest_size(value ctx) {
   return Val_int(((struct blake2s_ctx *) String_val (ctx))->outlen);
 }
 
-
-#define __define_hash_sha3(mdlen)				     \
+#define __define_hash_sha3(mdlen)                                            \
                                                                              \
   CAMLprim value                                                             \
   caml_digestif_sha3_ ## mdlen ## _ba_init (value ctx) {                     \
-    digestif_sha3_init ((struct sha3_ctx *) String_val (ctx), mdlen); \
+    digestif_sha3_init ((struct sha3_ctx *) String_val (ctx), mdlen);        \
     return Val_unit;                                                         \
   }                                                                          \
                                                                              \
   CAMLprim value                                                             \
   caml_digestif_sha3_ ## mdlen ## _st_init (value ctx) {                     \
-    digestif_sha3_init ((struct sha3_ctx *) String_val (ctx), mdlen);   \
+    digestif_sha3_init ((struct sha3_ctx *) String_val (ctx), mdlen);        \
     return Val_unit;                                                         \
   }                                                                          \
                                                                              \
-  CAMLprim value                                                             \
-  caml_digestif_sha3_ ## mdlen ## _ba_update (value ctx, value src, value off, value len) { \
-    CAMLparam4 (ctx, src, off, len);                                         \
-    uint8_t *off_ = ((uint8_t*) Caml_ba_data_val(src)) + Long_val (off);     \
-    uint32_t len_ = Long_val (len);                                          \
-    struct sha3_ctx ctx_;                                                   \
-    memcpy(&ctx_, Bytes_val(ctx), sizeof(struct sha3_ctx));                  \
-    caml_release_runtime_system();                                           \
-    digestif_sha3_update (&ctx_, off_, len_);                                \
-    caml_acquire_runtime_system();                                           \
-    memcpy(Bytes_val(ctx), &ctx_, sizeof(struct sha3_ctx));                  \
-    CAMLreturn (Val_unit);                                                   \
-  }                                                                          \
+  __define_sha3_ba_update(mdlen)                                             \
                                                                              \
   CAMLprim value                                                             \
-  caml_digestif_sha3_ ## mdlen ## _st_update (value ctx, value src, value off, value len) { \
+  caml_digestif_sha3_ ## mdlen ## _st_update                                 \
+      (value ctx, value src, value off, value len) {                         \
     digestif_sha3_update (                                                   \
       (struct sha3_ctx *) String_val (ctx),                                  \
       _st_uint8_off (src, off), Int_val (len));                              \
@@ -193,15 +225,17 @@ caml_digestif_blake2s_digest_size(value ctx) {
   }                                                                          \
                                                                              \
   CAMLprim value                                                             \
-  caml_digestif_sha3_ ## mdlen ## _ba_finalize (value ctx, value dst, value off) {         \
-    digestif_sha3_finalize (                                                \
+  caml_digestif_sha3_ ## mdlen ## _ba_finalize                               \
+      (value ctx, value dst, value off) {                                    \
+    digestif_sha3_finalize (                                                 \
       (struct sha3_ctx *) String_val (ctx),                                  \
       _ba_uint8_off (dst, off));                                             \
     return Val_unit;                                                         \
   }                                                                          \
                                                                              \
   CAMLprim value                                                             \
-  caml_digestif_sha3_ ## mdlen ## _st_finalize (value ctx, value dst, value off) { \
+  caml_digestif_sha3_ ## mdlen ## _st_finalize                               \
+      (value ctx, value dst, value off) {                                    \
     digestif_sha3_finalize(                                                  \
       (struct sha3_ctx *) String_val (ctx),                                  \
       _st_uint8_off (dst, off));                                             \
@@ -217,3 +251,4 @@ __define_hash_sha3 (224)
 __define_hash_sha3 (256)
 __define_hash_sha3 (384)
 __define_hash_sha3 (512)
+
