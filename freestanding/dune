@@ -1,0 +1,16 @@
+(copy_files#
+ (alias install)
+ (files ../src-c/native/*))
+
+(rule
+ (deps Makefile)
+ (targets libdigestif_freestanding_stubs.a)
+ (action
+  (no-infer
+   (progn
+    (run %{make})))))
+
+(install
+ (package digestif)
+ (section lib)
+ (files libdigestif_freestanding_stubs.a))

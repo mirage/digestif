@@ -40,6 +40,7 @@ install:  [
 depends: [
   "ocaml"          {>= "4.03.0"}
   "dune"           {>= "2.6.0"}
+  "conf-pkg-config" {build}
   "eqaf"
   "base-bytes"
   "bigarray-compat"
@@ -52,13 +53,11 @@ depends: [
   "rresult"        {with-test}
   "ocamlfind"      {with-test}
 ]
-
 depopts: [
   "ocaml-freestanding"
-  "mirage-xen-posix"
 ]
 
 conflicts: [
-  "mirage-xen-posix" {< "3.1.0"}
-  "ocaml-freestanding" {< "0.4.3"}
+  "mirage-xen" {< "6.0.0"}
+  "ocaml-freestanding" {< "0.6.0"}
 ]

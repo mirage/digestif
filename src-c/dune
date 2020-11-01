@@ -2,20 +2,19 @@
  (name digestif_c)
  (public_name digestif.c)
  (implements digestif)
- (libraries stdlib-shims bigarray-compat eqaf digestif.rakia)
+ (libraries stdlib-shims bigarray-compat eqaf)
  (private_modules digestif_native digestif_eq digestif_conv digestif_by
    digestif_bi)
+ (foreign_stubs
+  (language c)
+  (names blake2b blake2s md5 ripemd160 sha1 sha256 sha512 sha3 whirlpool misc
+    stubs)
+  (flags
+   (:standard -I./native/)))
  (flags
   (:standard -no-keep-locs)))
 
-(rule
- (copy# ../src/digestif_bi.ml digestif_bi.ml))
+(include_subdirs unqualified)
 
-(rule
- (copy# ../src/digestif_by.ml digestif_by.ml))
-
-(rule
- (copy# ../src/digestif_eq.ml digestif_eq.ml))
-
-(rule
- (copy# ../src/digestif_conv.ml digestif_conv.ml))
+(copy_files#
+ (files ../src/*.ml))

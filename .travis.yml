@@ -11,8 +11,8 @@ env:
   - OCAML_VERSION=4.03
   - OCAML_VERSION=4.04
   - OCAML_VERSION=4.05
-  - OCAML_VERSION=4.05 DEPOPTS="mirage-xen-posix"
   - OCAML_VERSION=4.06
   - OCAML_VERSION=4.07
-  - OCAML_VERSION=4.07 DEPOPTS="ocaml-freestanding"
+  - OCAML_VERSION=4.08 DEPOPTS="ocaml-freestanding"
   - OCAML_VERSION=4.08
+  - OCAML_VERSION=4.09 TESTS=false POST_INSTALL_HOOK=./.test-mirage.sh
