@@ -1,3 +1,18 @@
+### v1.0.0 2020-11-02 Paris (France)
+
+- **breaking changes** Upgrade the library with MirageOS 3.9 (new layout of artifacts)
+  Add tests about compilation of unikernels (execution and link)
+  (#105, @dinosaure, @hannesm)
+- Fix `esy` installation (#104, @dinosaure)
+- **breaking changes** Better GADT (#103, @dinosaure)
+  As far as I can tell, nobody really use this part of `digestif`.
+  The idea is to provide a GADT which contains the type of the hash.
+  From third-part libraries point-of-view, it's better to _pattern-match_ with
+  such information instead to use a polymorphic variant (as before).
+- **breaking changes** key used for HMAC is a constant `string` (#101, @dinosaure, @hannesm)
+  The key should not follow the same type as the digest value (`string`, `bytes`, `bigstring`).
+  This update restricts the user to user only constant key (as a `string`).
+
 ### v0.9.0 2020-07-10 Paris (France)
 
 - Add sha3 implementation (#98), @lyrm, @dinosaure, @hannesm and @cfcs
