@@ -1,4 +1,4 @@
-(copy_files# ../src-c/native/*)
+(copy_files# ../src-c/native/*.c)
 
 (rule
  (deps blake2b.c blake2s.c md5.c ripemd160.c sha1.c sha256.c sha512.c sha3.c
