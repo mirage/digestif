@@ -1,9 +1,8 @@
-(copy_files#
- (alias install)
- (files ../src-c/native/*))
+(copy_files# ../src-c/native/*)
 
 (rule
- (deps Makefile)
+ (deps blake2b.c blake2s.c md5.c ripemd160.c sha1.c sha256.c sha512.c sha3.c
+   whirlpool.c misc.c Makefile)
  (targets libdigestif_freestanding_stubs.a)
  (action
   (no-infer

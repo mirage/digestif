@@ -11,7 +11,7 @@ libdigestif_freestanding_stubs.a:
 else
 CC ?= cc
 FREESTANDING_CFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags ocaml-freestanding)
-CFLAGS := -O3 $(FREESTANDING_CFLAGS)
+CFLAGS := -I../src-c/native -O3 $(FREESTANDING_CFLAGS)
 
 OBJS= blake2b.o blake2s.o md5.o ripemd160.o sha1.o sha256.o sha512.o sha3.o whirlpool.o misc.o stubs.o
 
