@@ -10,14 +10,4 @@
  (flags
   (:standard -no-keep-locs)))
 
-(rule
- (copy# ../src/digestif_bi.ml digestif_bi.ml))
-
-(rule
- (copy# ../src/digestif_by.ml digestif_by.ml))
-
-(rule
- (copy# ../src/digestif_eq.ml digestif_eq.ml))
-
-(rule
- (copy# ../src/digestif_conv.ml digestif_conv.ml))
+(copy_files# ../src/*.ml)

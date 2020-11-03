@@ -16,5 +16,4 @@
 
 (include_subdirs unqualified)
 
-(copy_files#
- (files ../src/*.ml))
+(copy_files# ../src/*.ml)
