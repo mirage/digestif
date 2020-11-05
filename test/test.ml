@@ -314,7 +314,8 @@ module BLAKE2 = struct
       | _ -> raise (Invalid_argument "of_hex") in
     let wsp = function ' ' | '\t' | '\r' | '\n' -> true | _ -> false in
     fold_s
-      (fun (res, i, acc) -> function chr when wsp chr -> (res, i, acc)
+      (fun (res, i, acc) -> function
+        | chr when wsp chr -> (res, i, acc)
         | chr ->
         match (acc, code chr) with
         | None, x -> (res, i, Some (x lsl 4))
