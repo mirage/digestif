@@ -7,10 +7,8 @@ Digestif is a toolbox which implements hashes:
 
  * MD5
  * SHA1
- * SHA224
- * SHA256
- * SHA384
- * SHA512
+ * SHA2
+ * SHA3
  * WHIRLPOOL
  * BLAKE2B
  * BLAKE2S
@@ -28,7 +26,7 @@ implementation.
 **Note**: The linking trick requires `digestif.c` or `digestif.ocaml` to be the first of your dependencies.
 
 
-Home page: http://din.osau.re/
+Home page: http://blog.x25519.net/
 
 Contact: Romain Calascibetta `<romain.calascibet ta@gmail.com>`
 
