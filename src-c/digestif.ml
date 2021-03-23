@@ -379,29 +379,30 @@ module Make_BLAKE2 (F : Foreign_BLAKE2) (D : Desc) = struct
       failwith "Invalid digest_size:%d to make a BLAKE2{S,B} implementation"
         D.digest_size
 
-  include Make
-            (struct
-              module Bigstring = struct
-                let init ctx =
-                  F.Bigstring.with_outlen_and_key ctx D.digest_size Bi.empty 0 0
+  include
+    Make
+      (struct
+        module Bigstring = struct
+          let init ctx =
+            F.Bigstring.with_outlen_and_key ctx D.digest_size Bi.empty 0 0
 
-                let update = F.Bigstring.update
+          let update = F.Bigstring.update
 
-                let finalize = F.Bigstring.finalize
-              end
+          let finalize = F.Bigstring.finalize
+        end
 
-              module Bytes = struct
-                let init ctx =
-                  F.Bytes.with_outlen_and_key ctx D.digest_size By.empty 0 0
+        module Bytes = struct
+          let init ctx =
+            F.Bytes.with_outlen_and_key ctx D.digest_size By.empty 0 0
 
-                let update = F.Bytes.update
+          let update = F.Bytes.update
 
-                let finalize = F.Bytes.finalize
-              end
+          let finalize = F.Bytes.finalize
+        end
 
-              let ctx_size () = F.ctx_size ()
-            end)
-            (D)
+        let ctx_size () = F.ctx_size ()
+      end)
+      (D)
 
   type outer = t
 
@@ -579,21 +580,23 @@ module RMD160 : S =
 module Make_BLAKE2B (D : sig
   val digest_size : int
 end) : S = struct
-  include Make_BLAKE2
-            (Native.BLAKE2B)
-            (struct
-              let digest_size, block_size = (D.digest_size, 128)
-            end)
+  include
+    Make_BLAKE2
+      (Native.BLAKE2B)
+      (struct
+        let digest_size, block_size = (D.digest_size, 128)
+      end)
 end
 
 module Make_BLAKE2S (D : sig
   val digest_size : int
 end) : S = struct
-  include Make_BLAKE2
-            (Native.BLAKE2S)
-            (struct
-              let digest_size, block_size = (D.digest_size, 64)
-            end)
+  include
+    Make_BLAKE2
+      (Native.BLAKE2S)
+      (struct
+        let digest_size, block_size = (D.digest_size, 64)
+      end)
 end
 
 type 'k hash =

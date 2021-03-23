@@ -348,22 +348,22 @@ module Make_BLAKE2 (H : Hash_BLAKE2) (D : Desc) = struct
       failwith "Invalid digest_size:%d to make a BLAKE2{S,B} implementation"
         D.digest_size
 
-  include Make
-            (struct
-              type ctx = H.ctx
+  include
+    Make
+      (struct
+        type ctx = H.ctx
 
-              let init () =
-                H.with_outlen_and_bytes_key D.digest_size By.empty 0 0
+        let init () = H.with_outlen_and_bytes_key D.digest_size By.empty 0 0
 
-              let unsafe_feed_bytes = H.unsafe_feed_bytes
+        let unsafe_feed_bytes = H.unsafe_feed_bytes
 
-              let unsafe_feed_bigstring = H.unsafe_feed_bigstring
+        let unsafe_feed_bigstring = H.unsafe_feed_bigstring
 
-              let unsafe_get = H.unsafe_get
+        let unsafe_get = H.unsafe_get
 
-              let dup = H.dup
-            end)
-            (D)
+        let dup = H.dup
+      end)
+      (D)
 
   type outer = t
 
@@ -536,21 +536,23 @@ module RMD160 : S =
 module Make_BLAKE2B (D : sig
   val digest_size : int
 end) : S = struct
-  include Make_BLAKE2
-            (Baijiu_blake2b.Unsafe)
-            (struct
-              let digest_size, block_size = (D.digest_size, 128)
-            end)
+  include
+    Make_BLAKE2
+      (Baijiu_blake2b.Unsafe)
+      (struct
+        let digest_size, block_size = (D.digest_size, 128)
+      end)
 end
 
 module Make_BLAKE2S (D : sig
   val digest_size : int
 end) : S = struct
-  include Make_BLAKE2
-            (Baijiu_blake2s.Unsafe)
-            (struct
-              let digest_size, block_size = (D.digest_size, 64)
-            end)
+  include
+    Make_BLAKE2
+      (Baijiu_blake2s.Unsafe)
+      (struct
+        let digest_size, block_size = (D.digest_size, 64)
+      end)
 end
 
 type 'k hash =
