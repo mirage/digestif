@@ -1,15 +1,11 @@
 #!/usr/bin/env ocaml
 
-;;
 #use "topfind"
 
-;;
 #require "astring"
 
-;;
 #require "fpath"
 
-;;
 #require "bos"
 
 open Rresult

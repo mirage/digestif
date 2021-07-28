@@ -1,6 +1,5 @@
 #!/usr/bin/env ocaml
 
-;;
 #load "unix.cma"
 
 let freestanding =
