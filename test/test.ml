@@ -126,10 +126,7 @@ let split3 lst =
 
 let keys_by, keys_st, keys_bi =
   [
-    "Salut";
-    "Jefe";
-    "Lorenzo";
-    "Le son qui fait plaiz'";
+    "Salut"; "Jefe"; "Lorenzo"; "Le son qui fait plaiz'";
     "La c'est un peu chaud en vrai";
   ]
   |> List.map (fun s ->
@@ -138,8 +135,7 @@ let keys_by, keys_st, keys_bi =
 
 let inputs_by, inputs_st, inputs_bi =
   [
-    "Hi There";
-    "what do ya want for nothing?";
+    "Hi There"; "what do ya want for nothing?";
     "C'est Lolo je bois de l'Ice Tea quand j'suis fonsde";
     "Mes pecs dansent le flamenco, Lolo l'empereur du sale, dans le deal on \
      m'surnomme Joe La Crapule";
@@ -157,10 +153,8 @@ let inputs_by, inputs_st, inputs_bi =
 
 let results_md5 =
   [
-    "689e721d493b6eeea482947be736c808";
-    "750c783e6ab0b503eaa86e310a5db738";
-    "1cdd24eef6163afee7adc7c53dd6c9df";
-    "0316ebcad933675e84a81850e24d55b2";
+    "689e721d493b6eeea482947be736c808"; "750c783e6ab0b503eaa86e310a5db738";
+    "1cdd24eef6163afee7adc7c53dd6c9df"; "0316ebcad933675e84a81850e24d55b2";
     "9ee938a2659d546ccc2e5993601964eb";
   ]
   |> List.map (Digestif.of_hex Digestif.md5)
@@ -413,11 +407,7 @@ end
 module RMD160 = struct
   let inputs =
     [
-      "";
-      "a";
-      "abc";
-      "message digest";
-      "abcdefghijklmnopqrstuvwxyz";
+      ""; "a"; "abc"; "message digest"; "abcdefghijklmnopqrstuvwxyz";
       "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq";
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
       "12345678901234567890123456789012345678901234567890123456789012345678901234567890";

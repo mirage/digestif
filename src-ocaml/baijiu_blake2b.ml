@@ -113,8 +113,7 @@ module Unsafe : S = struct
   let param_to_bytes param =
     let arr =
       [|
-        param.digest_length land 0xFF;
-        param.key_length land 0xFF;
+        param.digest_length land 0xFF; param.key_length land 0xFF;
         param.fanout land 0xFF;
         param.depth land 0xFF (* store to little-endian *);
         Int32.(to_int ((param.leaf_length lsr 0) land 0xFFl));
@@ -131,54 +130,30 @@ module Unsafe : S = struct
         Int32.(to_int ((param.xof_length lsr 8) land 0xFFl));
         Int32.(to_int ((param.xof_length lsr 16) land 0xFFl));
         Int32.(to_int ((param.xof_length lsr 24) land 0xFFl));
-        param.node_depth land 0xFF;
-        param.inner_length land 0xFF;
-        param.reserved.(0) land 0xFF;
-        param.reserved.(1) land 0xFF;
-        param.reserved.(2) land 0xFF;
-        param.reserved.(3) land 0xFF;
-        param.reserved.(4) land 0xFF;
-        param.reserved.(5) land 0xFF;
-        param.reserved.(6) land 0xFF;
-        param.reserved.(7) land 0xFF;
-        param.reserved.(8) land 0xFF;
-        param.reserved.(9) land 0xFF;
-        param.reserved.(10) land 0xFF;
-        param.reserved.(11) land 0xFF;
-        param.reserved.(12) land 0xFF;
-        param.reserved.(13) land 0xFF;
-        param.salt.(0) land 0xFF;
-        param.salt.(1) land 0xFF;
-        param.salt.(2) land 0xFF;
-        param.salt.(3) land 0xFF;
-        param.salt.(4) land 0xFF;
-        param.salt.(5) land 0xFF;
-        param.salt.(6) land 0xFF;
-        param.salt.(7) land 0xFF;
-        param.salt.(8) land 0xFF;
-        param.salt.(9) land 0xFF;
-        param.salt.(10) land 0xFF;
-        param.salt.(11) land 0xFF;
-        param.salt.(12) land 0xFF;
-        param.salt.(13) land 0xFF;
-        param.salt.(14) land 0xFF;
-        param.salt.(15) land 0xFF;
-        param.personal.(0) land 0xFF;
-        param.personal.(1) land 0xFF;
-        param.personal.(2) land 0xFF;
-        param.personal.(3) land 0xFF;
-        param.personal.(4) land 0xFF;
-        param.personal.(5) land 0xFF;
-        param.personal.(6) land 0xFF;
-        param.personal.(7) land 0xFF;
-        param.personal.(8) land 0xFF;
-        param.personal.(9) land 0xFF;
-        param.personal.(10) land 0xFF;
-        param.personal.(11) land 0xFF;
-        param.personal.(12) land 0xFF;
-        param.personal.(13) land 0xFF;
-        param.personal.(14) land 0xFF;
-        param.personal.(15) land 0xFF;
+        param.node_depth land 0xFF; param.inner_length land 0xFF;
+        param.reserved.(0) land 0xFF; param.reserved.(1) land 0xFF;
+        param.reserved.(2) land 0xFF; param.reserved.(3) land 0xFF;
+        param.reserved.(4) land 0xFF; param.reserved.(5) land 0xFF;
+        param.reserved.(6) land 0xFF; param.reserved.(7) land 0xFF;
+        param.reserved.(8) land 0xFF; param.reserved.(9) land 0xFF;
+        param.reserved.(10) land 0xFF; param.reserved.(11) land 0xFF;
+        param.reserved.(12) land 0xFF; param.reserved.(13) land 0xFF;
+        param.salt.(0) land 0xFF; param.salt.(1) land 0xFF;
+        param.salt.(2) land 0xFF; param.salt.(3) land 0xFF;
+        param.salt.(4) land 0xFF; param.salt.(5) land 0xFF;
+        param.salt.(6) land 0xFF; param.salt.(7) land 0xFF;
+        param.salt.(8) land 0xFF; param.salt.(9) land 0xFF;
+        param.salt.(10) land 0xFF; param.salt.(11) land 0xFF;
+        param.salt.(12) land 0xFF; param.salt.(13) land 0xFF;
+        param.salt.(14) land 0xFF; param.salt.(15) land 0xFF;
+        param.personal.(0) land 0xFF; param.personal.(1) land 0xFF;
+        param.personal.(2) land 0xFF; param.personal.(3) land 0xFF;
+        param.personal.(4) land 0xFF; param.personal.(5) land 0xFF;
+        param.personal.(6) land 0xFF; param.personal.(7) land 0xFF;
+        param.personal.(8) land 0xFF; param.personal.(9) land 0xFF;
+        param.personal.(10) land 0xFF; param.personal.(11) land 0xFF;
+        param.personal.(12) land 0xFF; param.personal.(13) land 0xFF;
+        param.personal.(14) land 0xFF; param.personal.(15) land 0xFF;
       |] in
     By.init 64 (fun i -> Char.unsafe_chr arr.(i))
 
@@ -202,14 +177,9 @@ module Unsafe : S = struct
 
   let iv =
     [|
-      0x6a09e667f3bcc908L;
-      0xbb67ae8584caa73bL;
-      0x3c6ef372fe94f82bL;
-      0xa54ff53a5f1d36f1L;
-      0x510e527fade682d1L;
-      0x9b05688c2b3e6c1fL;
-      0x1f83d9abfb41bd6bL;
-      0x5be0cd19137e2179L;
+      0x6a09e667f3bcc908L; 0xbb67ae8584caa73bL; 0x3c6ef372fe94f82bL;
+      0xa54ff53a5f1d36f1L; 0x510e527fade682d1L; 0x9b05688c2b3e6c1fL;
+      0x1f83d9abfb41bd6bL; 0x5be0cd19137e2179L;
     |]
 
   let increment_counter ctx inc =
