@@ -112,8 +112,7 @@ module Unsafe : S = struct
   let param_to_bytes param =
     let arr =
       [|
-        param.digest_length land 0xFF;
-        param.key_length land 0xFF;
+        param.digest_length land 0xFF; param.key_length land 0xFF;
         param.fanout land 0xFF;
         param.depth land 0xFF (* store to little-endian *);
         Int32.(to_int ((param.leaf_length lsr 0) land 0xFFl));
@@ -125,26 +124,16 @@ module Unsafe : S = struct
         Int32.(to_int ((param.node_offset lsr 8) land 0xFFl));
         Int32.(to_int ((param.node_offset lsr 16) land 0xFFl));
         Int32.(to_int ((param.node_offset lsr 24) land 0xFFl))
-        (* store to little-endian *);
-        (param.xof_length lsr 0) land 0xFF;
-        (param.xof_length lsr 8) land 0xFF;
-        param.node_depth land 0xFF;
-        param.inner_length land 0xFF;
-        param.salt.(0) land 0xFF;
-        param.salt.(1) land 0xFF;
-        param.salt.(2) land 0xFF;
-        param.salt.(3) land 0xFF;
-        param.salt.(4) land 0xFF;
-        param.salt.(5) land 0xFF;
-        param.salt.(6) land 0xFF;
-        param.salt.(7) land 0xFF;
-        param.personal.(0) land 0xFF;
-        param.personal.(1) land 0xFF;
-        param.personal.(2) land 0xFF;
-        param.personal.(3) land 0xFF;
-        param.personal.(4) land 0xFF;
-        param.personal.(5) land 0xFF;
-        param.personal.(6) land 0xFF;
+        (* store to little-endian *); (param.xof_length lsr 0) land 0xFF;
+        (param.xof_length lsr 8) land 0xFF; param.node_depth land 0xFF;
+        param.inner_length land 0xFF; param.salt.(0) land 0xFF;
+        param.salt.(1) land 0xFF; param.salt.(2) land 0xFF;
+        param.salt.(3) land 0xFF; param.salt.(4) land 0xFF;
+        param.salt.(5) land 0xFF; param.salt.(6) land 0xFF;
+        param.salt.(7) land 0xFF; param.personal.(0) land 0xFF;
+        param.personal.(1) land 0xFF; param.personal.(2) land 0xFF;
+        param.personal.(3) land 0xFF; param.personal.(4) land 0xFF;
+        param.personal.(5) land 0xFF; param.personal.(6) land 0xFF;
         param.personal.(7) land 0xFF;
       |] in
     By.init 32 (fun i -> Char.unsafe_chr arr.(i))
@@ -168,14 +157,8 @@ module Unsafe : S = struct
 
   let iv =
     [|
-      0x6A09E667l;
-      0xBB67AE85l;
-      0x3C6EF372l;
-      0xA54FF53Al;
-      0x510E527Fl;
-      0x9B05688Cl;
-      0x1F83D9ABl;
-      0x5BE0CD19l;
+      0x6A09E667l; 0xBB67AE85l; 0x3C6EF372l; 0xA54FF53Al; 0x510E527Fl;
+      0x9B05688Cl; 0x1F83D9ABl; 0x5BE0CD19l;
     |]
 
   let increment_counter ctx inc =

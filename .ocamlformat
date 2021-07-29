@@ -6,3 +6,5 @@ nested-match=align
 sequence-style=separator
 break-before-in=auto
 if-then-else=keyword-first
+dock-collection-brackets=true
+break-collection-expressions=wrap
