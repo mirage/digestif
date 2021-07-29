@@ -126,11 +126,7 @@ module Unsafe = struct
       1;
     |]
 
-  let swap64 = if Sys.big_endian then By.swap64 else fun x -> x
-
   let sha3_keccakf (q : int64 array) =
-    if Sys.big_endian then Array.iteri (fun i sti -> q.(i) <- swap64 sti) q ;
-
     for r = 0 to keccakf_rounds - 1 do
       let ( lxor ) = Int64.( lxor ) in
       let lnot = Int64.lognot in
@@ -171,9 +167,8 @@ module Unsafe = struct
 
       (* Iota *)
       q.(0) <- q.(0) lxor keccaft_rndc.(r)
-    done ;
-
-    if Sys.big_endian then Array.iteri (fun i sti -> q.(i) <- swap64 sti) q
+    done
+  ;;
 
   let masks =
     [|
@@ -252,7 +247,7 @@ module Unsafe = struct
 
     let hash = By.create n in
     for i = 0 to (n / 8) - 1 do
-      By.unsafe_set_64 hash (i * 8) ctx.q.(i)
+      By.unsafe_set_64 hash (i * 8) (if Sys.big_endian then By.swap64 ctx.q.(i) else ctx.q.(i))
     done ;
 
     By.sub hash 0 ctx.mdlen
