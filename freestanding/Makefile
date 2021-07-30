@@ -1,4 +1,6 @@
+ifneq (, $(shell command -v opam || which opam))
 PKG_CONFIG_PATH := $(shell opam config var prefix)/lib/pkgconfig
+endif
 
 EXISTS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --exists ocaml-freestanding; echo $$?)
 
