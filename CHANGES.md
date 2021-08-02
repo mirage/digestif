@@ -1,3 +1,8 @@
+### v1.0.1 2020-02-08 Paris (France)
+
+- Fix `esy` support (@dinosaure, #115)
+- Fix big-endian support (@dinosaure, #113)
+
 ### v1.0.0 2020-11-02 Paris (France)
 
 - **breaking changes** Upgrade the library with MirageOS 3.9 (new layout of artifacts)
