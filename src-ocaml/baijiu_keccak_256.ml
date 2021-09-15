@@ -4,7 +4,7 @@ module Bi = Digestif_bi
 module type S = sig
   type ctx
 
-  type kind = [ `SHA3_384 ]
+  type kind = [ `SHA3_256 ]
 
   val init : unit -> ctx
 
@@ -18,17 +18,17 @@ module type S = sig
 end
 
 module Unsafe : S = struct
-  type kind = [ `SHA3_384 ]
+  type kind = [ `SHA3_256 ]
 
   module U = Baijiu_sha3.Unsafe (struct
-    let padding = Baijiu_sha3.nist_padding
+    let padding = Baijiu_sha3.keccak_padding
   end)
 
   open U
 
   type nonrec ctx = ctx
 
-  let init () = U.init 48
+  let init () = U.init 32
 
   let unsafe_get = unsafe_get
 

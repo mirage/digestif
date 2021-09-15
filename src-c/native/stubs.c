@@ -199,6 +199,25 @@ caml_digestif_blake2s_digest_size(value ctx) {
   return Val_int(((struct blake2s_ctx *) String_val (ctx))->outlen);
 }
 
+CAMLprim value
+caml_digestif_keccak_256_ba_finalize
+(value ctx, value dst, value off) {
+  digestif_sha3_finalize (
+    (struct sha3_ctx *) String_val (ctx),
+    _ba_uint8_off (dst, off), 0x01);
+  return Val_unit;
+}
+
+CAMLprim value
+caml_digestif_keccak_256_st_finalize
+(value ctx, value dst, value off) {
+  digestif_sha3_finalize(
+    (struct sha3_ctx *) String_val (ctx),
+    _st_uint8_off (dst, off), 0x01);
+  return Val_unit;
+}
+
+
 #define __define_hash_sha3(mdlen)                                            \
                                                                              \
   CAMLprim value                                                             \
@@ -226,19 +245,19 @@ caml_digestif_blake2s_digest_size(value ctx) {
                                                                              \
   CAMLprim value                                                             \
   caml_digestif_sha3_ ## mdlen ## _ba_finalize                               \
-      (value ctx, value dst, value off) {                                    \
+  (value ctx, value dst, value off) {                                        \
     digestif_sha3_finalize (                                                 \
       (struct sha3_ctx *) String_val (ctx),                                  \
-      _ba_uint8_off (dst, off));                                             \
+      _ba_uint8_off (dst, off), 0x06);                                       \
     return Val_unit;                                                         \
   }                                                                          \
                                                                              \
   CAMLprim value                                                             \
   caml_digestif_sha3_ ## mdlen ## _st_finalize                               \
-      (value ctx, value dst, value off) {                                    \
+  (value ctx, value dst, value off) {                                        \
     digestif_sha3_finalize(                                                  \
       (struct sha3_ctx *) String_val (ctx),                                  \
-      _st_uint8_off (dst, off));                                             \
+      _st_uint8_off (dst, off), 0x06);                                       \
     return Val_unit;                                                         \
   }                                                                          \
                                                                              \
@@ -251,4 +270,3 @@ __define_hash_sha3 (224)
 __define_hash_sha3 (256)
 __define_hash_sha3 (384)
 __define_hash_sha3 (512)
-

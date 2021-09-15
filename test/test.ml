@@ -22,6 +22,7 @@ let title : type a k. [ `HMAC | `Digest ] -> k Digestif.hash -> a s -> string =
     | Digestif.SHA512 -> Fmt.string ppf "sha512"
     | Digestif.SHA3_224 -> Fmt.string ppf "sha3_224"
     | Digestif.SHA3_256 -> Fmt.string ppf "sha3_256"
+    | Digestif.KECCAK_256 -> Fmt.string ppf "keccak_256"
     | Digestif.SHA3_384 -> Fmt.string ppf "sha3_384"
     | Digestif.SHA3_512 -> Fmt.string ppf "sha3_512"
     | Digestif.WHIRLPOOL -> Fmt.string ppf "whirlpool"
@@ -228,6 +229,16 @@ let results_sha3_256 =
     "8d1de07fd2312402f94d061a88b02dc1e0173e9d89750284b78d2bb004e9d3c1";
   ]
   |> List.map (Digestif.of_hex Digestif.sha3_256)
+
+let results_keccak_256 =
+  [
+    "0dbf49d1c2d4625f87592309b3c7ceb2c1a2194dc866bb21be7ac6abb733f0f1";
+    "aa9aed448c7abc8b5e326ffa6a01cdedf7b4b831881468c044ba8dd4566369a1";
+    "7fce3f69adac930d657ce6998d6ad5ee102b5e7560e6690b4ca855e5d4c268a0";
+    "c6cf40deda9a1028823641235499c9b1891c6e2ab7d2bfa9db06890ce8bc855e";
+    "8af5e3a5ebc1a9927d43765c85ca455de007e357ea250ae3ed65b55765d3252a";
+  ]
+  |> List.map (Digestif.of_hex Digestif.keccak_256)
 
 let results_sha3_384 =
   [
@@ -564,6 +575,31 @@ let sha3_vector_tests filename =
   go () ;
   close_in ic
 
+let keccak_vector_tests filename =
+  Alcotest.test_case filename `Quick @@ fun () ->
+  let ic = open_in filename in
+  let _algorithm_type = input_line ic in
+  let _name = input_line ic in
+  let hash = Digestif.keccak_256 in
+  let rec go () =
+    try
+      let comment = parse_field (input_line ic) in
+      let message = parse_field (input_line ic) in
+      Fmt.epr ">>> %S.\n%!" comment ;
+      Fmt.epr ">>> %S.\n%!" (if message = empty then "" else of_hex message) ;
+      let digest = (Digestif.of_hex hash <.> parse_field <.> input_line) ic in
+      let _verify = input_line ic in
+      let result =
+        if message = empty
+        then Digestif.digest_string hash ""
+        else Digestif.digest_string hash (of_hex message) in
+      Alcotest.(check (testable (Digestif.pp hash) (Digestif.equal hash)))
+        comment digest result ;
+      go ()
+    with End_of_file -> () in
+  go () ;
+  close_in ic
+
 let tests () =
   Alcotest.run "digestif"
     [
@@ -612,6 +648,12 @@ let tests () =
       ( "sha3_256 (bigstring)",
         makes ~name:"sha3_256" bigstring Digestif.sha3_256 keys_st inputs_bi
           results_sha3_256 );
+      ( "keccak_256",
+        makes ~name:"keccak_256" bytes Digestif.keccak_256 keys_st inputs_by
+          results_keccak_256 );
+      ( "keccak_256 (bigstring)",
+        makes ~name:"keccak_256" bigstring Digestif.keccak_256 keys_st inputs_bi
+          results_keccak_256 );
       ( "sha3_384",
         makes ~name:"sha3_384" bytes Digestif.sha3_384 keys_st inputs_by
           results_sha3_384 );
@@ -661,6 +703,7 @@ let tests () =
           sha3_vector_tests "../sha3_256_fips_202.txt";
           sha3_vector_tests "../sha3_384_fips_202.txt";
           sha3_vector_tests "../sha3_512_fips_202.txt";
+          keccak_vector_tests "../keccak_256.txt";
         ] );
     ]
 

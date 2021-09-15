@@ -12,7 +12,8 @@
   ../sha3_224_fips_202.txt
   ../sha3_256_fips_202.txt
   ../sha3_384_fips_202.txt
-  ../sha3_512_fips_202.txt)
+  ../sha3_512_fips_202.txt
+  ../keccak_256.txt)
  (action
   (run %{test} --color=always)))
 
