@@ -20,11 +20,15 @@ end
 module Unsafe : S = struct
   type kind = [ `SHA3_512 ]
 
-  open Baijiu_sha3.Unsafe
+  module U = Baijiu_sha3.Unsafe (struct
+    let padding = Baijiu_sha3.nist_padding
+  end)
+
+  open U
 
   type nonrec ctx = ctx
 
-  let init () = Baijiu_sha3.Unsafe.init 64
+  let init () = U.init 64
 
   let unsafe_get = unsafe_get
 

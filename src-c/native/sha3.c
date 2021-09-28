@@ -138,12 +138,12 @@ void digestif_sha3_update(struct sha3_ctx *ctx, uint8_t *data, uint32_t len)
 
 // finalize and output a hash
 
-void digestif_sha3_finalize(struct sha3_ctx *ctx, uint8_t *md)
+void digestif_sha3_finalize(struct sha3_ctx *ctx, uint8_t *md, uint8_t padding)
 {
     int i;
 
     //padding
-    ctx->st.b[ctx->pt] ^= 0x06;
+    ctx->st.b[ctx->pt] ^= padding;
     ctx->st.b[ctx->rsiz - 1] ^= 0x80;
 
     //call f on the last block

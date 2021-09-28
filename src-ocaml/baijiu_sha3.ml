@@ -1,6 +1,10 @@
 module By = Digestif_by
 module Bi = Digestif_bi
 
+let nist_padding = 0x06L
+
+let keccak_padding = 0x01L
+
 module Int64 = struct
   include Int64
 
@@ -23,7 +27,10 @@ module Int64 = struct
   let rol64 a n = (a lsl n) lor (a lsr (64 - n))
 end
 
-module Unsafe = struct
+module Unsafe (P : sig
+  val padding : int64
+end) =
+struct
   type ctx = {
     q : int64 array;
     rsize : int;
@@ -161,7 +168,7 @@ module Unsafe = struct
     let ( lsl ) = Int64.( lsl ) in
 
     let v = ctx.q.(ctx.pt / 8) in
-    let v = v lxor (0x6L lsl ((ctx.pt && 0x7) * 8)) in
+    let v = v lxor (P.padding lsl ((ctx.pt && 0x7) * 8)) in
     ctx.q.(ctx.pt / 8) <- v ;
 
     let v = ctx.q.((ctx.rsize - 1) / 8) in

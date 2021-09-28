@@ -527,6 +527,13 @@ module SHA3_256 : S =
       let digest_size, block_size = (32, 136)
     end)
 
+module KECCAK_256 : S =
+  Make
+    (Native.KECCAK_256)
+    (struct
+      let digest_size, block_size = (32, 136)
+    end)
+
 module SHA3_384 : S =
   Make
     (Native.SHA3_384)
@@ -609,6 +616,7 @@ type 'k hash =
   | SHA512 : SHA512.t hash
   | SHA3_224 : SHA3_224.t hash
   | SHA3_256 : SHA3_256.t hash
+  | KECCAK_256 : KECCAK_256.t hash
   | SHA3_384 : SHA3_384.t hash
   | SHA3_512 : SHA3_512.t hash
   | WHIRLPOOL : WHIRLPOOL.t hash
@@ -633,6 +641,8 @@ let sha3_224 = SHA3_224
 
 let sha3_256 = SHA3_256
 
+let keccak_256 = KECCAK_256
+
 let sha3_384 = SHA3_384
 
 let sha3_512 = SHA3_512
@@ -653,6 +663,7 @@ let module_of : type k. k hash -> (module S with type t = k) = function
   | SHA512 -> (module SHA512)
   | SHA3_224 -> (module SHA3_224)
   | SHA3_256 -> (module SHA3_256)
+  | KECCAK_256 -> (module KECCAK_256)
   | SHA3_384 -> (module SHA3_384)
   | SHA3_512 -> (module SHA3_512)
   | WHIRLPOOL -> (module WHIRLPOOL)
@@ -784,6 +795,8 @@ let of_sha512 hash = hash
 let of_sha3_224 hash = hash
 
 let of_sha3_256 hash = hash
+
+let of_keccak_256 hash = hash
 
 let of_sha3_384 hash = hash
 

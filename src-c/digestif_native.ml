@@ -261,6 +261,36 @@ module SHA3_256 = struct
     [@@noalloc]
 end
 
+module KECCAK_256 = struct
+  type kind = [ `KECCAK_256 ]
+
+  module Bigstring = struct
+    external init : ctx -> unit = "caml_digestif_sha3_256_ba_init" [@@noalloc]
+
+    external update : ctx -> ba -> off -> size -> unit
+      = "caml_digestif_sha3_256_ba_update"
+
+    external finalize : ctx -> ba -> off -> unit
+      = "caml_digestif_keccak_256_ba_finalize"
+      [@@noalloc]
+  end
+
+  module Bytes = struct
+    external init : ctx -> unit = "caml_digestif_sha3_256_st_init" [@@noalloc]
+
+    external update : ctx -> st -> off -> size -> unit
+      = "caml_digestif_sha3_256_st_update"
+      [@@noalloc]
+
+    external finalize : ctx -> st -> off -> unit
+      = "caml_digestif_keccak_256_st_finalize"
+      [@@noalloc]
+  end
+
+  external ctx_size : unit -> int = "caml_digestif_sha3_256_ctx_size"
+    [@@noalloc]
+end
+
 module SHA3_384 = struct
   type kind = [ `SHA3_384 ]
 

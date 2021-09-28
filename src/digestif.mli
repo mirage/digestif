@@ -209,6 +209,8 @@ module SHA3_224 : S
 
 module SHA3_256 : S
 
+module KECCAK_256 : S
+
 module SHA3_384 : S
 
 module SHA3_512 : S
@@ -247,6 +249,7 @@ type 'k hash =
   | SHA512 : SHA512.t hash
   | SHA3_224 : SHA3_224.t hash
   | SHA3_256 : SHA3_256.t hash
+  | KECCAK_256 : KECCAK_256.t hash
   | SHA3_384 : SHA3_384.t hash
   | SHA3_512 : SHA3_512.t hash
   | WHIRLPOOL : WHIRLPOOL.t hash
@@ -270,6 +273,8 @@ val sha512 : SHA512.t hash
 val sha3_224 : SHA3_224.t hash
 
 val sha3_256 : SHA3_256.t hash
+
+val keccak_256 : KECCAK_256.t hash
 
 val sha3_384 : SHA3_384.t hash
 
@@ -344,6 +349,8 @@ val of_sha512 : SHA512.t -> SHA512.t t
 val of_sha3_224 : SHA3_224.t -> SHA3_224.t t
 
 val of_sha3_256 : SHA3_256.t -> SHA3_256.t t
+
+val of_keccak_256 : KECCAK_256.t -> KECCAK_256.t t
 
 val of_sha3_384 : SHA3_384.t -> SHA3_384.t t
 
