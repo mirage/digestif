@@ -25,8 +25,7 @@ implementation.
 
 **Note**: The linking trick requires `digestif.c` or `digestif.ocaml` to be the first of your dependencies.
 
-
-Home page: http://blog.x25519.net/
+Documentation: https://mirage.github.io/digestif/
 
 Contact: Romain Calascibetta `<romain.calascibet ta@gmail.com>`
 
