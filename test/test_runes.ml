@@ -102,7 +102,7 @@ let libraries_exist args =
               | false -> check ps) in
         check paths
     | `Name library :: libraries ->
-        let lib = Fmt.strf "lib%s.a" library in
+        let lib = Fmt.str "lib%s.a" library in
         let rec check = function
           | [] -> R.error_msgf "Library lib%s.a does not exist." library
           | p0 :: ps -> (
@@ -127,7 +127,7 @@ let exists lib =
 
 let query target lib =
   let open Bos in
-  let format = Fmt.strf "-L%%d %%(%s_linkopts)" target in
+  let format = Fmt.str "-L%%d %%(%s_linkopts)" target in
   let command = Cmd.(v "ocamlfind" % "query" % "-format" % format % lib) in
   OS.Cmd.run_out command
   |> OS.Cmd.out_lines
