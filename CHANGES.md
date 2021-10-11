@@ -1,3 +1,10 @@
+### v1.1.0 2021-10-11 Paris (France)
+
+- Add Keccak256 module (ethereum padding) (@maxtori, @dinosaure, #118)
+- Update README.md to include the documentation (@mimoo, @dinosaure, 65a5c12)
+- Remove deprecated function from `fmt` library (@dinosaure, #121)
+- **NOTE**: This version lost the support of OCaml 4.03 and OCaml 4.04.
+
 ### v1.0.1 2020-02-08 Paris (France)
 
 - Fix `esy` support (@dinosaure, #115)
