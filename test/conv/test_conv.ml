@@ -6,7 +6,7 @@ let () = Random.full_init seed
 
 let () = Fmt.epr "seed: %a.\n%!" Fmt.(Dump.array int) seed
 
-let strf = Fmt.strf
+let strf = Fmt.str
 
 let invalid_arg = Fmt.invalid_arg
 

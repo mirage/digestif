@@ -33,7 +33,7 @@ let title : type a k. [ `HMAC | `Digest ] -> k Digestif.hash -> a s -> string =
     | Bytes -> Fmt.string ppf "bytes"
     | String -> Fmt.string ppf "string"
     | Bigstring -> Fmt.string ppf "bigstring" in
-  Fmt.strf "%a:%a:%a" pp_computation computation pp_hash hash pp_input input
+  Fmt.str "%a:%a:%a" pp_computation computation pp_hash hash pp_input input
 
 let bytes = Bytes
 
@@ -466,7 +466,7 @@ end
 let str = Alcotest.testable (fun ppf -> Fmt.pf ppf "%S") String.equal
 
 let blake2s_spe digest_size =
-  Alcotest.test_case (Fmt.strf "BLAKE2S (digest-size: %d)" digest_size) `Quick
+  Alcotest.test_case (Fmt.str "BLAKE2S (digest-size: %d)" digest_size) `Quick
   @@ fun () ->
   let module Hash = Digestif.Make_BLAKE2S (struct
     let digest_size = digest_size
@@ -484,7 +484,7 @@ let blake2s_spe digest_size =
   Alcotest.(check str) "raw hash" raw_hash0 raw_hash1
 
 let blake2b_spe digest_size =
-  Alcotest.test_case (Fmt.strf "BLAKE2B (digest-size: %d)" digest_size) `Quick
+  Alcotest.test_case (Fmt.str "BLAKE2B (digest-size: %d)" digest_size) `Quick
   @@ fun () ->
   let module Hash = Digestif.Make_BLAKE2B (struct
     let digest_size = digest_size
