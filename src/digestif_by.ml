@@ -1,7 +1,6 @@
 include Bytes
 
 external unsafe_get_32 : t -> int -> int32 = "%caml_string_get32u"
-
 external unsafe_get_64 : t -> int -> int64 = "%caml_string_get64u"
 
 let unsafe_get_nat : t -> int -> nativeint =
@@ -11,7 +10,6 @@ let unsafe_get_nat : t -> int -> nativeint =
   else Int64.to_nativeint @@ unsafe_get_64 s i
 
 external unsafe_set_32 : t -> int -> int32 -> unit = "%caml_string_set32u"
-
 external unsafe_set_64 : t -> int -> int64 -> unit = "%caml_string_set64u"
 
 let unsafe_set_nat : t -> int -> nativeint -> unit =
@@ -33,9 +31,7 @@ let rpad a size x =
   b
 
 external swap32 : int32 -> int32 = "%bswap_int32"
-
 external swap64 : int64 -> int64 = "%bswap_int64"
-
 external swapnat : nativeint -> nativeint = "%bswap_native"
 
 let cpu_to_be32 s i v =

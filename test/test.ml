@@ -36,9 +36,7 @@ let title : type a k. [ `HMAC | `Digest ] -> k Digestif.hash -> a s -> string =
   Fmt.str "%a:%a:%a" pp_computation computation pp_hash hash pp_input input
 
 let bytes = Bytes
-
 let string = String
-
 let bigstring = Bigstring
 
 let test_hmac :
@@ -302,7 +300,6 @@ let results_blake2s =
 
 module BLAKE2 = struct
   let input_blake2b_file = "../blake2b.test"
-
   let input_blake2s_file = "../blake2s.test"
 
   let fold_s f a s =

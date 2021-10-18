@@ -5,43 +5,29 @@ module Int64 = struct
   include Int64
 
   let ( lsl ) = Int64.shift_left
-
   let ( lsr ) = Int64.shift_right_logical
-
   let ( asr ) = Int64.shift_right
-
   let ( lor ) = Int64.logor
-
   let ( land ) = Int64.logand
-
   let ( lxor ) = Int64.logxor
-
   let ( + ) = Int64.add
-
   let ror64 a n = (a lsr n) lor (a lsl (64 - n))
-
   let rol64 a n = (a lsl n) lor (a lsr (64 - n))
 end
 
 module type S = sig
   type kind = [ `WHIRLPOOL ]
-
   type ctx = { mutable size : int64; b : Bytes.t; h : int64 array }
 
   val init : unit -> ctx
-
   val unsafe_feed_bytes : ctx -> By.t -> int -> int -> unit
-
   val unsafe_feed_bigstring : ctx -> Bi.t -> int -> int -> unit
-
   val unsafe_get : ctx -> By.t
-
   val dup : ctx -> ctx
 end
 
 module Unsafe : S = struct
   type kind = [ `WHIRLPOOL ]
-
   type ctx = { mutable size : int64; b : Bytes.t; h : int64 array }
 
   let dup ctx = { size = ctx.size; b = By.copy ctx.b; h = Array.copy ctx.h }

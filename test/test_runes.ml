@@ -79,9 +79,7 @@ let parse_lL_args args =
   go [] args
 
 let is_path = function Path _ -> true | Library _ -> false
-
 let prj_path = function Path x -> x | _ -> assert false
-
 let prj_libraries = function Library x -> x | _ -> assert false
 
 let libraries_exist args =
@@ -147,7 +145,6 @@ let run () =
   >>= fun () -> R.ok ()
 
 let exit_success = 0
-
 let exit_failure = 1
 
 let () =
