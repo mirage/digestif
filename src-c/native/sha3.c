@@ -12,7 +12,7 @@
 
 // update the state with given number of rounds
 
-void sha3_keccakf(uint64_t st[25])
+static void sha3_keccakf(uint64_t st[25])
 {
     // constants
     const uint64_t keccakf_rndc[24] = {
