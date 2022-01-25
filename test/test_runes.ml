@@ -1,5 +1,3 @@
-#!/usr/bin/env ocaml
-
 #use "topfind"
 
 #require "astring"
