@@ -206,16 +206,34 @@ module SHA384 : S
 module SHA512 : S
 
 module SHA3_224 : S
+(** SHA3 224 hash algorithm.
+
+    @since 0.9.0 *)
 
 module SHA3_256 : S
+(** SHA3 256 hash algorithm.
+
+    @since 0.9.0 *)
 
 module KECCAK_256 : S
+(** KECCAK 256 hash algorithm.
+
+    @since 1.1.0 *)
 
 module SHA3_384 : S
+(** SHA3 384 hash algorithm.
+
+    @since 0.9.0 *)
 
 module SHA3_512 : S
+(** SHA3 512 hash algorithm.
+
+    @since 0.9.0 *)
 
 module WHIRLPOOL : S
+(** WHIRLPOOL hash algorithm.
+
+    @since 0.7.1 *)
 
 module BLAKE2B : sig
   include S
@@ -230,6 +248,9 @@ module BLAKE2S : sig
 end
 
 module RMD160 : S
+(** RMD160 hash algorithm.
+
+    @since 0.4 *)
 
 module Make_BLAKE2B (D : sig
   val digest_size : int
@@ -337,6 +358,7 @@ val of_md5 : MD5.t -> MD5.t t
 val of_sha1 : SHA1.t -> SHA1.t t
 
 val of_rmd160 : RMD160.t -> RMD160.t t
+(** @since 0.4 *)
 
 val of_sha224 : SHA224.t -> SHA224.t t
 
@@ -347,16 +369,22 @@ val of_sha384 : SHA384.t -> SHA384.t t
 val of_sha512 : SHA512.t -> SHA512.t t
 
 val of_sha3_224 : SHA3_224.t -> SHA3_224.t t
+(** @since 0.9.0 *)
 
 val of_sha3_256 : SHA3_256.t -> SHA3_256.t t
+(** @since 0.9.0 *)
 
 val of_keccak_256 : KECCAK_256.t -> KECCAK_256.t t
+(** @since 1.1.0 *)
 
 val of_sha3_384 : SHA3_384.t -> SHA3_384.t t
+(** @since 0.9.0 *)
 
 val of_sha3_512 : SHA3_512.t -> SHA3_512.t t
+(** @since 0.9.0 *)
 
 val of_whirlpool : WHIRLPOOL.t -> WHIRLPOOL.t t
+(** @since 0.7.1 *)
 
 val of_blake2b : BLAKE2B.t -> BLAKE2B.t t
 
