@@ -1,8 +1,6 @@
 Digestif - Hash algorithms in C and OCaml
 =========================================
 
-[![Build Status](https://travis-ci.org/mirage/digestif.svg?branch=master)](https://travis-ci.org/mirage/digestif)
-
 Digestif is a toolbox which implements hashes:
 
  * MD5
@@ -23,11 +21,51 @@ implementation he wants to use. We provide 2 implementations:
 Both are well-tested. However, OCaml implementation is slower than the C
 implementation.
 
-**Note**: The linking trick requires `digestif.c` or `digestif.ocaml` to be the first of your dependencies.
+**Note**: The linking trick requires `digestif.c` or `digestif.ocaml` to be the
+first of your dependencies.
 
 Documentation: https://mirage.github.io/digestif/
 
 Contact: Romain Calascibetta `<romain.calascibet ta@gmail.com>`
+
+## Install & Usage
+
+The library is available on [OPAM][]. You can install it via:
+```sh
+$ opem install digestif
+```
+
+This is a simple program which implements `sha1sum`:
+```sh
+$ cat >sha1sum.ml <<EOF
+let sum ic =
+  let tmp = Bytes.create 0x1000 in
+  let rec go ctx = match input ic tmp 0 0x1000 with
+    | 0 -> Digestif.SHA1.get ctx
+    | len ->
+      let ctx = Digestif.SHA1.feed_bytes ctx ~off:0 ~len tmp in
+      go ctx
+    | exception End_of_file -> Digestif.SHA1.get ctx in
+  go Digestif.SHA1.empty
+
+let () = match Sys.argv with
+  | [| _; filename; |] when Sys.file_exists filename ->
+    let ic = open_in filename in
+    let hash = sum ic in
+    close_in ic ; print_endline (Digestif.SHA1.to_hex hash)
+  | [| _ |] ->
+    let hash = sum stdin in
+    print_endline (Digestif.SHA1.to_hex hash)
+  | _ -> Format.eprintf "%s [<filename>]\n%!" Sys.argv.(0)
+EOF
+$ cat >dune <<EOF
+(executable
+ (name sha1sum)
+ (libraries digestif))
+EOF
+$ dune exec ./sha1sum.exe -- sha1sum.ml
+fe6e6639a817c23857b507e2d833ec776f23f327
+```
 
 ## API
 
@@ -74,7 +112,8 @@ This work is from the [nocrypto](https://github.com/mirleft/nocrypto) library
 and the Vincent hanquez's work in
 [ocaml-sha](https://github.com/vincenthz/ocaml-sha).
 
-All credits appear in the begin of files and this library is motivated by two reasons:
-
-  * delete the dependancy with `nocrypto` if you don't use the encryption (and common) part
+All credits appear in the begin of files and this library is motivated by two
+reasons:
+  * delete the dependancy with `nocrypto` if you don't use the encryption (and
+    common) part
   * aggregate all hashes functions in one library
