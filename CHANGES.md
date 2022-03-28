@@ -1,3 +1,12 @@
+### v1.1.1 2022-03-28 Paradou (France)
+
+- Hide C functions (`sha3_keccakf`) (@hannesm, #125)
+- Use `ocaml` to run `install.ml` instead of a shebang (@Nymphium, #127)
+- Use `command -v` instead of `which` (@Numphium, #126)
+- Add `@since` meta-data in documentation (@c-cube, @dinosaure, #128)
+- Update the README.md (@dinosaure, @mimoo, #130)
+- `ocaml-solo5` provides `__ocaml_solo5__` instead of `__ocaml_freestanding__` (@dinosaure, #131)
+
 ### v1.1.0 2021-10-11 Paris (France)
 
 - Add Keccak256 module (ethereum padding) (@maxtori, @dinosaure, #118)
