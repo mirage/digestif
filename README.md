@@ -30,9 +30,9 @@ Contact: Romain Calascibetta `<romain.calascibet ta@gmail.com>`
 
 ## Install & Usage
 
-The library is available on [OPAM][]. You can install it via:
+The library is available on [OPAM](https://opam.ocaml.org/packages/digestif/). You can install it via:
 ```sh
-$ opem install digestif
+$ opam install digestif
 ```
 
 This is a simple program which implements `sha1sum`:
