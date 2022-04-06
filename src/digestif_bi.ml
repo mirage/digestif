@@ -1,4 +1,4 @@
-open Bigarray_compat
+open Bigarray
 
 type t = (char, int8_unsigned_elt, c_layout) Array1.t
 

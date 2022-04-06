@@ -38,13 +38,10 @@ install:  [
 ]
 
 depends: [
-  "ocaml"           {>= "4.05.0"}
+  "ocaml"           {>= "4.07.0"}
   "dune"            {>= "2.6.0"}
   "conf-pkg-config" {build}
   "eqaf"
-  "base-bytes"
-  "bigarray-compat"
-  "stdlib-shims"
   "fmt"            {with-test}
   "alcotest"       {with-test}
   "bos"            {with-test}
