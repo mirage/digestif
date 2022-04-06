@@ -1,15 +1,9 @@
 type bigstring =
-  ( char,
-    Bigarray_compat.int8_unsigned_elt,
-    Bigarray_compat.c_layout )
-  Bigarray_compat.Array1.t
+  (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
 
 type 'a iter = ('a -> unit) -> unit
-
 type 'a compare = 'a -> 'a -> int
-
 type 'a equal = 'a -> 'a -> bool
-
 type 'a pp = Format.formatter -> 'a -> unit
 
 module Native = Digestif_native
@@ -24,83 +18,45 @@ module type S = sig
   val digest_size : int
 
   type ctx
-
   type t
 
   val empty : ctx
-
   val init : unit -> ctx
-
   val feed_bytes : ctx -> ?off:int -> ?len:int -> Bytes.t -> ctx
-
   val feed_string : ctx -> ?off:int -> ?len:int -> String.t -> ctx
-
   val feed_bigstring : ctx -> ?off:int -> ?len:int -> bigstring -> ctx
-
   val feedi_bytes : ctx -> Bytes.t iter -> ctx
-
   val feedi_string : ctx -> String.t iter -> ctx
-
   val feedi_bigstring : ctx -> bigstring iter -> ctx
-
   val get : ctx -> t
-
   val digest_bytes : ?off:int -> ?len:int -> Bytes.t -> t
-
   val digest_string : ?off:int -> ?len:int -> String.t -> t
-
   val digest_bigstring : ?off:int -> ?len:int -> bigstring -> t
-
   val digesti_bytes : Bytes.t iter -> t
-
   val digesti_string : String.t iter -> t
-
   val digesti_bigstring : bigstring iter -> t
-
   val digestv_bytes : Bytes.t list -> t
-
   val digestv_string : String.t list -> t
-
   val digestv_bigstring : bigstring list -> t
-
   val hmac_bytes : key:string -> ?off:int -> ?len:int -> Bytes.t -> t
-
   val hmac_string : key:string -> ?off:int -> ?len:int -> String.t -> t
-
   val hmac_bigstring : key:string -> ?off:int -> ?len:int -> bigstring -> t
-
   val hmaci_bytes : key:string -> Bytes.t iter -> t
-
   val hmaci_string : key:string -> String.t iter -> t
-
   val hmaci_bigstring : key:string -> bigstring iter -> t
-
   val hmacv_bytes : key:string -> Bytes.t list -> t
-
   val hmacv_string : key:string -> String.t list -> t
-
   val hmacv_bigstring : key:string -> bigstring list -> t
-
   val unsafe_compare : t compare
-
   val equal : t equal
-
   val pp : t pp
-
   val of_hex : string -> t
-
   val of_hex_opt : string -> t option
-
   val consistent_of_hex : string -> t
-
   val consistent_of_hex_opt : string -> t option
-
   val to_hex : t -> string
-
   val of_raw_string : string -> t
-
   val of_raw_string_opt : string -> t option
-
   val to_raw_string : t -> string
 end
 
@@ -108,21 +64,13 @@ module type MAC = sig
   type t
 
   val mac_bytes : key:string -> ?off:int -> ?len:int -> Bytes.t -> t
-
   val mac_string : key:string -> ?off:int -> ?len:int -> String.t -> t
-
   val mac_bigstring : key:string -> ?off:int -> ?len:int -> bigstring -> t
-
   val maci_bytes : key:string -> Bytes.t iter -> t
-
   val maci_string : key:string -> String.t iter -> t
-
   val maci_bigstring : key:string -> bigstring iter -> t
-
   val macv_bytes : key:string -> Bytes.t list -> t
-
   val macv_string : key:string -> String.t list -> t
-
   val macv_bigstring : key:string -> bigstring list -> t
 end
 
@@ -131,17 +79,13 @@ module type Foreign = sig
 
   module Bigstring : sig
     val init : ctx -> unit
-
     val update : ctx -> ba -> int -> int -> unit
-
     val finalize : ctx -> ba -> int -> unit
   end
 
   module Bytes : sig
     val init : ctx -> unit
-
     val update : ctx -> st -> int -> int -> unit
-
     val finalize : ctx -> st -> int -> unit
   end
 
@@ -150,15 +94,12 @@ end
 
 module type Desc = sig
   val block_size : int
-
   val digest_size : int
 end
 
 module Unsafe (F : Foreign) (D : Desc) = struct
   let block_size = D.block_size
-
   and digest_size = D.digest_size
-
   and ctx_size = F.ctx_size ()
 
   let init () =
@@ -205,7 +146,6 @@ end
 
 module Core (F : Foreign) (D : Desc) = struct
   type t = string
-
   type ctx = Native.ctx
 
   include Unsafe (F) (D)
@@ -250,21 +190,13 @@ module Core (F : Foreign) (D : Desc) = struct
     t
 
   let digest_bytes ?off ?len buf = feed_bytes empty ?off ?len buf |> get
-
   let digest_string ?off ?len buf = feed_string empty ?off ?len buf |> get
-
   let digest_bigstring ?off ?len buf = feed_bigstring empty ?off ?len buf |> get
-
   let digesti_bytes iter = feedi_bytes empty iter |> get
-
   let digesti_string iter = feedi_string empty iter |> get
-
   let digesti_bigstring iter = feedi_bigstring empty iter |> get
-
   let digestv_bytes lst = digesti_bytes (fun f -> List.iter f lst)
-
   let digestv_string lst = digesti_string (fun f -> List.iter f lst)
-
   let digestv_bigstring lst = digesti_bigstring (fun f -> List.iter f lst)
 end
 
@@ -272,7 +204,6 @@ module Make (F : Foreign) (D : Desc) = struct
   include Core (F) (D)
 
   let bytes_opad = By.make block_size '\x5c'
-
   let bytes_ipad = By.make block_size '\x36'
 
   let rec norm_bytes key =
@@ -337,7 +268,6 @@ module Make (F : Foreign) (D : Desc) = struct
     hmaci_bigstring ~key (fun f -> f buf)
 
   let hmacv_bytes ~key bufs = hmaci_bytes ~key (fun f -> List.iter f bufs)
-
   let hmacv_string ~key bufs = hmaci_string ~key (fun f -> List.iter f bufs)
 
   let hmacv_bigstring ~key bufs =
@@ -351,24 +281,18 @@ module type Foreign_BLAKE2 = sig
 
   module Bigstring : sig
     val update : ctx -> ba -> int -> int -> unit
-
     val finalize : ctx -> ba -> int -> unit
-
     val with_outlen_and_key : ctx -> int -> ba -> int -> int -> unit
   end
 
   module Bytes : sig
     val update : ctx -> st -> int -> int -> unit
-
     val finalize : ctx -> st -> int -> unit
-
     val with_outlen_and_key : ctx -> int -> st -> int -> int -> unit
   end
 
   val max_outlen : unit -> int
-
   val ctx_size : unit -> int
-
   val key_size : unit -> int
 end
 
@@ -387,7 +311,6 @@ module Make_BLAKE2 (F : Foreign_BLAKE2) (D : Desc) = struct
             F.Bigstring.with_outlen_and_key ctx D.digest_size Bi.empty 0 0
 
           let update = F.Bigstring.update
-
           let finalize = F.Bigstring.finalize
         end
 
@@ -396,7 +319,6 @@ module Make_BLAKE2 (F : Foreign_BLAKE2) (D : Desc) = struct
             F.Bytes.with_outlen_and_key ctx D.digest_size By.empty 0 0
 
           let update = F.Bytes.update
-
           let finalize = F.Bytes.finalize
         end
 
@@ -463,7 +385,6 @@ module Make_BLAKE2 (F : Foreign_BLAKE2) (D : Desc) = struct
       maci_bigstring ~key (fun f -> f buf)
 
     let macv_bytes ~key bufs = maci_bytes ~key (fun f -> List.iter f bufs)
-
     let macv_string ~key bufs = maci_string ~key (fun f -> List.iter f bufs)
 
     let macv_bigstring ~key bufs =
@@ -557,7 +478,6 @@ module WHIRLPOOL : S =
 
 module BLAKE2B : sig
   include S
-
   module Keyed : MAC with type t = t
 end =
   Make_BLAKE2
@@ -568,7 +488,6 @@ end =
 
 module BLAKE2S : sig
   include S
-
   module Keyed : MAC with type t = t
 end =
   Make_BLAKE2
@@ -624,33 +543,19 @@ type 'k hash =
   | BLAKE2S : BLAKE2S.t hash
 
 let md5 = MD5
-
 let sha1 = SHA1
-
 let rmd160 = RMD160
-
 let sha224 = SHA224
-
 let sha256 = SHA256
-
 let sha384 = SHA384
-
 let sha512 = SHA512
-
 let sha3_224 = SHA3_224
-
 let sha3_256 = SHA3_256
-
 let keccak_256 = KECCAK_256
-
 let sha3_384 = SHA3_384
-
 let sha3_512 = SHA3_512
-
 let whirlpool = WHIRLPOOL
-
 let blake2b = BLAKE2B
-
 let blake2s = BLAKE2S
 
 let module_of : type k. k hash -> (module S with type t = k) = function
@@ -779,31 +684,17 @@ let of_digest (type hash) (module H : S with type t = hash) (hash : H.t) :
   hash
 
 let of_md5 hash = hash
-
 let of_sha1 hash = hash
-
 let of_rmd160 hash = hash
-
 let of_sha224 hash = hash
-
 let of_sha256 hash = hash
-
 let of_sha384 hash = hash
-
 let of_sha512 hash = hash
-
 let of_sha3_224 hash = hash
-
 let of_sha3_256 hash = hash
-
 let of_keccak_256 hash = hash
-
 let of_sha3_384 hash = hash
-
 let of_sha3_512 hash = hash
-
 let of_whirlpool hash = hash
-
 let of_blake2b hash = hash
-
 let of_blake2s hash = hash

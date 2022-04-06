@@ -1,15 +1,11 @@
-open Bigarray_compat
+open Bigarray
 
 type t = (char, int8_unsigned_elt, c_layout) Array1.t
 
 let create n = Array1.create Char c_layout n
-
 let length = Array1.dim
-
 let sub = Array1.sub
-
 let empty = Array1.create Char c_layout 0
-
 let get = Array1.get
 
 let copy t =
@@ -25,7 +21,6 @@ let init l f =
   v
 
 external unsafe_get_32 : t -> int -> int32 = "%caml_bigstring_get32u"
-
 external unsafe_get_64 : t -> int -> int64 = "%caml_bigstring_get64u"
 
 let unsafe_get_nat : t -> int -> nativeint =
@@ -35,7 +30,6 @@ let unsafe_get_nat : t -> int -> nativeint =
   else Int64.to_nativeint @@ unsafe_get_64 s i
 
 external unsafe_set_32 : t -> int -> int32 -> unit = "%caml_bigstring_set32u"
-
 external unsafe_set_64 : t -> int -> int64 -> unit = "%caml_bigstring_set64u"
 
 let unsafe_set_nat : t -> int -> nativeint -> unit =
@@ -52,9 +46,7 @@ let blit_from_bytes src src_off dst dst_off len =
   done
 
 external swap32 : int32 -> int32 = "%bswap_int32"
-
 external swap64 : int64 -> int64 = "%bswap_int64"
-
 external swapnat : nativeint -> nativeint = "%bswap_native"
 
 let cpu_to_be32 s i v =

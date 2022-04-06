@@ -5,21 +5,13 @@ module Int32 = struct
   include Int32
 
   let ( lsl ) = Int32.shift_left
-
   let ( lsr ) = Int32.shift_right_logical
-
   let ( asr ) = Int32.shift_right
-
   let ( lor ) = Int32.logor
-
   let ( lxor ) = Int32.logxor
-
   let ( land ) = Int32.logand
-
   let ( + ) = Int32.add
-
   let rol32 a n = (a lsl n) lor (a lsr (32 - n))
-
   let ror32 a n = (a lsr n) lor (a lsl (32 - n))
 end
 
@@ -27,29 +19,22 @@ module Int64 = struct
   include Int64
 
   let ( land ) = Int64.logand
-
   let ( lsl ) = Int64.shift_left
 end
 
 module type S = sig
   type kind = [ `SHA256 ]
-
   type ctx = { mutable size : int64; b : Bytes.t; h : int32 array }
 
   val init : unit -> ctx
-
   val unsafe_feed_bytes : ctx -> By.t -> int -> int -> unit
-
   val unsafe_feed_bigstring : ctx -> Bi.t -> int -> int -> unit
-
   val unsafe_get : ctx -> By.t
-
   val dup : ctx -> ctx
 end
 
 module Unsafe : S = struct
   type kind = [ `SHA256 ]
-
   type ctx = { mutable size : int64; b : Bytes.t; h : int32 array }
 
   let dup ctx = { size = ctx.size; b = By.copy ctx.b; h = Array.copy ctx.h }
@@ -84,11 +69,8 @@ module Unsafe : S = struct
     |]
 
   let e0 x = Int32.(ror32 x 2 lxor ror32 x 13 lxor ror32 x 22)
-
   let e1 x = Int32.(ror32 x 6 lxor ror32 x 11 lxor ror32 x 25)
-
   let s0 x = Int32.(ror32 x 7 lxor ror32 x 18 lxor (x lsr 3))
-
   let s1 x = Int32.(ror32 x 17 lxor ror32 x 19 lxor (x lsr 10))
 
   let sha256_do_chunk :

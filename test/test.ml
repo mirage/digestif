@@ -1,10 +1,7 @@
 type _ s = Bytes : Bytes.t s | String : String.t s | Bigstring : bigstring s
 
 and bigstring =
-  ( char,
-    Bigarray_compat.int8_unsigned_elt,
-    Bigarray_compat.c_layout )
-  Bigarray_compat.Array1.t
+  (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
 
 let title : type a k. [ `HMAC | `Digest ] -> k Digestif.hash -> a s -> string =
  fun computation hash input ->
@@ -36,9 +33,7 @@ let title : type a k. [ `HMAC | `Digest ] -> k Digestif.hash -> a s -> string =
   Fmt.str "%a:%a:%a" pp_computation computation pp_hash hash pp_input input
 
 let bytes = Bytes
-
 let string = String
-
 let bigstring = Bigstring
 
 let test_hmac :
@@ -111,9 +106,7 @@ let makes ~name kind hash keys inputs expects =
 
 let to_bigstring s =
   let ln = Bytes.length s in
-  let bi =
-    Bigarray_compat.Array1.create Bigarray_compat.Char Bigarray_compat.c_layout
-      ln in
+  let bi = Bigarray.Array1.create Bigarray.Char Bigarray.c_layout ln in
   for i = 0 to ln - 1 do
     bi.{i} <- Bytes.get s i
   done ;
@@ -302,7 +295,6 @@ let results_blake2s =
 
 module BLAKE2 = struct
   let input_blake2b_file = "../blake2b.test"
-
   let input_blake2s_file = "../blake2s.test"
 
   let fold_s f a s =
