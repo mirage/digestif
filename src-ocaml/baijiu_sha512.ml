@@ -5,43 +5,29 @@ module Int64 = struct
   include Int64
 
   let ( lsl ) = Int64.shift_left
-
   let ( lsr ) = Int64.shift_right_logical
-
   let ( asr ) = Int64.shift_right
-
   let ( lor ) = Int64.logor
-
   let ( land ) = Int64.logand
-
   let ( lxor ) = Int64.logxor
-
   let ( + ) = Int64.add
-
   let ror64 a n = (a lsr n) lor (a lsl (64 - n))
-
   let rol64 a n = (a lsl n) lor (a lsr (64 - n))
 end
 
 module type S = sig
   type kind = [ `SHA512 ]
-
   type ctx = { mutable size : int64 array; b : Bytes.t; h : int64 array }
 
   val init : unit -> ctx
-
   val unsafe_feed_bytes : ctx -> By.t -> int -> int -> unit
-
   val unsafe_feed_bigstring : ctx -> Bi.t -> int -> int -> unit
-
   val unsafe_get : ctx -> By.t
-
   val dup : ctx -> ctx
 end
 
 module Unsafe : S = struct
   type kind = [ `SHA512 ]
-
   type ctx = { mutable size : int64 array; b : Bytes.t; h : int64 array }
 
   let dup ctx =
@@ -92,11 +78,8 @@ module Unsafe : S = struct
     |]
 
   let e0 x = Int64.(ror64 x 28 lxor ror64 x 34 lxor ror64 x 39)
-
   let e1 x = Int64.(ror64 x 14 lxor ror64 x 18 lxor ror64 x 41)
-
   let s0 x = Int64.(ror64 x 1 lxor ror64 x 8 lxor (x lsr 7))
-
   let s1 x = Int64.(ror64 x 19 lxor ror64 x 61 lxor (x lsr 6))
 
   let sha512_do_chunk :

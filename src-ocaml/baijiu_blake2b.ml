@@ -7,23 +7,14 @@ module Int32 = struct
   include Int32
 
   let ( lsl ) = Int32.shift_left
-
   let ( lsr ) = Int32.shift_right_logical
-
   let ( asr ) = Int32.shift_right
-
   let ( lor ) = Int32.logor
-
   let ( lxor ) = Int32.logxor
-
   let ( land ) = Int32.logand
-
   let lnot = Int32.lognot
-
   let ( + ) = Int32.add
-
   let rol32 a n = (a lsl n) lor (a lsr (32 - n))
-
   let ror32 a n = (a lsr n) lor (a lsl (32 - n))
 end
 
@@ -31,43 +22,27 @@ module Int64 = struct
   include Int64
 
   let ( land ) = Int64.logand
-
   let ( lsl ) = Int64.shift_left
-
   let ( lsr ) = Int64.shift_right_logical
-
   let ( lor ) = Int64.logor
-
   let ( asr ) = Int64.shift_right
-
   let ( lxor ) = Int64.logxor
-
   let ( + ) = Int64.add
-
   let rol64 a n = (a lsl n) lor (a lsr (64 - n))
-
   let ror64 a n = (a lsr n) lor (a lsl (64 - n))
 end
 
 module type S = sig
   type ctx
-
   type kind = [ `BLAKE2B ]
 
   val init : unit -> ctx
-
   val with_outlen_and_bytes_key : int -> By.t -> int -> int -> ctx
-
   val with_outlen_and_bigstring_key : int -> Bi.t -> int -> int -> ctx
-
   val unsafe_feed_bytes : ctx -> By.t -> int -> int -> unit
-
   val unsafe_feed_bigstring : ctx -> Bi.t -> int -> int -> unit
-
   val unsafe_get : ctx -> By.t
-
   val dup : ctx -> ctx
-
   val max_outlen : int
 end
 

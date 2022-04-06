@@ -2,28 +2,19 @@ module By = Digestif_by
 module Bi = Digestif_bi
 
 let nist_padding = 0x06L
-
 let keccak_padding = 0x01L
 
 module Int64 = struct
   include Int64
 
   let ( lsl ) = Int64.shift_left
-
   let ( lsr ) = Int64.shift_right_logical
-
   let ( asr ) = Int64.shift_right
-
   let ( lor ) = Int64.logor
-
   let ( land ) = Int64.logand
-
   let ( lxor ) = Int64.logxor
-
   let ( + ) = Int64.add
-
   let ror64 a n = (a lsr n) lor (a lsl (64 - n))
-
   let rol64 a n = (a lsl n) lor (a lsr (64 - n))
 end
 

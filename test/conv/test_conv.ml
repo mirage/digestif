@@ -1,13 +1,9 @@
 external random_seed : unit -> int array = "caml_sys_random_seed"
 
 let seed = random_seed ()
-
 let () = Random.full_init seed
-
 let () = Fmt.epr "seed: %a.\n%!" Fmt.(Dump.array int) seed
-
 let strf = Fmt.str
-
 let invalid_arg = Fmt.invalid_arg
 
 let list_init f l =
@@ -23,7 +19,6 @@ let random_string length _ =
   rs
 
 let hashes = list_init (random_string Digestif.SHA1.digest_size) 32
-
 let hashes = List.map Digestif.SHA1.of_raw_string hashes
 
 let consistent_hex =

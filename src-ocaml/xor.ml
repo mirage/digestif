@@ -8,13 +8,9 @@ module type BUFFER = sig
   type t
 
   val length : t -> int
-
   val sub : t -> int -> int -> t
-
   val copy : t -> t
-
   val benat_to_cpu : t -> int -> nativeint
-
   val cpu_to_benat : t -> int -> nativeint -> unit
 end
 

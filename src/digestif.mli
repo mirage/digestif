@@ -1,8 +1,5 @@
 type bigstring =
-  ( char,
-    Bigarray.int8_unsigned_elt,
-    Bigarray.c_layout )
-  Bigarray.Array1.t
+  (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
 
 type 'a iter = ('a -> unit) -> unit
 (** A general (inner) iterator. It applies the provided function to a collection
@@ -13,9 +10,7 @@ type 'a iter = ('a -> unit) -> unit
     - [let iter_list : 'a list -> 'a iter = fun l f -> List.iter f l] *)
 
 type 'a compare = 'a -> 'a -> int
-
 type 'a equal = 'a -> 'a -> bool
-
 type 'a pp = Format.formatter -> 'a -> unit
 
 module type S = sig
@@ -23,7 +18,6 @@ module type S = sig
   (** Size of hash results, in bytes. *)
 
   type ctx
-
   type t
 
   val empty : ctx
@@ -175,34 +169,21 @@ module type MAC = sig
   type t
 
   val mac_bytes : key:string -> ?off:int -> ?len:int -> Bytes.t -> t
-
   val mac_string : key:string -> ?off:int -> ?len:int -> String.t -> t
-
   val mac_bigstring : key:string -> ?off:int -> ?len:int -> bigstring -> t
-
   val maci_bytes : key:string -> Bytes.t iter -> t
-
   val maci_string : key:string -> String.t iter -> t
-
   val maci_bigstring : key:string -> bigstring iter -> t
-
   val macv_bytes : key:string -> Bytes.t list -> t
-
   val macv_string : key:string -> String.t list -> t
-
   val macv_bigstring : key:string -> bigstring list -> t
 end
 
 module MD5 : S
-
 module SHA1 : S
-
 module SHA224 : S
-
 module SHA256 : S
-
 module SHA384 : S
-
 module SHA512 : S
 
 module SHA3_224 : S
@@ -237,13 +218,11 @@ module WHIRLPOOL : S
 
 module BLAKE2B : sig
   include S
-
   module Keyed : MAC with type t = t
 end
 
 module BLAKE2S : sig
   include S
-
   module Keyed : MAC with type t = t
 end
 
@@ -278,94 +257,54 @@ type 'k hash =
   | BLAKE2S : BLAKE2S.t hash
 
 val md5 : MD5.t hash
-
 val sha1 : SHA1.t hash
-
 val rmd160 : RMD160.t hash
-
 val sha224 : SHA224.t hash
-
 val sha256 : SHA256.t hash
-
 val sha384 : SHA384.t hash
-
 val sha512 : SHA512.t hash
-
 val sha3_224 : SHA3_224.t hash
-
 val sha3_256 : SHA3_256.t hash
-
 val keccak_256 : KECCAK_256.t hash
-
 val sha3_384 : SHA3_384.t hash
-
 val sha3_512 : SHA3_512.t hash
-
 val whirlpool : WHIRLPOOL.t hash
-
 val blake2b : BLAKE2B.t hash
-
 val blake2s : BLAKE2S.t hash
 
 type 'kind t
 
 val module_of : 'k hash -> (module S with type t = 'k)
-
 val digest_bytes : 'k hash -> Bytes.t -> 'k t
-
 val digest_string : 'k hash -> String.t -> 'k t
-
 val digest_bigstring : 'k hash -> bigstring -> 'k t
-
 val digesti_bytes : 'k hash -> Bytes.t iter -> 'k t
-
 val digesti_string : 'k hash -> String.t iter -> 'k t
-
 val digesti_bigstring : 'k hash -> bigstring iter -> 'k t
-
 val hmaci_bytes : 'k hash -> key:string -> Bytes.t iter -> 'k t
-
 val hmaci_string : 'k hash -> key:string -> String.t iter -> 'k t
-
 val hmaci_bigstring : 'k hash -> key:string -> bigstring iter -> 'k t
-
 val pp : 'k hash -> 'k t pp
-
 val equal : 'k hash -> 'k t equal
-
 val unsafe_compare : 'k hash -> 'k t compare
-
 val to_hex : 'k hash -> 'k t -> string
-
 val of_hex : 'k hash -> string -> 'k t
-
 val of_hex_opt : 'k hash -> string -> 'k t option
-
 val consistent_of_hex : 'k hash -> string -> 'k t
-
 val consistent_of_hex_opt : 'k hash -> string -> 'k t option
-
 val of_raw_string : 'k hash -> string -> 'k t
-
 val of_raw_string_opt : 'k hash -> string -> 'k t option
-
 val to_raw_string : 'k hash -> 'k t -> string
-
 val of_digest : (module S with type t = 'hash) -> 'hash -> 'hash t
-
 val of_md5 : MD5.t -> MD5.t t
-
 val of_sha1 : SHA1.t -> SHA1.t t
 
 val of_rmd160 : RMD160.t -> RMD160.t t
 (** @since 0.4 *)
 
 val of_sha224 : SHA224.t -> SHA224.t t
-
 val of_sha256 : SHA256.t -> SHA256.t t
-
 val of_sha384 : SHA384.t -> SHA384.t t
-
 val of_sha512 : SHA512.t -> SHA512.t t
 
 val of_sha3_224 : SHA3_224.t -> SHA3_224.t t
@@ -387,5 +326,4 @@ val of_whirlpool : WHIRLPOOL.t -> WHIRLPOOL.t t
 (** @since 0.7.1 *)
 
 val of_blake2b : BLAKE2B.t -> BLAKE2B.t t
-
 val of_blake2s : BLAKE2S.t -> BLAKE2S.t t

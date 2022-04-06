@@ -3,17 +3,12 @@ module Bi = Digestif_bi
 
 module type S = sig
   type ctx
-
   type kind = [ `RMD160 ]
 
   val init : unit -> ctx
-
   val unsafe_feed_bytes : ctx -> By.t -> int -> int -> unit
-
   val unsafe_feed_bigstring : ctx -> Bi.t -> int -> int -> unit
-
   val unsafe_get : ctx -> By.t
-
   val dup : ctx -> ctx
 end
 
@@ -21,23 +16,14 @@ module Int32 = struct
   include Int32
 
   let ( lsl ) = Int32.shift_left
-
   let ( lsr ) = Int32.shift_right_logical
-
   let ( asr ) = Int32.shift_right
-
   let ( lor ) = Int32.logor
-
   let ( lxor ) = Int32.logxor
-
   let ( land ) = Int32.logand
-
   let lnot = Int32.lognot
-
   let ( + ) = Int32.add
-
   let rol32 a n = (a lsl n) lor (a lsr (32 - n))
-
   let ror32 a n = (a lsr n) lor (a lsl (32 - n))
 end
 
@@ -45,13 +31,11 @@ module Int64 = struct
   include Int64
 
   let ( land ) = Int64.logand
-
   let ( lsl ) = Int64.shift_left
 end
 
 module Unsafe : S = struct
   type kind = [ `RMD160 ]
-
   type ctx = { s : int32 array; mutable n : int; h : int32 array; b : Bytes.t }
 
   let dup ctx =
@@ -67,13 +51,9 @@ module Unsafe : S = struct
     }
 
   let f x y z = Int32.(x lxor y lxor z)
-
   let g x y z = Int32.(x land y lor (lnot x land z))
-
   let h x y z = Int32.(x lor lnot y lxor z)
-
   let i x y z = Int32.(x land z lor (y land lnot z))
-
   let j x y z = Int32.(x lxor (y lor lnot z))
 
   let ff a b c d e x s =

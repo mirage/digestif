@@ -16,13 +16,9 @@ module By = Digestif_by
 module Bi = Digestif_bi
 
 type off = int
-
 type size = int
-
 type ba = Bi.t
-
 type st = By.t
-
 type ctx = By.t
 
 let dup : ctx -> ctx = By.copy
@@ -416,7 +412,6 @@ module BLAKE2B = struct
   end
 
   external ctx_size : unit -> int = "caml_digestif_blake2b_ctx_size" [@@noalloc]
-
   external key_size : unit -> int = "caml_digestif_blake2b_key_size" [@@noalloc]
 
   external max_outlen : unit -> int = "caml_digestif_blake2b_max_outlen"
@@ -461,7 +456,6 @@ module BLAKE2S = struct
   end
 
   external ctx_size : unit -> int = "caml_digestif_blake2s_ctx_size" [@@noalloc]
-
   external key_size : unit -> int = "caml_digestif_blake2s_key_size" [@@noalloc]
 
   external max_outlen : unit -> int = "caml_digestif_blake2s_max_outlen"

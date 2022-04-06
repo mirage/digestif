@@ -5,23 +5,14 @@ module Int32 = struct
   include Int32
 
   let ( lsl ) = Int32.shift_left
-
   let ( lsr ) = Int32.shift_right_logical
-
   let ( asr ) = Int32.shift_right
-
   let ( lor ) = Int32.logor
-
   let ( lxor ) = Int32.logxor
-
   let ( land ) = Int32.logand
-
   let lnot = Int32.lognot
-
   let ( + ) = Int32.add
-
   let rol32 a n = (a lsl n) lor (a lsr (32 - n))
-
   let ror32 a n = (a lsr n) lor (a lsl (32 - n))
 end
 
@@ -29,29 +20,22 @@ module Int64 = struct
   include Int64
 
   let ( land ) = Int64.logand
-
   let ( lsl ) = Int64.shift_left
 end
 
 module type S = sig
   type kind = [ `MD5 ]
-
   type ctx = { mutable size : int64; b : Bytes.t; h : int32 array }
 
   val init : unit -> ctx
-
   val unsafe_feed_bytes : ctx -> By.t -> int -> int -> unit
-
   val unsafe_feed_bigstring : ctx -> Bi.t -> int -> int -> unit
-
   val unsafe_get : ctx -> By.t
-
   val dup : ctx -> ctx
 end
 
 module Unsafe : S = struct
   type kind = [ `MD5 ]
-
   type ctx = { mutable size : int64; b : Bytes.t; h : int32 array }
 
   let dup ctx = { size = ctx.size; b = By.copy ctx.b; h = Array.copy ctx.h }
@@ -65,11 +49,8 @@ module Unsafe : S = struct
     }
 
   let f1 x y z = Int32.(z lxor (x land (y lxor z)))
-
   let f2 x y z = f1 z x y
-
   let f3 x y z = Int32.(x lxor y lxor z)
-
   let f4 x y z = Int32.(y lxor (x lor lnot z))
 
   let md5_do_chunk :
