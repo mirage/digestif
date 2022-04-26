@@ -1,3 +1,9 @@
+### v1.1.2 2022-04-08 Paris (France)
+
+- Minor update on the README.md (@punchagan, #133)
+- Support only OCaml >= 4.08, update with `ocamlformat.0.21.0` and remove `bigarray-compat`
+  dependency (@hannesm, #134)
+
 ### v1.1.1 2022-03-28 Paradou (France)
 
 - Hide C functions (`sha3_keccakf`) (@hannesm, #125)
