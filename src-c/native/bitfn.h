@@ -259,6 +259,9 @@ static __INLINE void store64( void *dst, uint64_t w )
 #elif defined( __QNXNTO__ ) && defined( __BIGENDIAN__ )
   # define BIG_ENDIAN 1234
   # define BYTE_ORDER    BIG_ENDIAN
+#elif defined(_MSC_VER)
+  # define LITTLE_ENDIAN	1234
+  # define BYTE_ORDER	    LITTLE_ENDIAN
 #else
   # include <endian.h>
 #endif

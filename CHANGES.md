@@ -1,3 +1,7 @@
+### Pending
+
+- Support MSVC compiler (@jonahbeckford, #137)
+
 ### v1.1.2 2022-04-08 Paris (France)
 
 - Minor update on the README.md (@punchagan, #133)
