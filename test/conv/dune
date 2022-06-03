@@ -5,5 +5,6 @@
 
 (rule
  (alias runtest)
+ (enabled_if (= ${os_type} "Unix"))
  (action
   (run ./test_conv.exe --color=always)))
