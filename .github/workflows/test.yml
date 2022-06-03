@@ -1,10 +1,10 @@
 name: Cross-platform tests
 
 on:
+  pull_request:
   push:
     branches:
       - 'master'
-      - 'feature-msvc'
 
 jobs:
   test-with-setup-ocaml:
