@@ -1,0 +1,147 @@
+name: Cross-platform tests
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'feature-msvc'
+
+jobs:
+  test-with-setup-ocaml:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-latest
+          - ubuntu-latest
+          - macos-latest
+        ocaml-compiler:
+          - '4.13.x'
+    runs-on: ${{ matrix.os }}
+    name: test-ocaml / ${{ matrix.os }}-${{ matrix.ocaml-compiler }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Hack Git CRLF for ocaml/setup-ocaml issue #529
+        if: ${{ startsWith(matrix.os, 'windows-') }}
+        run: |
+          & "C:\Program Files\Git\bin\git.exe" config --system core.autocrlf input
+
+      - name: OCaml ${{ matrix.ocaml-compiler }} with Dune cache
+        uses: ocaml/setup-ocaml@v2
+        if: ${{ !startsWith(matrix.os, 'windows-') }}
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+          dune-cache: true
+      - name: OCaml ${{ matrix.ocaml-compiler }} without Dune cache
+        uses: ocaml/setup-ocaml@v2
+        if: ${{ startsWith(matrix.os, 'windows-') }}
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+          dune-cache: false
+      - name: Install/build/test
+        run: |
+          opam install . --deps-only --with-test
+          opam exec -- dune build --display=short
+          opam exec -- dune runtest --display=short
+
+  setup-dkml:
+    uses: 'diskuv/dkml-workflows/.github/workflows/setup-dkml.yml@v0'
+    permissions: {} # remove all rights of GITHUB_TOKEN when it is passed to setup-dkml.yml
+    with:
+      ocaml-compiler: 4.12.1
+
+  test-with-setup-dkml:
+    needs: setup-dkml
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2019
+            abi-pattern: win32-windows_x86
+            dkml-host-abi: windows_x86
+            opam-root: D:/.opam
+            default_shell: msys2 {0}
+            msys2_system: MINGW32
+            msys2_packages: mingw-w64-i686-pkg-config
+            bits: "32"
+          - os: windows-2019
+            abi-pattern: win32-windows_x86_64
+            dkml-host-abi: windows_x86_64
+            opam-root: D:/.opam
+            default_shell: msys2 {0}
+            msys2_system: CLANG64
+            msys2_packages: mingw-w64-clang-x86_64-pkg-config
+            bits: "64"
+          - os: macos-latest
+            abi-pattern: macos-darwin_all
+            dkml-host-abi: darwin_x86_64
+            default_shell: sh
+            opam-root: /Users/runner/.opam
+            bits: "64"
+          - os: ubuntu-latest
+            abi-pattern: manylinux2014-linux_x86
+            bits: "32"
+            default_shell: sh
+            dkml-host-abi: linux_x86
+            opam-root: .ci/opamroot # local directory of $GITHUB_WORKSPACE so available to dockcross
+          - os: ubuntu-latest
+            abi-pattern: manylinux2014-linux_x86_64
+            bits: "64"
+            default_shell: sh
+            dkml-host-abi: linux_x86_64
+            opam-root: .ci/opamroot # local directory of $GITHUB_WORKSPACE so available to dockcross
+    runs-on: ${{ matrix.os }}
+    name: test-dkml / ${{ matrix.abi-pattern }}
+    defaults:
+      run:
+        shell: ${{ matrix.default_shell }}
+    env:
+      OPAMROOT: ${{ matrix.opam-root }}
+      COMPONENT: dkml-component-staging-opam${{ matrix.bits }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - uses: actions/download-artifact@v3
+        with:
+          path: .ci/dist
+
+      - name: Install MSYS2 (Windows)
+        if: startsWith(matrix.dkml-host-abi, 'windows_')
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{ matrix.msys2_system }}
+          update: true
+          install: >-
+            ${{ matrix.msys2_packages }}
+            wget
+            make
+            rsync
+            diffutils
+            patch
+            unzip
+            git
+            tar
+
+      - name: Import build environments from setup-dkml
+        run: |
+          ${{ needs.setup-dkml.outputs.import_func }}
+          import ${{ matrix.abi-pattern }}
+
+      - name: Cache Opam downloads by host
+        uses: actions/cache@v3
+        with:
+          path: ${{ matrix.opam-root }}/download-cache
+          key: ${{ matrix.dkml-host-abi }}
+
+      - name: Install/build/test
+        run: |
+          # Fix dependencies to work with MSVC
+          #   - alcotest.1.4.0 works with MSVC; 1.5.0 does not
+          opamrun pin alcotest -k version 1.4.0 --no-action --yes
+
+          opamrun install . --deps-only --with-test --yes
+          opamrun exec -- dune build --display=short
+          opamrun exec -- dune runtest --display=short
