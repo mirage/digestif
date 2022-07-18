@@ -37,7 +37,17 @@
     return Val_unit;                                                         \
   }
 #else
-#include <caml/threads.h>
+/* XXX(dinosaure): even if they are not defined (only defined by
+ * [caml/threads.h]), they exists without [threads.cmxa]. For compatibility
+ * reason, we keep a protection when we compile for Solo5/ocaml-freestanding
+ * but for the rest, these functions should be available in any cases.
+ *
+ * In some cases (Solo5 or Esperanto), [caml/threads.h] is not available but
+ * these functions still exist!
+ */
+
+extern void caml_enter_blocking_section (void);
+extern void caml_leave_blocking_section (void);
 
 #define __define_ba_update(name)                                             \
   CAMLprim value                                                             \
@@ -48,9 +58,9 @@
     uint32_t len_ = Long_val (len);                                          \
     struct name ## _ctx ctx_;                                                \
     memcpy(&ctx_, Bytes_val(ctx), sizeof(struct name ## _ctx));              \
-    caml_release_runtime_system();                                           \
+    caml_enter_blocking_section();                                           \
     digestif_ ## name ## _update (&ctx_, off_, len_);                        \
-    caml_acquire_runtime_system();                                           \
+    caml_leave_blocking_section();                                           \
     memcpy(Bytes_val(ctx), &ctx_, sizeof(struct name ## _ctx));              \
     CAMLreturn (Val_unit);                                                   \
   }
@@ -64,9 +74,9 @@
     uint32_t len_ = Long_val (len);                                          \
     struct sha3_ctx ctx_;                                                    \
     memcpy(&ctx_, Bytes_val(ctx), sizeof(struct sha3_ctx));                  \
-    caml_release_runtime_system();                                           \
+    caml_enter_blocking_section();                                           \
     digestif_sha3_update (&ctx_, off_, len_);                                \
-    caml_acquire_runtime_system();                                           \
+    caml_leave_blocking_section();                                           \
     memcpy(Bytes_val(ctx), &ctx_, sizeof(struct sha3_ctx));                  \
     CAMLreturn (Val_unit);                                                   \
   }
