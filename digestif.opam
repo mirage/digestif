@@ -29,7 +29,6 @@ We provides implementation of:
 
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]
-  [ "ocaml" "./install/install.ml" ]
   [ "dune" "runtest" "-p" name "-j" jobs ] {with-test}
 ]
 install:  [
@@ -50,11 +49,8 @@ depends: [
   "rresult"        {with-test}
   "ocamlfind"      {with-test}
 ]
-depopts: [
-  "ocaml-freestanding"
-]
 
 conflicts: [
   "mirage-xen" {< "6.0.0"}
-  "ocaml-freestanding" {< "0.6.0"}
+  "ocaml-freestanding"
 ]
