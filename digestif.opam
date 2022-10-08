@@ -29,7 +29,6 @@ We provides implementation of:
 
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]
-  [ "ocaml" "./install/install.ml" ]
   [ "dune" "runtest" "-p" name "-j" jobs ] {with-test}
 ]
 install:  [
