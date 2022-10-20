@@ -1,6 +1,12 @@
-### Pending
+### v1.1.3 2022-10-20 Paris (France)
 
 - Support MSVC compiler (@jonahbeckford, #137)
+- Fix CI on Windows (`test_conv.ml` requires `/dev/urandom`) (@dinosaure, #138)
+- Fix threads support (@dinosaure, #140)
+- Delete the META trick needed for MirageOS 3 when we install `digestif` (@dinosaure, #141)
+  This version of `digestif` breaks the compatibility with MirageOS 3
+  and `ocaml-freestanding`. This PR should unlock the ability to
+  use `dune-cache`.
 
 ### v1.1.2 2022-04-08 Paris (France)
 
