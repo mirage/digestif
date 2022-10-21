@@ -15,7 +15,30 @@
   ../sha3_512_fips_202.txt
   ../keccak_256.txt)
  (action
+  (run %{test} --color=always)))
+
+(executable
+ (name test_cve)
+ (modules test_cve)
+ (enabled_if
+  (or
+   (= %{architecture} "arm64")
+   (= %{architecture} "amd64")))
+ (libraries fmt alcotest digestif.c))
+
+(rule
+ (alias runtest)
+ (enabled_if
+  (or
+   (= %{architecture} "arm64")
+   (= %{architecture} "amd64")))
+ (deps
+  (:test test_cve.exe))
+ (action
   (run %{test} --quick-tests --color=always)))
 
 (rule
  (copy# ../test.ml test.ml))
+
+(rule
+ (copy# ../test_cve.ml test_cve.ml))
