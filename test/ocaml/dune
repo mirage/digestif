@@ -15,7 +15,7 @@
   ../sha3_512_fips_202.txt
   ../keccak_256.txt)
  (action
-  (run %{test} --color=always)))
+  (run %{test} --quick-tests --color=always)))
 
 (rule
  (copy# ../test.ml test.ml))
