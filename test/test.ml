@@ -78,7 +78,7 @@ let make_hmac :
     k Digestif.t ->
     unit Alcotest.test_case =
  fun ~name kind hash key input expect ->
-  (name, `Slow, fun () -> test_hmac kind hash key input expect)
+  (name, `Quick, fun () -> test_hmac kind hash key input expect)
 
 let make_digest :
     type a k.
@@ -89,7 +89,7 @@ let make_digest :
     k Digestif.t ->
     unit Alcotest.test_case =
  fun ~name kind hash input expect ->
-  (name, `Slow, fun () -> test_digest kind hash input expect)
+  (name, `Quick, fun () -> test_digest kind hash input expect)
 
 let combine a b c =
   let rec aux r a b c =
@@ -389,7 +389,7 @@ module BLAKE2 = struct
     | Bigstring -> check @@ Mac.maci_bigstring ~key (fun f -> f input)
 
   let make_keyed_blake m ~name kind hash key input expect =
-    (name, `Slow, fun () -> test_mac kind hash m key input expect)
+    (name, `Quick, fun () -> test_mac kind hash m key input expect)
 
   let tests m kind filename =
     let ic = open_in filename in
@@ -577,8 +577,6 @@ let keccak_vector_tests filename =
     try
       let comment = parse_field (input_line ic) in
       let message = parse_field (input_line ic) in
-      Fmt.epr ">>> %S.\n%!" comment ;
-      Fmt.epr ">>> %S.\n%!" (if message = empty then "" else of_hex message) ;
       let digest = (Digestif.of_hex hash <.> parse_field <.> input_line) ic in
       let _verify = input_line ic in
       let result =
