@@ -39,15 +39,14 @@ install:  [
 depends: [
   "ocaml"           {>= "4.08.0"}
   "dune"            {>= "2.6.0"}
-  "conf-pkg-config" {build}
   "eqaf"
-  "fmt"            {with-test}
-  "alcotest"       {with-test}
-  "bos"            {with-test}
-  "astring"        {with-test}
-  "fpath"          {with-test}
-  "rresult"        {with-test}
-  "ocamlfind"      {with-test}
+  "fmt"             {with-test}
+  "alcotest"        {with-test}
+  "bos"             {with-test}
+  "astring"         {with-test}
+  "fpath"           {with-test}
+  "rresult"         {with-test}
+  "ocamlfind"       {with-test}
 ]
 
 conflicts: [
