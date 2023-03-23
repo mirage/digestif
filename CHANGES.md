@@ -1,3 +1,9 @@
+### v1.1.4 2023-03-23 Paris (France)
+
+- Add a test about CVE-2022-37454 (@dinosaure, #143)
+- Lint the distribution and delete the `pkg-config` dependency (@dinosuare, 1eff5c5)
+- Fix primitives used for bytes and fix the support of `js_of_ocaml` 5 (@hhugo, #144)
+
 ### v1.1.3 2022-10-20 Paris (France)
 
 - Support MSVC compiler (@jonahbeckford, #137)
