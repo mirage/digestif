@@ -125,7 +125,7 @@ module Unsafe (Hash : Hash) (D : Desc) = struct
   let unsafe_get = unsafe_get
 
   let get_into_bytes ctx ?(off = 0) buf =
-    if off < 0 || off < Bytes.length buf then invalid_arg "offset out of bounds" ;
+    if off < 0 || off >= Bytes.length buf then invalid_arg "offset out of bounds" ;
     if Bytes.length buf - off < digest_size
     then invalid_arg "destination too small" ;
     let raw = unsafe_get (Hash.dup ctx) in

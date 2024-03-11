@@ -145,7 +145,7 @@ module Unsafe (F : Foreign) (D : Desc) = struct
     res
 
   let get_into_bytes t ?(off = 0) buf =
-    if off < 0 || off < Bytes.length buf then invalid_arg "offset out of bounds" ;
+    if off < 0 || off >= Bytes.length buf then invalid_arg "offset out of bounds" ;
     if Bytes.length buf - off < digest_size
     then invalid_arg "destination too small" ;
     F.Bytes.finalize (Native.dup t) buf off
