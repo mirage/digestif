@@ -161,6 +161,21 @@ module type S = sig
 
   val to_raw_string : t -> string
   (** [to_raw_string s] is [(s :> string)]. *)
+
+  val get_into_bytes : ctx -> ?off:int -> bytes -> unit
+  (** [get_into_bytes ctx ?off buf] writes the result into the given [buf] at
+      [off] (defaults to [0]).
+
+      It's equivalent to:
+
+      {[
+        let get_into_bytes ctx ?(off = 0) buf =
+          let t = get ctx in
+          let str = to_raw_string t in
+          Bytes.blit_string str 0 buf off digest_size
+      ]}
+
+      except [get_into_bytes] does not allocate an intermediate string. *)
 end
 
 (** Some hash algorithms expose extra MAC constructs. The interface is similar
