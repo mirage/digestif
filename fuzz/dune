@@ -1,0 +1,15 @@
+(rule
+ (copy# fuzz.ml fuzz_c.ml))
+
+(rule
+ (copy# fuzz.ml fuzz_ocaml.ml))
+
+(executable
+ (name fuzz_c)
+ (modules fuzz_c)
+ (libraries digestif.c crowbar))
+
+(executable
+ (name fuzz_ocaml)
+ (modules fuzz_ocaml)
+ (libraries digestif.ocaml crowbar))

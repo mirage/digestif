@@ -50,6 +50,7 @@ depends: [
   "fpath"           {with-test}
   "rresult"         {with-test}
   "ocamlfind"       {with-test}
+  "crowbar"         {with-test}
 ]
 
 conflicts: [
