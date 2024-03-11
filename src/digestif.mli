@@ -256,6 +256,25 @@ type 'k hash =
   | BLAKE2B : BLAKE2B.t hash
   | BLAKE2S : BLAKE2S.t hash
 
+type hash' =
+  [ `MD5
+  | `SHA1
+  | `RMD160
+  | `SHA224
+  | `SHA256
+  | `SHA384
+  | `SHA512
+  | `SHA3_224
+  | `SHA3_256
+  | `KECCAK_256
+  | `SHA3_384
+  | `SHA3_512
+  | `WHIRLPOOL
+  | `BLAKE2B
+  | `BLAKE2S ]
+
+val module_of_hash' : hash' -> (module S)
+val hash_to_hash' : _ hash -> hash'
 val md5 : MD5.t hash
 val sha1 : SHA1.t hash
 val rmd160 : RMD160.t hash
