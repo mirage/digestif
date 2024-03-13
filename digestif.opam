@@ -43,7 +43,7 @@ depends: [
   "ocaml"           {>= "4.08.0"}
   "dune"            {>= "2.6.0"}
   "eqaf"
-  "fmt"             {with-test}
+  "fmt"             {with-test & >= "0.8.7"}
   "alcotest"        {with-test}
   "bos"             {with-test}
   "astring"         {with-test}
