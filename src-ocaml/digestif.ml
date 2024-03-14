@@ -512,6 +512,57 @@ let whirlpool = WHIRLPOOL
 let blake2b = BLAKE2B
 let blake2s = BLAKE2S
 
+type hash' =
+  [ `MD5
+  | `SHA1
+  | `RMD160
+  | `SHA224
+  | `SHA256
+  | `SHA384
+  | `SHA512
+  | `SHA3_224
+  | `SHA3_256
+  | `KECCAK_256
+  | `SHA3_384
+  | `SHA3_512
+  | `WHIRLPOOL
+  | `BLAKE2B
+  | `BLAKE2S ]
+
+let hash_to_hash' : type a. a hash -> hash' = function
+  | MD5 -> `MD5
+  | SHA1 -> `SHA1
+  | RMD160 -> `RMD160
+  | SHA224 -> `SHA224
+  | SHA256 -> `SHA256
+  | SHA384 -> `SHA384
+  | SHA512 -> `SHA512
+  | SHA3_224 -> `SHA3_224
+  | SHA3_256 -> `SHA3_256
+  | KECCAK_256 -> `KECCAK_256
+  | SHA3_384 -> `SHA3_384
+  | SHA3_512 -> `SHA3_512
+  | WHIRLPOOL -> `WHIRLPOOL
+  | BLAKE2B -> `BLAKE2B
+  | BLAKE2S -> `BLAKE2S
+
+let module_of_hash' : hash' -> (module S) = function
+  | `MD5 -> (module MD5)
+  | `SHA1 -> (module SHA1)
+  | `RMD160 -> (module RMD160)
+  | `SHA224 -> (module SHA224)
+  | `SHA256 -> (module SHA256)
+  | `SHA384 -> (module SHA384)
+  | `SHA512 -> (module SHA512)
+  | `SHA3_224 -> (module SHA3_224)
+  | `SHA3_256 -> (module SHA3_256)
+  | `KECCAK_256 -> (module KECCAK_256)
+  | `SHA3_384 -> (module SHA3_384)
+  | `SHA3_512 -> (module SHA3_512)
+  | `WHIRLPOOL -> (module WHIRLPOOL)
+  | `BLAKE2B -> (module BLAKE2B)
+  | `BLAKE2S -> (module BLAKE2S)
+
 let module_of : type k. k hash -> (module S with type t = k) = function
   | MD5 -> (module MD5)
   | SHA1 -> (module SHA1)
