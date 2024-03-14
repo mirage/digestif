@@ -1,0 +1,6 @@
+(executable
+ (name fuzz)
+ (libraries digestif.c crowbar))
+
+(rule
+ (copy# ../fuzz.ml fuzz.ml))
