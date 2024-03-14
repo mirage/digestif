@@ -13,3 +13,13 @@
  (name fuzz_ocaml)
  (modules fuzz_ocaml)
  (libraries digestif.ocaml crowbar))
+
+(rule
+ (alias runtest)
+ (action
+  (run ./fuzz_ocaml.exe)))
+
+(rule
+ (alias runtest)
+ (action
+  (run ./fuzz_c.exe)))
