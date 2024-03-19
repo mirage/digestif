@@ -1,3 +1,10 @@
+### v1.2.0 2024-03-18 Paris (France)
+
+- Update the description to include SHA3 (@Leonidas-from-XIV, #146)
+- Add a new type `hash'`, a polymorphic variant (@reynir, @dinosaure, #150)
+- Lint `fmt` dependency lower-bound (@reynir, #152)
+- Add `get_into_bytes` function and a fuzzer about it (@reynir, @dinosaure, #149)
+
 ### v1.1.4 2023-03-23 Paris (France)
 
 - Add a test about CVE-2022-37454 (@dinosaure, #143)
