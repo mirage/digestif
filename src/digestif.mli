@@ -18,6 +18,7 @@ module type S = sig
   (** Size of hash results, in bytes. *)
 
   type ctx
+  type hmac
   type t
 
   val empty : ctx
@@ -48,6 +49,34 @@ module type S = sig
 
   val get : ctx -> t
   (** [get t] is the digest corresponding to [t]. *)
+
+  val hmac_init : key:string -> hmac
+  (** Create a new hmac state. *)
+
+  val hmac_feed_bytes : hmac -> ?off:int -> ?len:int -> Bytes.t -> hmac
+  (** [hmac_feed_bytes msg t] adds informations in [msg] to [t]. [hmac_feed] is
+      analogous to appending:
+      [hmac_feed (hmac_feed t msg1) msg2 = hmac_feed t
+      (append msg1 msg2)] *)
+
+  val hmac_feed_string : hmac -> ?off:int -> ?len:int -> String.t -> hmac
+  (** Same as {!hmac_feed_bytes} but for {!String.t}. *)
+
+  val hmac_feed_bigstring : hmac -> ?off:int -> ?len:int -> bigstring -> hmac
+  (** Same as {!hmac_feed_bytes} but for {!bigstring}. *)
+
+  val hmac_feedi_bytes : hmac -> Bytes.t iter -> hmac
+  (** [hmac_feedi_bytes t iter = let r = ref t in iter (fun msg -> r := hmac_feed !r msg);
+      !r] *)
+
+  val hmac_feedi_string : hmac -> String.t iter -> hmac
+  (** Same as {!hmac_feedi_bytes} but for {!String.t}. *)
+
+  val hmac_feedi_bigstring : hmac -> bigstring iter -> hmac
+  (** Same as {!hmac_feedi_bytes} but for {!bigstring}. *)
+
+  val hmac_get : hmac -> t
+  (** [hmac_get t] is the hmac corresponding to [t]. *)
 
   val digest_bytes : ?off:int -> ?len:int -> Bytes.t -> t
   (** [digest_bytes msg] is the digest of [msg].
