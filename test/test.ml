@@ -60,13 +60,23 @@ let test_hmac_feed :
   let module H = (val Digestif.module_of hash) in
   let test_hash = Alcotest.testable H.pp H.equal in
   let hmac_ctx = H.hmac_init ~key in
-  let hmac_ctx =
-    match kind with
-    | Bytes -> H.hmac_feed_bytes hmac_ctx input
-    | String -> H.hmac_feed_string hmac_ctx input
-    | Bigstring -> H.hmac_feed_bigstring hmac_ctx input
+  let total_len = match kind with
+    | Bytes -> Bytes.length input
+    | String -> String.length input
+    | Bigstring -> Bigarray.Array1.dim input
   in
-  Alcotest.check test_hash title expect (H.hmac_get hmac_ctx)
+  let rec loop hmac_ctx off =
+    if off = total_len then hmac_ctx else
+      let len = min (total_len - off) 16 in
+      let hmac_ctx =
+        match kind with
+        | Bytes -> H.hmac_feed_bytes hmac_ctx ~off ~len input
+        | String -> H.hmac_feed_string hmac_ctx ~off ~len input
+        | Bigstring -> H.hmac_feed_bigstring hmac_ctx ~off ~len input
+      in
+      loop hmac_ctx (off + len)
+  in
+  Alcotest.check test_hash title expect (H.hmac_get (loop hmac_ctx 0))
 
 let test_digest : type k a. a s -> k Digestif.hash -> a -> k Digestif.t -> unit
     =
