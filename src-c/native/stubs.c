@@ -46,8 +46,8 @@
  * these functions still exist!
  */
 
-extern void caml_enter_blocking_section (void);
-extern void caml_leave_blocking_section (void);
+CAMLextern void caml_enter_blocking_section (void);
+CAMLextern void caml_leave_blocking_section (void);
 
 #define __define_ba_update(name)                                             \
   CAMLprim value                                                             \
