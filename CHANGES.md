@@ -1,3 +1,8 @@
+### Pending
+
+- Use `CAMLextern` rather than `extern` in `caml_*` forward declarations to
+  support bytecode linking on Windows (@jonahbeckford, #157)
+
 ### v1.2.0 2024-03-18 Paris (France)
 
 - Update the description to include SHA3 (@Leonidas-from-XIV, #146)
