@@ -57,3 +57,4 @@ conflicts: [
   "mirage-xen" {< "6.0.0"}
   "ocaml-freestanding"
 ]
+x-maintenance-intent: [ "(latest)" ]
