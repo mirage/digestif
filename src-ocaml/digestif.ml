@@ -17,6 +17,7 @@ module type S = sig
   val digest_size : int
 
   type ctx
+  type hmac
   type t
 
   val empty : ctx
@@ -28,6 +29,14 @@ module type S = sig
   val feedi_string : ctx -> String.t iter -> ctx
   val feedi_bigstring : ctx -> bigstring iter -> ctx
   val get : ctx -> t
+  val hmac_init : key:string -> hmac
+  val hmac_feed_bytes : hmac -> ?off:int -> ?len:int -> Bytes.t -> hmac
+  val hmac_feed_string : hmac -> ?off:int -> ?len:int -> String.t -> hmac
+  val hmac_feed_bigstring : hmac -> ?off:int -> ?len:int -> bigstring -> hmac
+  val hmac_feedi_bytes : hmac -> Bytes.t iter -> hmac
+  val hmac_feedi_string : hmac -> String.t iter -> hmac
+  val hmac_feedi_bigstring : hmac -> bigstring iter -> hmac
+  val hmac_get : hmac -> t
   val digest_bytes : ?off:int -> ?len:int -> Bytes.t -> t
   val digest_string : ?off:int -> ?len:int -> String.t -> t
   val digest_bigstring : ?off:int -> ?len:int -> bigstring -> t
@@ -192,6 +201,8 @@ end
 module Make (H : Hash) (D : Desc) = struct
   include Core (H) (D)
 
+  type hmac = ctx * string
+
   let bytes_opad = By.init block_size (fun _ -> '\x5c')
   let bytes_ipad = By.init block_size (fun _ -> '\x36')
 
@@ -201,33 +212,40 @@ module Make (H : Hash) (D : Desc) = struct
     | -1 -> By.rpad (Bytes.unsafe_of_string key) block_size '\000'
     | _ -> By.of_string key
 
-  let hmaci_bytes ~key iter =
+  let hmac_init ~key =
     let key = norm_bytes key in
     let outer = Xor.Bytes.xor key bytes_opad in
     let inner = Xor.Bytes.xor key bytes_ipad in
     let ctx = feed_bytes empty inner in
-    let res = feedi_bytes ctx iter |> get in
-    let ctx = feed_bytes empty outer in
-    feed_string ctx (res :> string) |> get
+    (ctx, Bytes.unsafe_to_string outer)
+
+  let hmac_feed_bytes (t, outer) ?off ?len buf =
+    (feed_bytes t ?off ?len buf, outer)
+
+  let hmac_feed_string (t, outer) ?off ?len buf =
+    (feed_string t ?off ?len buf, outer)
+
+  let hmac_feed_bigstring (t, outer) ?off ?len buf =
+    (feed_bigstring t ?off ?len buf, outer)
+
+  let hmac_get (ctx, outer) =
+    feed_string (feed_string empty outer) (get ctx) |> get
+
+  let hmac_feedi_bytes (t, outer) iter = (feedi_bytes t iter, outer)
+  let hmac_feedi_string (t, outer) iter = (feedi_string t iter, outer)
+  let hmac_feedi_bigstring (t, outer) iter = (feedi_bigstring t iter, outer)
+
+  let hmaci_bytes ~key iter =
+    let t = hmac_init ~key in
+    hmac_feedi_bytes t iter |> hmac_get
 
   let hmaci_string ~key iter =
-    let key = norm_bytes key in
-    (* XXX(dinosaure): safe, [rpad] and [digest] have a read-only access. *)
-    let outer = Xor.Bytes.xor key bytes_opad in
-    let inner = Xor.Bytes.xor key bytes_ipad in
-    let ctx = feed_bytes empty inner in
-    let res = feedi_string ctx iter |> get in
-    let ctx = feed_bytes empty outer in
-    feed_string ctx (res :> string) |> get
+    let t = hmac_init ~key in
+    hmac_feedi_string t iter |> hmac_get
 
   let hmaci_bigstring ~key iter =
-    let key = norm_bytes key in
-    let outer = Xor.Bytes.xor key bytes_opad in
-    let inner = Xor.Bytes.xor key bytes_ipad in
-    let ctx = feed_bytes empty inner in
-    let res = feedi_bigstring ctx iter |> get in
-    let ctx = feed_bytes empty outer in
-    feed_string ctx (res :> string) |> get
+    let t = hmac_init ~key in
+    hmac_feedi_bigstring t iter |> hmac_get
 
   let hmac_bytes ~key ?off ?len buf =
     let buf =

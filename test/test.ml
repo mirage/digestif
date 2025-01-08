@@ -3,10 +3,13 @@ type _ s = Bytes : Bytes.t s | String : String.t s | Bigstring : bigstring s
 and bigstring =
   (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
 
-let title : type a k. [ `HMAC | `Digest ] -> k Digestif.hash -> a s -> string =
+let title :
+    type a k.
+    [ `HMAC | `HMAC_feed | `Digest ] -> k Digestif.hash -> a s -> string =
  fun computation hash input ->
   let pp_computation ppf = function
     | `HMAC -> Fmt.string ppf "hmac"
+    | `HMAC_feed -> Fmt.string ppf "hmac_feed"
     | `Digest -> Fmt.string ppf "digest" in
   let pp_hash : type k. k Digestif.hash Fmt.t =
    fun ppf -> function
@@ -52,6 +55,31 @@ let test_hmac :
       let result = Digestif.hmaci_bigstring hash ~key (fun f -> f input) in
       Alcotest.(check test_hash) title expect result
 
+let test_hmac_feed :
+    type k a. a s -> k Digestif.hash -> string -> a -> k -> unit =
+ fun kind hash key input expect ->
+  let title = title `HMAC_feed hash kind in
+  let module H = (val Digestif.module_of hash) in
+  let test_hash = Alcotest.testable H.pp H.equal in
+  let hmac_ctx = H.hmac_init ~key in
+  let total_len =
+    match kind with
+    | Bytes -> Bytes.length input
+    | String -> String.length input
+    | Bigstring -> Bigarray.Array1.dim input in
+  let rec loop hmac_ctx off =
+    if off = total_len
+    then hmac_ctx
+    else
+      let len = min (total_len - off) 16 in
+      let hmac_ctx =
+        match kind with
+        | Bytes -> H.hmac_feed_bytes hmac_ctx ~off ~len input
+        | String -> H.hmac_feed_string hmac_ctx ~off ~len input
+        | Bigstring -> H.hmac_feed_bigstring hmac_ctx ~off ~len input in
+      loop hmac_ctx (off + len) in
+  Alcotest.check test_hash title expect (H.hmac_get (loop hmac_ctx 0))
+
 let test_digest : type k a. a s -> k Digestif.hash -> a -> k Digestif.t -> unit
     =
  fun kind hash input expect ->
@@ -80,6 +108,18 @@ let make_hmac :
  fun ~name kind hash key input expect ->
   (name, `Quick, fun () -> test_hmac kind hash key input expect)
 
+let make_hmac_feed :
+    type a k.
+    name:string ->
+    a s ->
+    k Digestif.hash ->
+    string ->
+    a ->
+    k ->
+    unit Alcotest.test_case =
+ fun ~name kind hash key input expect ->
+  (name, `Quick, fun () -> test_hmac_feed kind hash key input expect)
+
 let make_digest :
     type a k.
     name:string ->
@@ -102,6 +142,12 @@ let combine a b c =
 let makes ~name kind hash keys inputs expects =
   List.map
     (fun (key, input, expect) -> make_hmac ~name kind hash key input expect)
+    (combine keys inputs expects)
+
+let makes' ~name kind hash keys inputs expects =
+  List.map
+    (fun (key, input, expect) ->
+      make_hmac_feed ~name kind hash key input expect)
     (combine keys inputs expects)
 
 let to_bigstring s =
@@ -173,15 +219,17 @@ let results_sha224 =
   ]
   |> List.map (Digestif.of_hex Digestif.sha224)
 
-let results_sha256 =
-  [
-    "2178f5f21b4311607bf9347bcde5f6552edb9ec5aa13b954d53de2fbfd8b75de";
-    "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843";
-    "aa36cd61caddefe26b07ba1d3d07ea978ed575c9d1f921837dff9f73e019713e";
-    "a7c8b53d68678a8e6e4d403c6b97cf0f82c4ef7b835c41039c0a73aa4d627d05";
-    "b2a83b628f7e0da71c3879b81075775072d0d35935c62cc6c5a79b337ccccca1";
-  ]
-  |> List.map (Digestif.of_hex Digestif.sha256)
+let results_sha256, results_sha256' =
+  let raw_results_sha256 =
+    [
+      "2178f5f21b4311607bf9347bcde5f6552edb9ec5aa13b954d53de2fbfd8b75de";
+      "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843";
+      "aa36cd61caddefe26b07ba1d3d07ea978ed575c9d1f921837dff9f73e019713e";
+      "a7c8b53d68678a8e6e4d403c6b97cf0f82c4ef7b835c41039c0a73aa4d627d05";
+      "b2a83b628f7e0da71c3879b81075775072d0d35935c62cc6c5a79b337ccccca1";
+    ] in
+  ( List.map (Digestif.of_hex Digestif.sha256) raw_results_sha256,
+    List.map Digestif.SHA256.of_hex raw_results_sha256 )
 
 let results_sha384 =
   [
@@ -614,6 +662,9 @@ let tests () =
       ( "sha256 (bigstring)",
         makes ~name:"sha256" bigstring Digestif.sha256 keys_st inputs_bi
           results_sha256 );
+      ( "sha256 (feed bytes)",
+        makes' ~name:"sha256" bytes Digestif.sha256 keys_st inputs_by
+          results_sha256' );
       ( "sha384",
         makes ~name:"sha384" bytes Digestif.sha384 keys_st inputs_by
           results_sha384 );
