@@ -1,7 +1,9 @@
-### Pending
+### v1.3.0 2025-04-14 Paris (France)
 
 - Use `CAMLextern` rather than `extern` in `caml_*` forward declarations to
   support bytecode linking on Windows (@jonahbeckford, #157)
+- Add `x-maintenance-intent` into OPAM file (@hannesm, #158)
+- Implement _feedable_ hmac (@reynir, #155)
 
 ### v1.2.0 2024-03-18 Paris (France)
 
