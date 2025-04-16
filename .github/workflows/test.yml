@@ -21,7 +21,7 @@ jobs:
     name: test-ocaml / ${{ matrix.os }}-${{ matrix.ocaml-compiler }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Hack Git CRLF for ocaml/setup-ocaml issue #529
         if: ${{ startsWith(matrix.os, 'windows-') }}
@@ -29,13 +29,13 @@ jobs:
           & "C:\Program Files\Git\bin\git.exe" config --system core.autocrlf input
 
       - name: OCaml ${{ matrix.ocaml-compiler }} with Dune cache
-        uses: ocaml/setup-ocaml@v2
+        uses: ocaml/setup-ocaml@v3
         if: ${{ !startsWith(matrix.os, 'windows-') }}
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
           dune-cache: true
       - name: OCaml ${{ matrix.ocaml-compiler }} without Dune cache
-        uses: ocaml/setup-ocaml@v2
+        uses: ocaml/setup-ocaml@v3
         if: ${{ startsWith(matrix.os, 'windows-') }}
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
