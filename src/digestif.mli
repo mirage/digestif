@@ -54,7 +54,7 @@ module type S = sig
   (** Create a new hmac state. *)
 
   val hmac_feed_bytes : hmac -> ?off:int -> ?len:int -> Bytes.t -> hmac
-  (** [hmac_feed_bytes msg t] adds informations in [msg] to [t]. [hmac_feed] is
+  (** [hmac_feed_bytes t msg] adds informations in [msg] to [t]. [hmac_feed] is
       analogous to appending:
       [hmac_feed (hmac_feed t msg1) msg2 = hmac_feed t
       (append msg1 msg2)] *)
