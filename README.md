@@ -67,6 +67,8 @@ $ dune exec ./sha1sum.exe -- sha1sum.ml
 fe6e6639a817c23857b507e2d833ec776f23f327
 ```
 
+A further example is given in the examples directory.
+
 ## API
 
 For each hash, we implement the same API which is referentially transparent.
