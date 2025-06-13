@@ -34,4 +34,4 @@ let () =
   match Sys.argv with
   | [|_|] -> go ()
   | [|_; filename|] -> from_file filename
-  | _ -> Printf.eprintf "digestif example: unknown command line\n"
+  | _ -> Printf.eprintf "Usage: %s [<filename>]" Sys.argv.(0)
