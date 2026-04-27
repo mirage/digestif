@@ -6,6 +6,8 @@
 
 #require "bos"
 
+#require "rresult"
+
 open Rresult
 
 let is_opt x = String.length x > 1 && x.[0] = '-'
