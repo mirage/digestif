@@ -241,10 +241,37 @@ module SHA3_256 : S
 
     @since 0.9.0 *)
 
+module KECCAK_224 : S
+(** KECCAK 224 hash algorithm.
+
+    This is the pre-FIPS-202 Keccak padding (delimiter byte [0x01]), not the
+    NIST SHA-3 padding ([0x06]); it produces different digests from
+    {!SHA3_224} for the same input.
+
+    @since 1.4.0 *)
+
 module KECCAK_256 : S
 (** KECCAK 256 hash algorithm.
 
     @since 1.1.0 *)
+
+module KECCAK_384 : S
+(** KECCAK 384 hash algorithm.
+
+    This is the pre-FIPS-202 Keccak padding (delimiter byte [0x01]), not the
+    NIST SHA-3 padding ([0x06]); it produces different digests from
+    {!SHA3_384} for the same input.
+
+    @since 1.4.0 *)
+
+module KECCAK_512 : S
+(** KECCAK 512 hash algorithm.
+
+    This is the pre-FIPS-202 Keccak padding (delimiter byte [0x01]), not the
+    NIST SHA-3 padding ([0x06]); it produces different digests from
+    {!SHA3_512} for the same input.
+
+    @since 1.4.0 *)
 
 module SHA3_384 : S
 (** SHA3 384 hash algorithm.
@@ -294,7 +321,10 @@ type 'k hash =
   | SHA512 : SHA512.t hash
   | SHA3_224 : SHA3_224.t hash
   | SHA3_256 : SHA3_256.t hash
+  | KECCAK_224 : KECCAK_224.t hash
   | KECCAK_256 : KECCAK_256.t hash
+  | KECCAK_384 : KECCAK_384.t hash
+  | KECCAK_512 : KECCAK_512.t hash
   | SHA3_384 : SHA3_384.t hash
   | SHA3_512 : SHA3_512.t hash
   | WHIRLPOOL : WHIRLPOOL.t hash
@@ -311,7 +341,10 @@ type hash' =
   | `SHA512
   | `SHA3_224
   | `SHA3_256
+  | `KECCAK_224
   | `KECCAK_256
+  | `KECCAK_384
+  | `KECCAK_512
   | `SHA3_384
   | `SHA3_512
   | `WHIRLPOOL
@@ -329,7 +362,10 @@ val sha384 : SHA384.t hash
 val sha512 : SHA512.t hash
 val sha3_224 : SHA3_224.t hash
 val sha3_256 : SHA3_256.t hash
+val keccak_224 : KECCAK_224.t hash
 val keccak_256 : KECCAK_256.t hash
+val keccak_384 : KECCAK_384.t hash
+val keccak_512 : KECCAK_512.t hash
 val sha3_384 : SHA3_384.t hash
 val sha3_512 : SHA3_512.t hash
 val whirlpool : WHIRLPOOL.t hash
@@ -377,8 +413,17 @@ val of_sha3_224 : SHA3_224.t -> SHA3_224.t t
 val of_sha3_256 : SHA3_256.t -> SHA3_256.t t
 (** @since 0.9.0 *)
 
+val of_keccak_224 : KECCAK_224.t -> KECCAK_224.t t
+(** @since 1.4.0 *)
+
 val of_keccak_256 : KECCAK_256.t -> KECCAK_256.t t
 (** @since 1.1.0 *)
+
+val of_keccak_384 : KECCAK_384.t -> KECCAK_384.t t
+(** @since 1.4.0 *)
+
+val of_keccak_512 : KECCAK_512.t -> KECCAK_512.t t
+(** @since 1.4.0 *)
 
 val of_sha3_384 : SHA3_384.t -> SHA3_384.t t
 (** @since 0.9.0 *)

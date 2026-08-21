@@ -21,7 +21,10 @@ let title : type a k.
      | Digestif.SHA512 -> Fmt.string ppf "sha512"
      | Digestif.SHA3_224 -> Fmt.string ppf "sha3_224"
      | Digestif.SHA3_256 -> Fmt.string ppf "sha3_256"
+     | Digestif.KECCAK_224 -> Fmt.string ppf "keccak_224"
      | Digestif.KECCAK_256 -> Fmt.string ppf "keccak_256"
+     | Digestif.KECCAK_384 -> Fmt.string ppf "keccak_384"
+     | Digestif.KECCAK_512 -> Fmt.string ppf "keccak_512"
      | Digestif.SHA3_384 -> Fmt.string ppf "sha3_384"
      | Digestif.SHA3_512 -> Fmt.string ppf "sha3_512"
      | Digestif.WHIRLPOOL -> Fmt.string ppf "whirlpool"
@@ -611,12 +614,23 @@ let sha3_vector_tests filename =
   go () ;
   close_in ic
 
+let keccak_of_name str =
+  match Astring.String.cut ~sep:":" str with
+  | None -> Fmt.invalid_arg "Invalid line: %S" str
+  | Some (_name, value) -> (
+      let value = Astring.String.trim value in
+      match value with
+      | "KECCAK-224" -> V Digestif.keccak_224
+      | "KECCAK-256" -> V Digestif.keccak_256
+      | "KECCAK-384" -> V Digestif.keccak_384
+      | "KECCAK-512" -> V Digestif.keccak_512
+      | v -> Fmt.invalid_arg "Invalid kind of hash: %s" v)
+
 let keccak_vector_tests filename =
   Alcotest.test_case filename `Quick @@ fun () ->
   let ic = open_in filename in
   let _algorithm_type = input_line ic in
-  let _name = input_line ic in
-  let hash = Digestif.keccak_256 in
+  let (V hash) = keccak_of_name (input_line ic) in
   let rec go () =
     try
       let comment = parse_field (input_line ic) in
@@ -740,7 +754,10 @@ let tests () =
           sha3_vector_tests "../sha3_256_fips_202.txt";
           sha3_vector_tests "../sha3_384_fips_202.txt";
           sha3_vector_tests "../sha3_512_fips_202.txt";
+          keccak_vector_tests "../keccak_224.txt";
           keccak_vector_tests "../keccak_256.txt";
+          keccak_vector_tests "../keccak_384.txt";
+          keccak_vector_tests "../keccak_512.txt";
         ] );
     ]
 

@@ -429,11 +429,32 @@ module SHA3_256 : S =
       let digest_size, block_size = (32, 136)
     end)
 
+module KECCAK_224 : S =
+  Make
+    (Baijiu_keccak_224.Unsafe)
+    (struct
+      let digest_size, block_size = (28, 144)
+    end)
+
 module KECCAK_256 : S =
   Make
     (Baijiu_keccak_256.Unsafe)
     (struct
       let digest_size, block_size = (32, 136)
+    end)
+
+module KECCAK_384 : S =
+  Make
+    (Baijiu_keccak_384.Unsafe)
+    (struct
+      let digest_size, block_size = (48, 104)
+    end)
+
+module KECCAK_512 : S =
+  Make
+    (Baijiu_keccak_512.Unsafe)
+    (struct
+      let digest_size, block_size = (64, 72)
     end)
 
 module SHA3_384 : S =
@@ -516,7 +537,10 @@ type 'k hash =
   | SHA512 : SHA512.t hash
   | SHA3_224 : SHA3_224.t hash
   | SHA3_256 : SHA3_256.t hash
+  | KECCAK_224 : KECCAK_224.t hash
   | KECCAK_256 : KECCAK_256.t hash
+  | KECCAK_384 : KECCAK_384.t hash
+  | KECCAK_512 : KECCAK_512.t hash
   | SHA3_384 : SHA3_384.t hash
   | SHA3_512 : SHA3_512.t hash
   | WHIRLPOOL : WHIRLPOOL.t hash
@@ -532,7 +556,10 @@ let sha384 = SHA384
 let sha512 = SHA512
 let sha3_224 = SHA3_224
 let sha3_256 = SHA3_256
+let keccak_224 = KECCAK_224
 let keccak_256 = KECCAK_256
+let keccak_384 = KECCAK_384
+let keccak_512 = KECCAK_512
 let sha3_384 = SHA3_384
 let sha3_512 = SHA3_512
 let whirlpool = WHIRLPOOL
@@ -549,7 +576,10 @@ type hash' =
   | `SHA512
   | `SHA3_224
   | `SHA3_256
+  | `KECCAK_224
   | `KECCAK_256
+  | `KECCAK_384
+  | `KECCAK_512
   | `SHA3_384
   | `SHA3_512
   | `WHIRLPOOL
@@ -566,7 +596,10 @@ let hash_to_hash' : type a. a hash -> hash' = function
   | SHA512 -> `SHA512
   | SHA3_224 -> `SHA3_224
   | SHA3_256 -> `SHA3_256
+  | KECCAK_224 -> `KECCAK_224
   | KECCAK_256 -> `KECCAK_256
+  | KECCAK_384 -> `KECCAK_384
+  | KECCAK_512 -> `KECCAK_512
   | SHA3_384 -> `SHA3_384
   | SHA3_512 -> `SHA3_512
   | WHIRLPOOL -> `WHIRLPOOL
@@ -583,7 +616,10 @@ let module_of_hash' : hash' -> (module S) = function
   | `SHA512 -> (module SHA512)
   | `SHA3_224 -> (module SHA3_224)
   | `SHA3_256 -> (module SHA3_256)
+  | `KECCAK_224 -> (module KECCAK_224)
   | `KECCAK_256 -> (module KECCAK_256)
+  | `KECCAK_384 -> (module KECCAK_384)
+  | `KECCAK_512 -> (module KECCAK_512)
   | `SHA3_384 -> (module SHA3_384)
   | `SHA3_512 -> (module SHA3_512)
   | `WHIRLPOOL -> (module WHIRLPOOL)
@@ -600,7 +636,10 @@ let module_of : type k. k hash -> (module S with type t = k) = function
   | SHA512 -> (module SHA512)
   | SHA3_224 -> (module SHA3_224)
   | SHA3_256 -> (module SHA3_256)
+  | KECCAK_224 -> (module KECCAK_224)
   | KECCAK_256 -> (module KECCAK_256)
+  | KECCAK_384 -> (module KECCAK_384)
+  | KECCAK_512 -> (module KECCAK_512)
   | SHA3_384 -> (module SHA3_384)
   | SHA3_512 -> (module SHA3_512)
   | WHIRLPOOL -> (module WHIRLPOOL)
@@ -724,7 +763,10 @@ let of_sha384 hash = hash
 let of_sha512 hash = hash
 let of_sha3_224 hash = hash
 let of_sha3_256 hash = hash
+let of_keccak_224 hash = hash
 let of_keccak_256 hash = hash
+let of_keccak_384 hash = hash
+let of_keccak_512 hash = hash
 let of_sha3_384 hash = hash
 let of_sha3_512 hash = hash
 let of_whirlpool hash = hash

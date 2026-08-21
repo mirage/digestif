@@ -13,7 +13,10 @@
   ../sha3_256_fips_202.txt
   ../sha3_384_fips_202.txt
   ../sha3_512_fips_202.txt
-  ../keccak_256.txt)
+  ../keccak_224.txt
+  ../keccak_256.txt
+  ../keccak_384.txt
+  ../keccak_512.txt)
  (action
   (run %{test} --quick-tests --color=always)))
 

@@ -209,23 +209,34 @@ caml_digestif_blake2s_digest_size(value ctx) {
   return Val_int(((struct blake2s_ctx *) String_val (ctx))->outlen);
 }
 
-CAMLprim value
-caml_digestif_keccak_256_ba_finalize
-(value ctx, value dst, value off) {
-  digestif_sha3_finalize (
-    (struct sha3_ctx *) String_val (ctx),
-    _ba_uint8_off (dst, off), 0x01);
-  return Val_unit;
-}
+/* KECCAK-<mdlen> is SHA3-<mdlen> with the pre-FIPS-202 padding (delimiter
+   0x01 rather than 0x06).  Only [finalize] differs, so the init/update/ctx_size
+   stubs defined by __define_hash_sha3 below are reused verbatim. */
 
-CAMLprim value
-caml_digestif_keccak_256_st_finalize
-(value ctx, value dst, value off) {
-  digestif_sha3_finalize(
-    (struct sha3_ctx *) String_val (ctx),
-    _st_uint8_off (dst, off), 0x01);
-  return Val_unit;
-}
+#define __define_hash_keccak(mdlen)                                          \
+                                                                             \
+  CAMLprim value                                                             \
+  caml_digestif_keccak_ ## mdlen ## _ba_finalize                             \
+  (value ctx, value dst, value off) {                                        \
+    digestif_sha3_finalize (                                                 \
+      (struct sha3_ctx *) String_val (ctx),                                  \
+      _ba_uint8_off (dst, off), 0x01);                                       \
+    return Val_unit;                                                         \
+  }                                                                          \
+                                                                             \
+  CAMLprim value                                                             \
+  caml_digestif_keccak_ ## mdlen ## _st_finalize                             \
+  (value ctx, value dst, value off) {                                        \
+    digestif_sha3_finalize(                                                  \
+      (struct sha3_ctx *) String_val (ctx),                                  \
+      _st_uint8_off (dst, off), 0x01);                                       \
+    return Val_unit;                                                         \
+  }
+
+__define_hash_keccak (224)
+__define_hash_keccak (256)
+__define_hash_keccak (384)
+__define_hash_keccak (512)
 
 
 #define __define_hash_sha3(mdlen)                                            \
