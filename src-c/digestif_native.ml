@@ -435,6 +435,70 @@ module KECCAK_512 = struct
   [@@noalloc]
 end
 
+module SHAKE128 = struct
+  type kind = [ `SHAKE128 ]
+
+  module Bigstring = struct
+    external init : ctx -> unit = "caml_digestif_shake_128_ba_init" [@@noalloc]
+
+    external update : ctx -> ba -> off -> size -> unit
+      = "caml_digestif_shake_128_ba_update"
+
+    external out : ctx -> ba -> off -> size -> unit
+      = "caml_digestif_shake_ba_out"
+    [@@noalloc]
+  end
+
+  module Bytes = struct
+    external init : ctx -> unit = "caml_digestif_shake_128_st_init" [@@noalloc]
+
+    external update : ctx -> st -> off -> size -> unit
+      = "caml_digestif_shake_128_st_update"
+    [@@noalloc]
+
+    external out : ctx -> st -> off -> size -> unit
+      = "caml_digestif_shake_st_out"
+    [@@noalloc]
+  end
+
+  external xof : ctx -> unit = "caml_digestif_shake_xof" [@@noalloc]
+
+  external ctx_size : unit -> int = "caml_digestif_shake_128_ctx_size"
+  [@@noalloc]
+end
+
+module SHAKE256 = struct
+  type kind = [ `SHAKE256 ]
+
+  module Bigstring = struct
+    external init : ctx -> unit = "caml_digestif_shake_256_ba_init" [@@noalloc]
+
+    external update : ctx -> ba -> off -> size -> unit
+      = "caml_digestif_shake_256_ba_update"
+
+    external out : ctx -> ba -> off -> size -> unit
+      = "caml_digestif_shake_ba_out"
+    [@@noalloc]
+  end
+
+  module Bytes = struct
+    external init : ctx -> unit = "caml_digestif_shake_256_st_init" [@@noalloc]
+
+    external update : ctx -> st -> off -> size -> unit
+      = "caml_digestif_shake_256_st_update"
+    [@@noalloc]
+
+    external out : ctx -> st -> off -> size -> unit
+      = "caml_digestif_shake_st_out"
+    [@@noalloc]
+  end
+
+  external xof : ctx -> unit = "caml_digestif_shake_xof" [@@noalloc]
+
+  external ctx_size : unit -> int = "caml_digestif_shake_256_ctx_size"
+  [@@noalloc]
+end
+
 module SHA3_384 = struct
   type kind = [ `SHA3_384 ]
 

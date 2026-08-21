@@ -210,6 +210,76 @@ end
 
 (** Some hash algorithms expose extra MAC constructs. The interface is similar
     to the [hmac_*] functions in [S]. *)
+module type XOF = sig
+  (** An extendable-output function: a sponge that absorbs a message and then
+      produces output of any length.
+
+      Unlike {!S}, output length is not a property of the algorithm, so an XOF
+      has no [digest_size], no [t] and no fixed-width digest to compare or
+      convert.  Use {!Make_SHAKE128} / {!Make_SHAKE256} to obtain an ordinary
+      {!S} at a chosen output length instead.
+
+      The two phases are separate types: a [ctx] absorbs, {!xof} closes the
+      absorbing phase and yields an [xof], and an [xof] squeezes.  Feeding
+      after squeezing is therefore not expressible rather than a runtime
+      error. *)
+
+  type ctx
+  (** The absorbing state. *)
+
+  type xof
+  (** The squeezing state. *)
+
+  val empty : ctx
+  val init : unit -> ctx
+  val feed_bytes : ctx -> ?off:int -> ?len:int -> Bytes.t -> ctx
+  val feed_string : ctx -> ?off:int -> ?len:int -> String.t -> ctx
+  val feed_bigstring : ctx -> ?off:int -> ?len:int -> bigstring -> ctx
+  val feedi_bytes : ctx -> Bytes.t iter -> ctx
+  val feedi_string : ctx -> String.t iter -> ctx
+  val feedi_bigstring : ctx -> bigstring iter -> ctx
+
+  val xof : ctx -> xof
+  (** [xof ctx] closes the absorbing phase by applying the padding and
+      returns a squeezing state positioned at the start of the output stream.
+      [ctx] is not modified. *)
+
+  val dup : xof -> xof
+  (** [dup t] is an independent copy of [t], positioned at the same point in
+      the output stream.  Squeezing from one does not affect the other. *)
+
+  val squeeze : xof -> int -> string
+  (** [squeeze t n] is the next [n] bytes of the output stream.
+
+      {b This advances [t]}: consecutive calls return consecutive,
+      non-overlapping chunks, and [squeeze t 32] twice is [squeeze t 64] once.
+      To read the same bytes again, squeeze from a {!dup}.
+
+      @raise Invalid_argument if [n] is negative. *)
+
+  val squeeze_into_bytes : xof -> ?off:int -> ?len:int -> Bytes.t -> unit
+  (** [squeeze_into_bytes t ?off ?len buf] squeezes [len] bytes into [buf]
+      starting at [off], defaulting to the whole of [buf].  [off] and [len]
+      describe the {e destination}.  Advances [t] like {!squeeze}. *)
+
+  val squeeze_into_bigstring : xof -> ?off:int -> ?len:int -> bigstring -> unit
+  (** As {!squeeze_into_bytes}, for a bigstring destination. *)
+
+  val digest_bytes : size:int -> ?off:int -> ?len:int -> Bytes.t -> string
+  (** [digest_bytes ~size ?off ?len buf] is [size] bytes of output over the
+      given input.  [off] and [len] slice the {e input}; [size] is the length
+      of the {e output}. *)
+
+  val digest_string : size:int -> ?off:int -> ?len:int -> String.t -> string
+  val digest_bigstring : size:int -> ?off:int -> ?len:int -> bigstring -> string
+  val digesti_bytes : size:int -> Bytes.t iter -> string
+  val digesti_string : size:int -> String.t iter -> string
+  val digesti_bigstring : size:int -> bigstring iter -> string
+  val digestv_bytes : size:int -> Bytes.t list -> string
+  val digestv_string : size:int -> String.t list -> string
+  val digestv_bigstring : size:int -> bigstring list -> string
+end
+
 module type MAC = sig
   type t
 
@@ -326,6 +396,38 @@ end) : S
 module Make_BLAKE2S (D : sig
   val digest_size : int
 end) : S
+
+module SHAKE128 : XOF
+(** SHAKE128, the FIPS 202 extendable-output function at the 128-bit security
+    level (sponge rate 168 bytes).
+
+    @since 1.4.0 *)
+
+module SHAKE256 : XOF
+(** SHAKE256, the FIPS 202 extendable-output function at the 256-bit security
+    level (sponge rate 136 bytes).
+
+    @since 1.4.0 *)
+
+module Make_SHAKE128 (D : sig
+  val digest_size : int
+end) : S
+(** SHAKE128 restricted to a fixed output length, so that it can be used
+    wherever an {!S} is expected.  Compare {!Make_BLAKE2B}.
+
+    FIPS 202 defines no default output length for SHAKE, which is why there is
+    no plain [SHAKE128 : S]; pick one deliberately.  32 bytes matches the
+    128-bit security level against collisions.
+
+    @since 1.4.0 *)
+
+module Make_SHAKE256 (D : sig
+  val digest_size : int
+end) : S
+(** SHAKE256 restricted to a fixed output length.  See {!Make_SHAKE128};
+    64 bytes matches the 256-bit security level.
+
+    @since 1.4.0 *)
 
 type 'k hash =
   | MD5 : MD5.t hash

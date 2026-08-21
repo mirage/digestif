@@ -1,3 +1,25 @@
+### v1.4.0 (unreleased)
+
+- Add `KECCAK_224`, `KECCAK_384` and `KECCAK_512` -- the pre-FIPS-202 Keccak
+  padding at the remaining digest sizes, alongside the existing `KECCAK_256`
+- Add `SHA512_224` and `SHA512_256`, the FIPS 180-4 truncated SHA-512 variants
+- Add `SHAKE128` and `SHAKE256`, the FIPS 202 extendable-output functions,
+  under a new `Digestif.XOF` module type with an explicit absorb/squeeze split
+  (`ctx` -> `xof` -> `squeeze`), plus `Make_SHAKE128` / `Make_SHAKE256` for a
+  fixed output length usable wherever an `S` is expected.  The Keccak squeeze
+  (`digestif_sha3_xof` / `digestif_sha3_out`) is restored from the upstream
+  tiny_sha3 `src-c/native/sha3.c` is vendored from; it had been dropped
+- Fix `src-ocaml/dune`'s `private_modules`, which omitted `baijiu_sha3` and
+  `baijiu_keccak_256` and listed `baijiu_sha256` twice in place of
+  `baijiu_sha3_256`
+
+  Note: adding constructors to the `'k hash` GADT and to the `hash'`
+  polymorphic variant breaks downstream exhaustive matches over either.
+
+  Note: the pure-OCaml backend (`digestif.ocaml`) additions are hand-written
+  and have not been audited for constant-time behaviour; they are validated
+  against test vectors only.  `digestif.c` remains the default implementation.
+
 ### v1.3.1 2026-07-14 Paris (France)
 
 - Remove DKML CI (@jonahbeckford, @dinosaure, #159, #160, #161)

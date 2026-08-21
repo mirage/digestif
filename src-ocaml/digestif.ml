@@ -69,6 +69,33 @@ module type S = sig
   val get_into_bytes : ctx -> ?off:int -> bytes -> unit
 end
 
+module type XOF = sig
+  type ctx
+  type xof
+  val empty : ctx
+  val init : unit -> ctx
+  val feed_bytes : ctx -> ?off:int -> ?len:int -> Bytes.t -> ctx
+  val feed_string : ctx -> ?off:int -> ?len:int -> String.t -> ctx
+  val feed_bigstring : ctx -> ?off:int -> ?len:int -> bigstring -> ctx
+  val feedi_bytes : ctx -> Bytes.t iter -> ctx
+  val feedi_string : ctx -> String.t iter -> ctx
+  val feedi_bigstring : ctx -> bigstring iter -> ctx
+  val xof : ctx -> xof
+  val dup : xof -> xof
+  val squeeze : xof -> int -> string
+  val squeeze_into_bytes : xof -> ?off:int -> ?len:int -> Bytes.t -> unit
+  val squeeze_into_bigstring : xof -> ?off:int -> ?len:int -> bigstring -> unit
+  val digest_bytes : size:int -> ?off:int -> ?len:int -> Bytes.t -> string
+  val digest_string : size:int -> ?off:int -> ?len:int -> String.t -> string
+  val digest_bigstring : size:int -> ?off:int -> ?len:int -> bigstring -> string
+  val digesti_bytes : size:int -> Bytes.t iter -> string
+  val digesti_string : size:int -> String.t iter -> string
+  val digesti_bigstring : size:int -> bigstring iter -> string
+  val digestv_bytes : size:int -> Bytes.t list -> string
+  val digestv_string : size:int -> String.t list -> string
+  val digestv_bigstring : size:int -> bigstring list -> string
+end
+
 module type MAC = sig
   type t
 
@@ -540,6 +567,155 @@ end) : S = struct
         let digest_size, block_size = (D.digest_size, 64)
       end)
 end
+
+module Make_XOF (X : Baijiu_shake.S) = struct
+  type ctx = X.ctx
+  type xof = X.ctx
+
+  let init = X.init
+  let empty = X.init ()
+
+  let unsafe_feed_bytes t ?off ?len buf =
+    let off, len =
+      match (off, len) with
+      | Some off, Some len -> (off, len)
+      | Some off, None -> (off, By.length buf - off)
+      | None, Some len -> (0, len)
+      | None, None -> (0, By.length buf) in
+    if off < 0 || len < 0 || off > By.length buf - len
+    then invalid_arg "offset out of bounds"
+    else X.unsafe_feed_bytes t buf off len
+
+  let unsafe_feed_bigstring t ?off ?len buf =
+    let off, len =
+      match (off, len) with
+      | Some off, Some len -> (off, len)
+      | Some off, None -> (off, Bi.length buf - off)
+      | None, Some len -> (0, len)
+      | None, None -> (0, Bi.length buf) in
+    if off < 0 || len < 0 || off > Bi.length buf - len
+    then invalid_arg "offset out of bounds"
+    else X.unsafe_feed_bigstring t buf off len
+
+  let feed_bytes t ?off ?len buf =
+    let t = X.dup t in
+    unsafe_feed_bytes t ?off ?len buf ;
+    t
+
+  let feed_string t ?off ?len buf =
+    feed_bytes t ?off ?len (By.unsafe_of_string buf)
+
+  let feed_bigstring t ?off ?len buf =
+    let t = X.dup t in
+    unsafe_feed_bigstring t ?off ?len buf ;
+    t
+
+  let feedi_bytes t iter =
+    let t = X.dup t in
+    let feed buf = unsafe_feed_bytes t buf in
+    iter feed ;
+    t
+
+  let feedi_string t iter =
+    let t = X.dup t in
+    let feed buf = unsafe_feed_bytes t (By.unsafe_of_string buf) in
+    iter feed ;
+    t
+
+  let feedi_bigstring t iter =
+    let t = X.dup t in
+    let feed buf = unsafe_feed_bigstring t buf in
+    iter feed ;
+    t
+
+  let xof t =
+    let t = X.dup t in
+    X.xof t ;
+    t
+
+  let dup = X.dup
+
+  let squeeze t n =
+    if n < 0 then invalid_arg "negative output length" ;
+    let res = By.create n in
+    X.unsafe_out_bytes t res 0 n ;
+    By.unsafe_to_string res
+
+  let squeeze_into_bytes t ?(off = 0) ?len buf =
+    let len = match len with Some len -> len | None -> By.length buf - off in
+    if off < 0 || len < 0 || off > By.length buf - len
+    then invalid_arg "offset out of bounds" ;
+    X.unsafe_out_bytes t buf off len
+
+  let squeeze_into_bigstring t ?(off = 0) ?len buf =
+    let len = match len with Some len -> len | None -> Bi.length buf - off in
+    if off < 0 || len < 0 || off > Bi.length buf - len
+    then invalid_arg "offset out of bounds" ;
+    X.unsafe_out_bigstring t buf off len
+
+  let digest_bytes ~size ?off ?len buf =
+    squeeze (xof (feed_bytes empty ?off ?len buf)) size
+
+  let digest_string ~size ?off ?len buf =
+    digest_bytes ~size ?off ?len (By.unsafe_of_string buf)
+
+  let digest_bigstring ~size ?off ?len buf =
+    squeeze (xof (feed_bigstring empty ?off ?len buf)) size
+
+  let digesti_bytes ~size iter = squeeze (xof (feedi_bytes empty iter)) size
+  let digesti_string ~size iter = squeeze (xof (feedi_string empty iter)) size
+
+  let digesti_bigstring ~size iter =
+    squeeze (xof (feedi_bigstring empty iter)) size
+
+  let digestv_bytes ~size lst = digesti_bytes ~size (fun f -> List.iter f lst)
+  let digestv_string ~size lst = digesti_string ~size (fun f -> List.iter f lst)
+
+  let digestv_bigstring ~size lst =
+    digesti_bigstring ~size (fun f -> List.iter f lst)
+end
+
+(* An XOF pinned to a fixed output length is an ordinary hash: pad, then
+   squeeze exactly [digest_size] bytes.  This lets Make provide the whole S
+   interface, HMAC included, unchanged. *)
+module Hash_of_XOF
+    (X : Baijiu_shake.S) (D : sig
+      val digest_size : int
+    end) : Hash = struct
+  type ctx = X.ctx
+
+  let init = X.init
+  let unsafe_feed_bytes = X.unsafe_feed_bytes
+  let unsafe_feed_bigstring = X.unsafe_feed_bigstring
+  let dup = X.dup
+
+  let unsafe_get ctx =
+    X.xof ctx ;
+    let res = By.create D.digest_size in
+    X.unsafe_out_bytes ctx res 0 D.digest_size ;
+    res
+end
+
+module SHAKE128 : XOF = Make_XOF (Baijiu_shake.SHAKE128)
+module SHAKE256 : XOF = Make_XOF (Baijiu_shake.SHAKE256)
+
+module Make_SHAKE128 (D : sig
+  val digest_size : int
+end) : S =
+  Make
+    (Hash_of_XOF (Baijiu_shake.SHAKE128) (D))
+    (struct
+      let digest_size, block_size = (D.digest_size, 168)
+    end)
+
+module Make_SHAKE256 (D : sig
+  val digest_size : int
+end) : S =
+  Make
+    (Hash_of_XOF (Baijiu_shake.SHAKE256) (D))
+    (struct
+      let digest_size, block_size = (D.digest_size, 136)
+    end)
 
 type 'k hash =
   | MD5 : MD5.t hash

@@ -683,6 +683,231 @@ let named_vector_tests of_name filename =
 let keccak_vector_tests = named_vector_tests keccak_of_name
 let sha512t_vector_tests = named_vector_tests sha512t_of_name
 
+(* --- SHAKE ------------------------------------------------------------- *)
+
+let hex = Alcotest.testable Fmt.string String.equal
+
+module type XOF_UNDER_TEST = sig
+  include Digestif.XOF
+
+  val name : string
+  val rate : int
+end
+
+let shake128 =
+  (module struct
+    include Digestif.SHAKE128
+
+    let name = "shake128"
+    let rate = 168
+  end : XOF_UNDER_TEST)
+
+let shake256 =
+  (module struct
+    include Digestif.SHAKE256
+
+    let name = "shake256"
+    let rate = 136
+  end : XOF_UNDER_TEST)
+
+let hex_of_string s =
+  let b = Buffer.create (String.length s * 2) in
+  String.iter (fun c -> Buffer.add_string b (Fmt.str "%02x" (Char.code c))) s ;
+  Buffer.contents b
+
+(* File-driven vectors: five-line records carrying an explicit output
+   length, so the same file exercises both the ShortMsg/LongMsg and the
+   VariableOut style of the NIST CAVP sets. *)
+let shake_vector_tests (module X : XOF_UNDER_TEST) filename =
+  Alcotest.test_case filename `Quick @@ fun () ->
+  let ic = open_in filename in
+  let _algorithm_type = input_line ic in
+  let _name = input_line ic in
+  let rec go () =
+    try
+      let comment = parse_field (input_line ic) in
+      let message = parse_field (input_line ic) in
+      let size = int_of_string (parse_field (input_line ic)) in
+      let digest = parse_field (input_line ic) in
+      let _verify = input_line ic in
+      let message = if message = empty then "" else of_hex message in
+      Alcotest.check hex comment digest
+        (hex_of_string (X.digest_string ~size message)) ;
+      go ()
+    with End_of_file -> () in
+  go () ;
+  close_in ic
+
+(* Squeezing is a stream: any split of it must agree with one call. *)
+let shake_incremental_squeeze (module X : XOF_UNDER_TEST) =
+  Alcotest.test_case (X.name ^ " incremental squeeze") `Quick @@ fun () ->
+  let msg = "The quick brown fox jumps over the lazy dog" in
+  let splits =
+    [
+      (1, 1); (0, 64); (64, 0); (31, 33); (X.rate - 1, 1); (X.rate, 1);
+      (1, X.rate); (X.rate + 1, X.rate - 1); (2 * X.rate, 3); (3, 2 * X.rate);
+    ] in
+  List.iter
+    (fun (a, b) ->
+      let whole = X.digest_string ~size:(a + b) msg in
+      let t = X.xof (X.feed_string (X.init ()) msg) in
+      let x = X.squeeze t a in
+      let y = X.squeeze t b in
+      Alcotest.check hex
+        (Fmt.str "%s squeeze %d+%d" X.name a b)
+        (hex_of_string whole)
+        (hex_of_string (x ^ y)))
+    splits
+
+(* [dup] must fork the output stream, and [xof] must not consume the ctx. *)
+let shake_dup (module X : XOF_UNDER_TEST) =
+  Alcotest.test_case (X.name ^ " dup") `Quick @@ fun () ->
+  let ctx = X.feed_string (X.init ()) "abc" in
+  let t = X.xof ctx in
+  let _ = X.squeeze t 40 in
+  let u = X.dup t in
+  Alcotest.check hex "dup continues the same stream"
+    (hex_of_string (X.squeeze t 40))
+    (hex_of_string (X.squeeze u 40)) ;
+  (* the absorbing ctx is untouched, so it can be padded again *)
+  Alcotest.check hex "xof does not consume the ctx"
+    (hex_of_string (X.digest_string ~size:40 "abc"))
+    (hex_of_string (X.squeeze (X.xof ctx) 40))
+
+(* Feeding in pieces must equal feeding at once, across the rate boundary. *)
+let shake_incremental_feed (module X : XOF_UNDER_TEST) =
+  Alcotest.test_case (X.name ^ " incremental feed") `Quick @@ fun () ->
+  let msg = String.init ((3 * X.rate) + 7) (fun i -> Char.chr (i land 0xff)) in
+  List.iter
+    (fun cut ->
+      let a = String.sub msg 0 cut in
+      let b = String.sub msg cut (String.length msg - cut) in
+      let ctx = X.feed_string (X.feed_string (X.init ()) a) b in
+      Alcotest.check hex
+        (Fmt.str "%s feed split at %d" X.name cut)
+        (hex_of_string (X.digest_string ~size:70 msg))
+        (hex_of_string (X.squeeze (X.xof ctx) 70)))
+    [ 0; 1; X.rate - 1; X.rate; X.rate + 1; 2 * X.rate; String.length msg ]
+
+(* The fixed-size functor must agree with the XOF at that size, and must
+   behave like any other S (feed/get, digest_string, HMAC round-trip). *)
+let shake_functor_agrees =
+  Alcotest.test_case "shake functor agrees with xof" `Quick @@ fun () ->
+  let module F128 = Digestif.Make_SHAKE128 (struct
+    let digest_size = 32
+  end) in
+  let module F256 = Digestif.Make_SHAKE256 (struct
+    let digest_size = 64
+  end) in
+  let msg = "The quick brown fox jumps over the lazy dog" in
+  Alcotest.check hex "shake128 functor" (Digestif.SHAKE128.digest_string ~size:32 msg
+                                         |> hex_of_string)
+    (F128.digest_string msg |> F128.to_raw_string |> hex_of_string) ;
+  Alcotest.check hex "shake256 functor" (Digestif.SHAKE256.digest_string ~size:64 msg
+                                         |> hex_of_string)
+    (F256.digest_string msg |> F256.to_raw_string |> hex_of_string) ;
+  Alcotest.(check int) "digest_size" 32 F128.digest_size ;
+  Alcotest.check hex "feed/get agrees with digest_string"
+    (F128.digest_string msg |> F128.to_raw_string |> hex_of_string)
+    (F128.get (F128.feed_string F128.empty msg)
+    |> F128.to_raw_string |> hex_of_string) ;
+  (* an unusual, non-word-multiple output length *)
+  let module F17 = Digestif.Make_SHAKE128 (struct
+    let digest_size = 17
+  end) in
+  Alcotest.check hex "17-byte functor"
+    (Digestif.SHAKE128.digest_string ~size:17 msg |> hex_of_string)
+    (F17.digest_string msg |> F17.to_raw_string |> hex_of_string)
+
+let shake_bad_args (module X : XOF_UNDER_TEST) =
+  Alcotest.test_case (X.name ^ " bad arguments") `Quick @@ fun () ->
+  let t = X.xof (X.init ()) in
+  Alcotest.check_raises "negative squeeze" (Invalid_argument "negative output length")
+    (fun () -> ignore (X.squeeze t (-1))) ;
+  Alcotest.check_raises "destination too small"
+    (Invalid_argument "offset out of bounds") (fun () ->
+      X.squeeze_into_bytes t ~off:0 ~len:10 (Bytes.create 4))
+
+(* bytes / string / bigstring inputs must agree. *)
+let shake_input_kinds (module X : XOF_UNDER_TEST) =
+  Alcotest.test_case (X.name ^ " input kinds") `Quick @@ fun () ->
+  let msg = String.init ((2 * X.rate) + 5) (fun i -> Char.chr (i land 0xff)) in
+  let expect = hex_of_string (X.digest_string ~size:50 msg) in
+  Alcotest.check hex "bytes" expect
+    (hex_of_string (X.digest_bytes ~size:50 (Bytes.of_string msg))) ;
+  Alcotest.check hex "bigstring" expect
+    (hex_of_string
+       (X.digest_bigstring ~size:50 (to_bigstring (Bytes.of_string msg)))) ;
+  Alcotest.check hex "digestv_string" expect
+    (hex_of_string
+       (X.digestv_string ~size:50
+          [ String.sub msg 0 3; String.sub msg 3 (String.length msg - 3) ])) ;
+  let buf = Bytes.make 60 '\xaa' in
+  X.squeeze_into_bytes (X.xof (X.feed_string (X.init ()) msg)) ~off:5 ~len:50 buf ;
+  Alcotest.check hex "squeeze_into_bytes" expect
+    (hex_of_string (Bytes.sub_string buf 5 50)) ;
+  Alcotest.(check char) "squeeze_into_bytes leaves the prefix" '\xaa' (Bytes.get buf 0) ;
+  Alcotest.(check char) "squeeze_into_bytes leaves the suffix" '\xaa' (Bytes.get buf 55)
+
+(* A large single squeeze must equal the same bytes taken in small chunks.
+   Guards the squeeze length plumbing (the C side takes a size_t; a uint32_t
+   there would truncate, the CVE-2022-37454 shape) and the permutation
+   boundary over many blocks. *)
+let shake_large_squeeze (module X : XOF_UNDER_TEST) =
+  Alcotest.test_case (X.name ^ " large squeeze") `Quick @@ fun () ->
+  let n = 1 lsl 20 in
+  let t = X.xof (X.feed_string (X.init ()) "abc") in
+  let whole = X.squeeze t n in
+  let u = X.xof (X.feed_string (X.init ()) "abc") in
+  let buf = Buffer.create n in
+  let rec go remaining =
+    if remaining > 0
+    then (
+      let chunk = min remaining 997 in
+      Buffer.add_string buf (X.squeeze u chunk) ;
+      go (remaining - chunk)) in
+  go n ;
+  Alcotest.(check int) "length" n (String.length whole) ;
+  Alcotest.check hex "chunked equals whole" (hex_of_string whole)
+    (hex_of_string (Buffer.contents buf))
+
+(* Published known-answer values, independent of the generated vector files
+   above: FIPS 202 / the Keccak team's own examples for the empty message,
+   and the customary "quick brown fox" case. *)
+let shake_known_answers =
+  Alcotest.test_case "shake known answers" `Quick @@ fun () ->
+  let check name expect got = Alcotest.check hex name expect (hex_of_string got) in
+  check "SHAKE128 \"\" 32"
+    "7f9c2ba4e88f827d616045507605853ed73b8093f6efbc88eb1a6eacfa66ef26"
+    (Digestif.SHAKE128.digest_string ~size:32 "") ;
+  check "SHAKE256 \"\" 64"
+    "46b9dd2b0ba88d13233b3feb743eeb243fcd52ea62b81b82b50c27646ed5762fd75dc4ddd8c0f200cb05019d67b592f6fc821c49479ab48640292eacb3b7c4be"
+    (Digestif.SHAKE256.digest_string ~size:64 "") ;
+  check "SHAKE128 fox 32"
+    "f4202e3c5852f9182a0430fd8144f0a74b95e7417ecae17db0f8cfeed0e3e66e"
+    (Digestif.SHAKE128.digest_string ~size:32
+       "The quick brown fox jumps over the lazy dog")
+
+let shake_tests =
+  [
+    shake_known_answers;
+    shake_large_squeeze shake128;
+    shake_large_squeeze shake256;
+    shake_vector_tests shake128 "../shake_128.txt";
+    shake_vector_tests shake256 "../shake_256.txt";
+    shake_incremental_squeeze shake128;
+    shake_incremental_squeeze shake256;
+    shake_dup shake128;
+    shake_dup shake256;
+    shake_incremental_feed shake128;
+    shake_incremental_feed shake256;
+    shake_input_kinds shake128;
+    shake_input_kinds shake256;
+    shake_bad_args shake128;
+    shake_bad_args shake256;
+    shake_functor_agrees;
+  ]
+
 let tests () =
   Alcotest.run "digestif"
     [
@@ -808,6 +1033,7 @@ let tests () =
           sha512t_vector_tests "../sha512_224.txt";
           sha512t_vector_tests "../sha512_256.txt";
         ] );
+      ("shake", shake_tests);
     ]
 
 let () = tests ()

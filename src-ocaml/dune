@@ -7,7 +7,7 @@
    baijiu_whirlpool baijiu_sha1 baijiu_sha256 baijiu_sha384 baijiu_sha224
    baijiu_sha512 baijiu_sha512_224 baijiu_sha512_256 baijiu_sha3 baijiu_sha3_224 baijiu_sha3_256 baijiu_sha3_384
    baijiu_sha3_512 baijiu_keccak_224 baijiu_keccak_256 baijiu_keccak_384
-   baijiu_keccak_512 baijiu_rmd160 baijiu_md5 baijiu_blake2s baijiu_blake2b)
+   baijiu_keccak_512 baijiu_shake baijiu_rmd160 baijiu_md5 baijiu_blake2s baijiu_blake2b)
  (flags
   (:standard -no-keep-locs)))
 

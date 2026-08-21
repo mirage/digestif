@@ -3,6 +3,7 @@ module Bi = Digestif_bi
 
 let nist_padding = 0x06L
 let keccak_padding = 0x01L
+let shake_padding = 0x1fL
 
 module Int64 = struct
   include Int64
@@ -152,7 +153,11 @@ struct
     let get_uint8 buf off = Char.code (Bi.get buf off) in
     feed ~get_uint8 ctx buf off len
 
-  let unsafe_get ctx =
+  (* Close the absorbing phase: apply the domain separator and the
+     multi-rate pad, then run the permutation once.  [pt] is reset to 0 so
+     that the state is positioned at the start of the output stream.  This is
+     the counterpart of digestif_sha3_xof in the C backend. *)
+  let xof ctx =
     let ( && ) = ( land ) in
 
     let ( lxor ) = Int64.( lxor ) in
@@ -167,6 +172,46 @@ struct
     ctx.q.((ctx.rsize - 1) / 8) <- v ;
 
     sha3_keccakf ctx.q ;
+    ctx.pt <- 0
+
+  (* Squeeze [len] bytes into [buf] at [off], permuting whenever the rate is
+     exhausted, and leave [pt] where the stream stopped so that a subsequent
+     call continues it.  [xof] must have been called first.  Counterpart of
+     digestif_sha3_out in the C backend. *)
+  let squeeze : type a.
+      set_uint8:(a -> int -> int -> unit) -> ctx -> a -> int -> int -> unit =
+   fun ~set_uint8 ctx buf off len ->
+    let ( && ) = ( land ) in
+
+    let ( land ) = Int64.( land ) in
+    let ( lsr ) = Int64.( lsr ) in
+
+    let j = ref ctx.pt in
+
+    for i = 0 to len - 1 do
+      if !j >= ctx.rsize
+      then (
+        sha3_keccakf ctx.q ;
+        j := 0) ;
+      let v = (ctx.q.(!j / 8) lsr ((!j && 0x7) * 8)) land 0xffL in
+      set_uint8 buf (off + i) (Int64.to_int v) ;
+      incr j
+    done ;
+
+    ctx.pt <- !j
+
+  let unsafe_out_bytes ctx buf off len =
+    let set_uint8 buf off v = By.unsafe_set buf off (Char.unsafe_chr v) in
+    squeeze ~set_uint8 ctx buf off len
+
+  let unsafe_out_bigstring : ctx -> Bi.t -> int -> int -> unit =
+   fun ctx buf off len ->
+    let set_uint8 buf off v =
+      Bigarray.Array1.set buf off (Char.unsafe_chr v) in
+    squeeze ~set_uint8 ctx buf off len
+
+  let unsafe_get ctx =
+    xof ctx ;
 
     (* Get hash *)
     (* if the hash size in bytes is not a multiple of 8 (meaning it is

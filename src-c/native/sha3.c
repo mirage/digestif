@@ -136,6 +136,42 @@ void digestif_sha3_update(struct sha3_ctx *ctx, uint8_t *data, uint32_t len)
     return;
 }
 
+// SHAKE128 and SHAKE256 extensible-output functions
+//
+// Restored verbatim (modulo the digestif_ prefix and the padding parameter)
+// from shake_xof/shake_out in the upstream tiny_sha3 this file is vendored
+// from: https://github.com/mjosaarinen/tiny_sha3.  Upstream hardcodes the
+// 0x1F SHAKE delimiter; it is a parameter here to match the shape of
+// digestif_sha3_finalize above.  The length stays size_t, as upstream: a
+// uint32_t would silently truncate a squeeze of 4 GiB or more, which is the
+// same shape of bug as CVE-2022-37454.
+
+void digestif_sha3_xof(struct sha3_ctx *ctx, uint8_t padding)
+{
+    ctx->st.b[ctx->pt] ^= padding;
+    ctx->st.b[ctx->rsiz - 1] ^= 0x80;
+    sha3_keccakf(ctx->st.q);
+    ctx->pt = 0;
+}
+
+void digestif_sha3_out(struct sha3_ctx *ctx, uint8_t *out, size_t len)
+{
+    size_t i;
+    int j;
+
+    j = ctx->pt;
+    for (i = 0; i < len; i++) {
+        if (j >= ctx->rsiz) {
+            sha3_keccakf(ctx->st.q);
+            j = 0;
+        }
+        out[i] = ctx->st.b[j++];
+    }
+    ctx->pt = j;
+
+    return;
+}
+
 // finalize and output a hash
 
 void digestif_sha3_finalize(struct sha3_ctx *ctx, uint8_t *md, uint8_t padding)

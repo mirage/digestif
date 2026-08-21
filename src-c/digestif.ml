@@ -70,6 +70,33 @@ module type S = sig
   val get_into_bytes : ctx -> ?off:int -> bytes -> unit
 end
 
+module type XOF = sig
+  type ctx
+  type xof
+  val empty : ctx
+  val init : unit -> ctx
+  val feed_bytes : ctx -> ?off:int -> ?len:int -> Bytes.t -> ctx
+  val feed_string : ctx -> ?off:int -> ?len:int -> String.t -> ctx
+  val feed_bigstring : ctx -> ?off:int -> ?len:int -> bigstring -> ctx
+  val feedi_bytes : ctx -> Bytes.t iter -> ctx
+  val feedi_string : ctx -> String.t iter -> ctx
+  val feedi_bigstring : ctx -> bigstring iter -> ctx
+  val xof : ctx -> xof
+  val dup : xof -> xof
+  val squeeze : xof -> int -> string
+  val squeeze_into_bytes : xof -> ?off:int -> ?len:int -> Bytes.t -> unit
+  val squeeze_into_bigstring : xof -> ?off:int -> ?len:int -> bigstring -> unit
+  val digest_bytes : size:int -> ?off:int -> ?len:int -> Bytes.t -> string
+  val digest_string : size:int -> ?off:int -> ?len:int -> String.t -> string
+  val digest_bigstring : size:int -> ?off:int -> ?len:int -> bigstring -> string
+  val digesti_bytes : size:int -> Bytes.t iter -> string
+  val digesti_string : size:int -> String.t iter -> string
+  val digesti_bigstring : size:int -> bigstring iter -> string
+  val digestv_bytes : size:int -> Bytes.t list -> string
+  val digestv_string : size:int -> String.t list -> string
+  val digestv_bigstring : size:int -> bigstring list -> string
+end
+
 module type MAC = sig
   type t
 
@@ -585,6 +612,190 @@ end) : S = struct
         let digest_size, block_size = (D.digest_size, 64)
       end)
 end
+
+module type Foreign_XOF = sig
+  open Native
+
+  module Bigstring : sig
+    val init : ctx -> unit
+    val update : ctx -> ba -> int -> int -> unit
+    val out : ctx -> ba -> int -> int -> unit
+  end
+
+  module Bytes : sig
+    val init : ctx -> unit
+    val update : ctx -> st -> int -> int -> unit
+    val out : ctx -> st -> int -> int -> unit
+  end
+
+  val xof : ctx -> unit
+  val ctx_size : unit -> int
+end
+
+module Make_XOF (F : Foreign_XOF) = struct
+  type ctx = Native.ctx
+  type xof = Native.ctx
+
+  let ctx_size = F.ctx_size ()
+
+  let init () =
+    let t = By.create ctx_size in
+    F.Bytes.init t ;
+    t
+
+  let empty =
+    let t = By.create ctx_size in
+    F.Bytes.init t ;
+    t
+
+  let unsafe_feed_bytes t ?off ?len buf =
+    let off, len =
+      match (off, len) with
+      | Some off, Some len -> (off, len)
+      | Some off, None -> (off, By.length buf - off)
+      | None, Some len -> (0, len)
+      | None, None -> (0, By.length buf) in
+    if off < 0 || len < 0 || off > By.length buf - len
+    then invalid_arg "offset out of bounds"
+    else F.Bytes.update t buf off len
+
+  let unsafe_feed_bigstring t ?off ?len buf =
+    let off, len =
+      match (off, len) with
+      | Some off, Some len -> (off, len)
+      | Some off, None -> (off, Bi.length buf - off)
+      | None, Some len -> (0, len)
+      | None, None -> (0, Bi.length buf) in
+    if off < 0 || len < 0 || off > Bi.length buf - len
+    then invalid_arg "offset out of bounds"
+    else F.Bigstring.update t buf off len
+
+  let feed_bytes t ?off ?len buf =
+    let t = Native.dup t in
+    unsafe_feed_bytes t ?off ?len buf ;
+    t
+
+  let feed_string t ?off ?len buf =
+    feed_bytes t ?off ?len (Bytes.unsafe_of_string buf)
+
+  let feed_bigstring t ?off ?len buf =
+    let t = Native.dup t in
+    unsafe_feed_bigstring t ?off ?len buf ;
+    t
+
+  let feedi_bytes t iter =
+    let t = Native.dup t in
+    let feed buf = unsafe_feed_bytes t buf in
+    iter feed ;
+    t
+
+  let feedi_string t iter =
+    let t = Native.dup t in
+    let feed buf = unsafe_feed_bytes t (Bytes.unsafe_of_string buf) in
+    iter feed ;
+    t
+
+  let feedi_bigstring t iter =
+    let t = Native.dup t in
+    let feed buf = unsafe_feed_bigstring t buf in
+    iter feed ;
+    t
+
+  let xof t =
+    let t = Native.dup t in
+    F.xof t ;
+    t
+
+  let dup = Native.dup
+
+  let squeeze t n =
+    if n < 0 then invalid_arg "negative output length" ;
+    let res = By.create n in
+    F.Bytes.out t res 0 n ;
+    By.unsafe_to_string res
+
+  let squeeze_into_bytes t ?(off = 0) ?len buf =
+    let len = match len with Some len -> len | None -> By.length buf - off in
+    if off < 0 || len < 0 || off > By.length buf - len
+    then invalid_arg "offset out of bounds" ;
+    F.Bytes.out t buf off len
+
+  let squeeze_into_bigstring t ?(off = 0) ?len buf =
+    let len = match len with Some len -> len | None -> Bi.length buf - off in
+    if off < 0 || len < 0 || off > Bi.length buf - len
+    then invalid_arg "offset out of bounds" ;
+    F.Bigstring.out t buf off len
+
+  let digest_bytes ~size ?off ?len buf =
+    squeeze (xof (feed_bytes empty ?off ?len buf)) size
+
+  let digest_string ~size ?off ?len buf =
+    digest_bytes ~size ?off ?len (Bytes.unsafe_of_string buf)
+
+  let digest_bigstring ~size ?off ?len buf =
+    squeeze (xof (feed_bigstring empty ?off ?len buf)) size
+
+  let digesti_bytes ~size iter = squeeze (xof (feedi_bytes empty iter)) size
+  let digesti_string ~size iter = squeeze (xof (feedi_string empty iter)) size
+
+  let digesti_bigstring ~size iter =
+    squeeze (xof (feedi_bigstring empty iter)) size
+
+  let digestv_bytes ~size lst = digesti_bytes ~size (fun f -> List.iter f lst)
+  let digestv_string ~size lst = digesti_string ~size (fun f -> List.iter f lst)
+
+  let digestv_bigstring ~size lst =
+    digesti_bigstring ~size (fun f -> List.iter f lst)
+end
+
+(* An XOF pinned to a fixed output length is an ordinary hash: pad, then
+   squeeze exactly [digest_size] bytes.  This lets Make provide the whole S
+   interface, HMAC included, unchanged. *)
+module Foreign_of_XOF
+    (F : Foreign_XOF) (D : sig
+      val digest_size : int
+    end) : Foreign = struct
+  module Bigstring = struct
+    let init = F.Bigstring.init
+    let update = F.Bigstring.update
+
+    let finalize ctx dst off =
+      F.xof ctx ;
+      F.Bigstring.out ctx dst off D.digest_size
+  end
+
+  module Bytes = struct
+    let init = F.Bytes.init
+    let update = F.Bytes.update
+
+    let finalize ctx dst off =
+      F.xof ctx ;
+      F.Bytes.out ctx dst off D.digest_size
+  end
+
+  let ctx_size = F.ctx_size
+end
+
+module SHAKE128 : XOF = Make_XOF (Native.SHAKE128)
+module SHAKE256 : XOF = Make_XOF (Native.SHAKE256)
+
+module Make_SHAKE128 (D : sig
+  val digest_size : int
+end) : S =
+  Make
+    (Foreign_of_XOF (Native.SHAKE128) (D))
+    (struct
+      let digest_size, block_size = (D.digest_size, 168)
+    end)
+
+module Make_SHAKE256 (D : sig
+  val digest_size : int
+end) : S =
+  Make
+    (Foreign_of_XOF (Native.SHAKE256) (D))
+    (struct
+      let digest_size, block_size = (D.digest_size, 136)
+    end)
 
 type 'k hash =
   | MD5 : MD5.t hash

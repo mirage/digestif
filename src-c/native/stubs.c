@@ -36,6 +36,16 @@
       _ba_uint8_off (src, off), Int_val (len));                              \
     return Val_unit;                                                         \
   }
+
+#define __define_shake_ba_update(n)                                          \
+  CAMLprim value                                                             \
+  caml_digestif_shake_ ## n ## _ba_update                                    \
+      (value ctx, value src, value off, value len) {                         \
+    digestif_sha3_update (                                                   \
+      (struct sha3_ctx *) String_val (ctx),                                  \
+      _ba_uint8_off (src, off), Int_val (len));                              \
+    return Val_unit;                                                         \
+  }
 #else
 /* XXX(dinosaure): even if they are not defined (only defined by
  * [caml/threads.h]), they exists without [threads.cmxa]. For compatibility
@@ -68,6 +78,22 @@ CAMLextern void caml_leave_blocking_section (void);
 #define __define_sha3_ba_update(mdlen)                                       \
   CAMLprim value                                                             \
   caml_digestif_sha3_ ## mdlen ## _ba_update                                 \
+      (value ctx, value src, value off, value len) {                         \
+    CAMLparam4 (ctx, src, off, len);                                         \
+    uint8_t *off_ = ((uint8_t*) Caml_ba_data_val(src)) + Long_val (off);     \
+    uint32_t len_ = Long_val (len);                                          \
+    struct sha3_ctx ctx_;                                                    \
+    memcpy(&ctx_, Bytes_val(ctx), sizeof(struct sha3_ctx));                  \
+    caml_enter_blocking_section();                                           \
+    digestif_sha3_update (&ctx_, off_, len_);                                \
+    caml_leave_blocking_section();                                           \
+    memcpy(Bytes_val(ctx), &ctx_, sizeof(struct sha3_ctx));                  \
+    CAMLreturn (Val_unit);                                                   \
+  }
+
+#define __define_shake_ba_update(n)                                          \
+  CAMLprim value                                                             \
+  caml_digestif_shake_ ## n ## _ba_update                                    \
       (value ctx, value src, value off, value len) {                         \
     CAMLparam4 (ctx, src, off, len);                                         \
     uint8_t *off_ = ((uint8_t*) Caml_ba_data_val(src)) + Long_val (off);     \
@@ -293,3 +319,70 @@ __define_hash_sha3 (224)
 __define_hash_sha3 (256)
 __define_hash_sha3 (384)
 __define_hash_sha3 (512)
+
+
+/* SHAKE-<n>.  digestif_sha3_init derives the sponge rate from the digest
+   length, so init(ctx, 128) and init(ctx, 256) give rsiz = 168 and 136, the
+   SHAKE128 and SHAKE256 rates.  ctx->mdlen is unused in this mode: the output
+   length is always passed explicitly to the squeeze. */
+
+#define __define_hash_shake(n)                                               \
+                                                                             \
+  CAMLprim value                                                             \
+  caml_digestif_shake_ ## n ## _ba_init (value ctx) {                        \
+    digestif_sha3_init ((struct sha3_ctx *) String_val (ctx), n);            \
+    return Val_unit;                                                         \
+  }                                                                          \
+                                                                             \
+  CAMLprim value                                                             \
+  caml_digestif_shake_ ## n ## _st_init (value ctx) {                        \
+    digestif_sha3_init ((struct sha3_ctx *) String_val (ctx), n);            \
+    return Val_unit;                                                         \
+  }                                                                          \
+                                                                             \
+  __define_shake_ba_update(n)                                                \
+                                                                             \
+  CAMLprim value                                                             \
+  caml_digestif_shake_ ## n ## _st_update                                    \
+      (value ctx, value src, value off, value len) {                         \
+    digestif_sha3_update (                                                   \
+      (struct sha3_ctx *) String_val (ctx),                                  \
+      _st_uint8_off (src, off), Int_val (len));                              \
+    return Val_unit;                                                         \
+  }                                                                          \
+                                                                             \
+  CAMLprim value                                                             \
+  caml_digestif_shake_ ## n ## _ctx_size (__unit ()) {                       \
+    return Val_int (SHA3_CTX_SIZE);                                          \
+  }
+
+__define_hash_shake (128)
+__define_hash_shake (256)
+
+/* The pad and the squeeze do not depend on the rate, so they are shared
+   between SHAKE128 and SHAKE256.  0x1F is the FIPS 202 SHAKE domain
+   separator. */
+
+CAMLprim value
+caml_digestif_shake_xof (value ctx) {
+  digestif_sha3_xof ((struct sha3_ctx *) String_val (ctx), 0x1f);
+  return Val_unit;
+}
+
+CAMLprim value
+caml_digestif_shake_ba_out
+(value ctx, value dst, value off, value len) {
+  digestif_sha3_out (
+    (struct sha3_ctx *) String_val (ctx),
+    _ba_uint8_off (dst, off), (size_t) Long_val (len));
+  return Val_unit;
+}
+
+CAMLprim value
+caml_digestif_shake_st_out
+(value ctx, value dst, value off, value len) {
+  digestif_sha3_out (
+    (struct sha3_ctx *) String_val (ctx),
+    _st_uint8_off (dst, off), (size_t) Long_val (len));
+  return Val_unit;
+}
