@@ -40,6 +40,40 @@ void digestif_sha384_init(struct sha512_ctx *ctx)
 	ctx->h[7] = 0x47b5481dbefa4fa4ULL;
 }
 
+/* SHA-512/224 and SHA-512/256 are SHA-512 with a different initial hash
+   value and a truncated output; the message schedule, compression function
+   and padding are untouched.  The initial values are the ones published in
+   FIPS 180-4 5.3.6, i.e. the output of the "SHA-512/t IV generation
+   function" for t = 224 and t = 256. */
+
+void digestif_sha512_224_init(struct sha512_224_ctx *ctx)
+{
+	memset(ctx, 0, sizeof(*ctx));
+
+	ctx->h[0] = 0x8c3d37c819544da2ULL;
+	ctx->h[1] = 0x73e1996689dcd4d6ULL;
+	ctx->h[2] = 0x1dfab7ae32ff9c82ULL;
+	ctx->h[3] = 0x679dd514582f9fcfULL;
+	ctx->h[4] = 0x0f6d2b697bd44da8ULL;
+	ctx->h[5] = 0x77e36f7304c48942ULL;
+	ctx->h[6] = 0x3f9d85a86a1d36c8ULL;
+	ctx->h[7] = 0x1112e6ad91d692a1ULL;
+}
+
+void digestif_sha512_256_init(struct sha512_256_ctx *ctx)
+{
+	memset(ctx, 0, sizeof(*ctx));
+
+	ctx->h[0] = 0x22312194fc2bf72cULL;
+	ctx->h[1] = 0x9f555fa3c84c64c2ULL;
+	ctx->h[2] = 0x2393b86b6f53b151ULL;
+	ctx->h[3] = 0x963877195940eabdULL;
+	ctx->h[4] = 0x96283ee2a88effe3ULL;
+	ctx->h[5] = 0xbe5e1e2553863992ULL;
+	ctx->h[6] = 0x2b0199fc2c85b8aaULL;
+	ctx->h[7] = 0x0eb72ddc81c52ca2ULL;
+}
+
 void digestif_sha512_init(struct sha512_ctx *ctx)
 {
 	memset(ctx, 0, sizeof(*ctx));
@@ -132,6 +166,16 @@ void digestif_sha384_update(struct sha384_ctx *ctx, uint8_t *data, uint32_t len)
 	digestif_sha512_update(ctx, data, len);
 }
 
+void digestif_sha512_224_update(struct sha512_224_ctx *ctx, uint8_t *data, uint32_t len)
+{
+	digestif_sha512_update(ctx, data, len);
+}
+
+void digestif_sha512_256_update(struct sha512_256_ctx *ctx, uint8_t *data, uint32_t len)
+{
+	digestif_sha512_update(ctx, data, len);
+}
+
 void digestif_sha512_update(struct sha512_ctx *ctx, uint8_t *data, uint32_t len)
 {
 	unsigned int index, to_fill;
@@ -168,6 +212,26 @@ void digestif_sha384_finalize(struct sha384_ctx *ctx, uint8_t *out)
 
 	digestif_sha512_finalize(ctx, intermediate);
 	memcpy(out, intermediate, SHA384_DIGEST_SIZE);
+}
+
+/* digestif_sha512_finalize writes SHA512_DIGEST_SIZE bytes unconditionally,
+   so truncate through a full-size scratch buffer rather than handing it a
+   short destination.  Same shape as digestif_sha384_finalize above. */
+
+void digestif_sha512_224_finalize(struct sha512_224_ctx *ctx, uint8_t *out)
+{
+	uint8_t intermediate[SHA512_DIGEST_SIZE];
+
+	digestif_sha512_finalize(ctx, intermediate);
+	memcpy(out, intermediate, SHA512_224_DIGEST_SIZE);
+}
+
+void digestif_sha512_256_finalize(struct sha512_256_ctx *ctx, uint8_t *out)
+{
+	uint8_t intermediate[SHA512_DIGEST_SIZE];
+
+	digestif_sha512_finalize(ctx, intermediate);
+	memcpy(out, intermediate, SHA512_256_DIGEST_SIZE);
 }
 
 void digestif_sha512_finalize(struct sha512_ctx *ctx, uint8_t *out)

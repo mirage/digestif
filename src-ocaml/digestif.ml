@@ -415,6 +415,20 @@ module SHA512 : S =
       let digest_size, block_size = (64, 128)
     end)
 
+module SHA512_224 : S =
+  Make
+    (Baijiu_sha512_224.Unsafe)
+    (struct
+      let digest_size, block_size = (28, 128)
+    end)
+
+module SHA512_256 : S =
+  Make
+    (Baijiu_sha512_256.Unsafe)
+    (struct
+      let digest_size, block_size = (32, 128)
+    end)
+
 module SHA3_224 : S =
   Make
     (Baijiu_sha3_224.Unsafe)
@@ -535,6 +549,8 @@ type 'k hash =
   | SHA256 : SHA256.t hash
   | SHA384 : SHA384.t hash
   | SHA512 : SHA512.t hash
+  | SHA512_224 : SHA512_224.t hash
+  | SHA512_256 : SHA512_256.t hash
   | SHA3_224 : SHA3_224.t hash
   | SHA3_256 : SHA3_256.t hash
   | KECCAK_224 : KECCAK_224.t hash
@@ -554,6 +570,8 @@ let sha224 = SHA224
 let sha256 = SHA256
 let sha384 = SHA384
 let sha512 = SHA512
+let sha512_224 = SHA512_224
+let sha512_256 = SHA512_256
 let sha3_224 = SHA3_224
 let sha3_256 = SHA3_256
 let keccak_224 = KECCAK_224
@@ -574,6 +592,8 @@ type hash' =
   | `SHA256
   | `SHA384
   | `SHA512
+  | `SHA512_224
+  | `SHA512_256
   | `SHA3_224
   | `SHA3_256
   | `KECCAK_224
@@ -594,6 +614,8 @@ let hash_to_hash' : type a. a hash -> hash' = function
   | SHA256 -> `SHA256
   | SHA384 -> `SHA384
   | SHA512 -> `SHA512
+  | SHA512_224 -> `SHA512_224
+  | SHA512_256 -> `SHA512_256
   | SHA3_224 -> `SHA3_224
   | SHA3_256 -> `SHA3_256
   | KECCAK_224 -> `KECCAK_224
@@ -614,6 +636,8 @@ let module_of_hash' : hash' -> (module S) = function
   | `SHA256 -> (module SHA256)
   | `SHA384 -> (module SHA384)
   | `SHA512 -> (module SHA512)
+  | `SHA512_224 -> (module SHA512_224)
+  | `SHA512_256 -> (module SHA512_256)
   | `SHA3_224 -> (module SHA3_224)
   | `SHA3_256 -> (module SHA3_256)
   | `KECCAK_224 -> (module KECCAK_224)
@@ -634,6 +658,8 @@ let module_of : type k. k hash -> (module S with type t = k) = function
   | SHA256 -> (module SHA256)
   | SHA384 -> (module SHA384)
   | SHA512 -> (module SHA512)
+  | SHA512_224 -> (module SHA512_224)
+  | SHA512_256 -> (module SHA512_256)
   | SHA3_224 -> (module SHA3_224)
   | SHA3_256 -> (module SHA3_256)
   | KECCAK_224 -> (module KECCAK_224)
@@ -761,6 +787,8 @@ let of_sha224 hash = hash
 let of_sha256 hash = hash
 let of_sha384 hash = hash
 let of_sha512 hash = hash
+let of_sha512_224 hash = hash
+let of_sha512_256 hash = hash
 let of_sha3_224 hash = hash
 let of_sha3_256 hash = hash
 let of_keccak_224 hash = hash

@@ -19,6 +19,8 @@ let title : type a k.
      | Digestif.SHA256 -> Fmt.string ppf "sha256"
      | Digestif.SHA384 -> Fmt.string ppf "sha384"
      | Digestif.SHA512 -> Fmt.string ppf "sha512"
+     | Digestif.SHA512_224 -> Fmt.string ppf "sha512_224"
+     | Digestif.SHA512_256 -> Fmt.string ppf "sha512_256"
      | Digestif.SHA3_224 -> Fmt.string ppf "sha3_224"
      | Digestif.SHA3_256 -> Fmt.string ppf "sha3_256"
      | Digestif.KECCAK_224 -> Fmt.string ppf "keccak_224"
@@ -249,6 +251,26 @@ let results_sha512 =
     "f6ecfca37d2abcff4b362f1919629e784c4b618af77e1061bb992c11d7f518716f5df5978b0a1455d68ceeb10ced9251306d2f26181407be76a219d48c36b592";
   ]
   |> List.map (Digestif.of_hex Digestif.sha512)
+
+let results_sha512_224 =
+  [
+    "1708d88b4183d55e97de2d14ae1d4223c6c043ee6c8196359cfe9194";
+    "4a530b31a79ebcce36916546317c45f247d83241dfb818fd37254bde";
+    "93cffdcacc5a6d672803666b802a42e2f247e92a20e5e974fa6aa490";
+    "ce0ae8146bc41dfb77b8ca152a3b423aad307665b5235ad5cddd4e28";
+    "ed3c1a6c2684e57ce10845d0e4bb572ba785826bf454f9871faa2ea8";
+  ]
+  |> List.map (Digestif.of_hex Digestif.sha512_224)
+
+let results_sha512_256 =
+  [
+    "f966d977e8ddecd122eaeed90a29b7c187df3deef0343249f7af5c74e0c7bf93";
+    "6df7b24630d5ccb2ee335407081a87188c221489768fa2020513b2d593359456";
+    "210aa172bd5a753f2466ffa70532cd0a19ea8fc2201079b271752c37c08bf042";
+    "87e525d2d07cd88767677ee7cc538a7318d23f86f25d6e304743b6f0e8eed756";
+    "3a05fa84d8d2c45026b2f70f9ba3e9cabd9a253b31e9f1e7bd1361b9f76c8419";
+  ]
+  |> List.map (Digestif.of_hex Digestif.sha512_256)
 
 let results_sha3_224 =
   [
@@ -614,6 +636,16 @@ let sha3_vector_tests filename =
   go () ;
   close_in ic
 
+let sha512t_of_name str =
+  match Astring.String.cut ~sep:":" str with
+  | None -> Fmt.invalid_arg "Invalid line: %S" str
+  | Some (_name, value) -> (
+      let value = Astring.String.trim value in
+      match value with
+      | "SHA-512/224" -> V Digestif.sha512_224
+      | "SHA-512/256" -> V Digestif.sha512_256
+      | v -> Fmt.invalid_arg "Invalid kind of hash: %s" v)
+
 let keccak_of_name str =
   match Astring.String.cut ~sep:":" str with
   | None -> Fmt.invalid_arg "Invalid line: %S" str
@@ -626,11 +658,11 @@ let keccak_of_name str =
       | "KECCAK-512" -> V Digestif.keccak_512
       | v -> Fmt.invalid_arg "Invalid kind of hash: %s" v)
 
-let keccak_vector_tests filename =
+let named_vector_tests of_name filename =
   Alcotest.test_case filename `Quick @@ fun () ->
   let ic = open_in filename in
   let _algorithm_type = input_line ic in
-  let (V hash) = keccak_of_name (input_line ic) in
+  let (V hash) = of_name (input_line ic) in
   let rec go () =
     try
       let comment = parse_field (input_line ic) in
@@ -647,6 +679,9 @@ let keccak_vector_tests filename =
     with End_of_file -> () in
   go () ;
   close_in ic
+
+let keccak_vector_tests = named_vector_tests keccak_of_name
+let sha512t_vector_tests = named_vector_tests sha512t_of_name
 
 let tests () =
   Alcotest.run "digestif"
@@ -687,6 +722,18 @@ let tests () =
       ( "sha512 (bigstring)",
         makes ~name:"sha512" bigstring Digestif.sha512 keys_st inputs_bi
           results_sha512 );
+      ( "sha512_224",
+        makes ~name:"sha512_224" bytes Digestif.sha512_224 keys_st inputs_by
+          results_sha512_224 );
+      ( "sha512_224 (bigstring)",
+        makes ~name:"sha512_224" bigstring Digestif.sha512_224 keys_st inputs_bi
+          results_sha512_224 );
+      ( "sha512_256",
+        makes ~name:"sha512_256" bytes Digestif.sha512_256 keys_st inputs_by
+          results_sha512_256 );
+      ( "sha512_256 (bigstring)",
+        makes ~name:"sha512_256" bigstring Digestif.sha512_256 keys_st inputs_bi
+          results_sha512_256 );
       ( "sha3_224",
         makes ~name:"sha3_224" bytes Digestif.sha3_224 keys_st inputs_by
           results_sha3_224 );
@@ -748,7 +795,7 @@ let tests () =
       ( "blake2b (specialization)",
         [ blake2b_spe 32; blake2b_spe 64; blake2b_spe 16 ] );
       ("ripemd160", RMD160.tests);
-      ( "sha3 (vector tests)",
+      ( "vector tests",
         [
           sha3_vector_tests "../sha3_224_fips_202.txt";
           sha3_vector_tests "../sha3_256_fips_202.txt";
@@ -758,6 +805,8 @@ let tests () =
           keccak_vector_tests "../keccak_256.txt";
           keccak_vector_tests "../keccak_384.txt";
           keccak_vector_tests "../keccak_512.txt";
+          sha512t_vector_tests "../sha512_224.txt";
+          sha512t_vector_tests "../sha512_256.txt";
         ] );
     ]
 

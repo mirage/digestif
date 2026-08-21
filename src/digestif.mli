@@ -231,6 +231,22 @@ module SHA256 : S
 module SHA384 : S
 module SHA512 : S
 
+module SHA512_224 : S
+(** SHA-512/224 hash algorithm.
+
+    SHA-512 with the FIPS 180-4 initial hash value for [t = 224] and the
+    output truncated to 28 bytes.  Distinct from {!SHA224}.
+
+    @since 1.4.0 *)
+
+module SHA512_256 : S
+(** SHA-512/256 hash algorithm.
+
+    SHA-512 with the FIPS 180-4 initial hash value for [t = 256] and the
+    output truncated to 32 bytes.  Distinct from {!SHA256}.
+
+    @since 1.4.0 *)
+
 module SHA3_224 : S
 (** SHA3 224 hash algorithm.
 
@@ -319,6 +335,8 @@ type 'k hash =
   | SHA256 : SHA256.t hash
   | SHA384 : SHA384.t hash
   | SHA512 : SHA512.t hash
+  | SHA512_224 : SHA512_224.t hash
+  | SHA512_256 : SHA512_256.t hash
   | SHA3_224 : SHA3_224.t hash
   | SHA3_256 : SHA3_256.t hash
   | KECCAK_224 : KECCAK_224.t hash
@@ -339,6 +357,8 @@ type hash' =
   | `SHA256
   | `SHA384
   | `SHA512
+  | `SHA512_224
+  | `SHA512_256
   | `SHA3_224
   | `SHA3_256
   | `KECCAK_224
@@ -360,6 +380,8 @@ val sha224 : SHA224.t hash
 val sha256 : SHA256.t hash
 val sha384 : SHA384.t hash
 val sha512 : SHA512.t hash
+val sha512_224 : SHA512_224.t hash
+val sha512_256 : SHA512_256.t hash
 val sha3_224 : SHA3_224.t hash
 val sha3_256 : SHA3_256.t hash
 val keccak_224 : KECCAK_224.t hash
@@ -406,6 +428,12 @@ val of_sha224 : SHA224.t -> SHA224.t t
 val of_sha256 : SHA256.t -> SHA256.t t
 val of_sha384 : SHA384.t -> SHA384.t t
 val of_sha512 : SHA512.t -> SHA512.t t
+
+val of_sha512_224 : SHA512_224.t -> SHA512_224.t t
+(** @since 1.4.0 *)
+
+val of_sha512_256 : SHA512_256.t -> SHA512_256.t t
+(** @since 1.4.0 *)
 
 val of_sha3_224 : SHA3_224.t -> SHA3_224.t t
 (** @since 0.9.0 *)

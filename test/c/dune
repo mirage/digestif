@@ -16,7 +16,9 @@
   ../keccak_224.txt
   ../keccak_256.txt
   ../keccak_384.txt
-  ../keccak_512.txt)
+  ../keccak_512.txt
+  ../sha512_224.txt
+  ../sha512_256.txt)
  (action
   (run %{test} --color=always)))
 
