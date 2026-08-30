@@ -3,7 +3,7 @@ Name:  SHAKE128
 Comment: length 0
 Message: ""
 OutputLen: 0
-Digest: 
+Digest:
 Test: Verify
 Comment: length 8
 Message: e9
