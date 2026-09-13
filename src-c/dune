@@ -7,8 +7,8 @@
    digestif_bi)
  (foreign_stubs
   (language c)
-  (names blake2b blake2s md5 ripemd160 sha1 sha256 sha512 sha3 whirlpool misc
-    stubs)
+  (names blake2b blake2s blake3 md5 ripemd160 sha1 sha256 sha512 sha3
+    whirlpool misc stubs)
   (flags
    (:standard -I./native/)))
  (flags

@@ -6,7 +6,7 @@ let hash =
   choose
     [
       const (Pack Digestif.sha1); const (Pack Digestif.sha256);
-      const (Pack Digestif.sha512);
+      const (Pack Digestif.sha512); const (Pack Digestif.blake3);
     ]
 
 let with_get_into_bytes off len (type ctx)
@@ -17,7 +17,7 @@ let with_get_into_bytes off len (type ctx)
     with Invalid_argument e -> (
       (* Skip if the invalid argument is valid; otherwise fail *)
       match Bytes.sub buf off Hash.digest_size with
-      | _ -> failf "Hash.get_into_bytes: Invalid_argument %S" e
+      | _ -> fail (Printf.sprintf "Hash.get_into_bytes: Invalid_argument %S" e)
       | exception Invalid_argument _ -> bad_test ()) in
   Bytes.sub_string buf off Hash.digest_size
 

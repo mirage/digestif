@@ -26,7 +26,8 @@ let title : type a k.
      | Digestif.SHA3_512 -> Fmt.string ppf "sha3_512"
      | Digestif.WHIRLPOOL -> Fmt.string ppf "whirlpool"
      | Digestif.BLAKE2B -> Fmt.string ppf "blake2b"
-     | Digestif.BLAKE2S -> Fmt.string ppf "blake2s" in
+     | Digestif.BLAKE2S -> Fmt.string ppf "blake2s"
+     | Digestif.BLAKE3 -> Fmt.string ppf "blake3" in
   let pp_input : type a. a s Fmt.t =
    fun ppf -> function
      | Bytes -> Fmt.string ppf "bytes"
@@ -451,6 +452,153 @@ module BLAKE2 = struct
     tests (module Digestif.BLAKE2B.Keyed) Digestif.blake2b input_blake2b_file
 end
 
+module BLAKE3 = struct
+  (* Expected outputs are from BLAKE3 1.8.7's official test vectors.
+     See src-c/native/blake3.c for the pinned source. *)
+  let key = "whats the Elvish word for friend"
+  let context = "BLAKE3 2019-12-27 16:29:52 test vectors context"
+  let input len = String.init len (fun i -> Char.chr (i mod 251))
+
+  let vectors =
+    [
+      ( 0,
+        "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+        "92b2b75604ed3c761f9d6f62392c8a9227ad0ea3f09573e783f1498a4ed60d26",
+        "2cc39783c223154fea8dfb7c1b1660f2ac2dcbd1c1de8277b0b0dd39b7e50d7d" );
+      ( 1,
+        "2d3adedff11b61f14c886e35afa036736dcd87a74d27b5c1510225d0f592e213",
+        "6d7878dfff2f485635d39013278ae14f1454b8c0a3a2d34bc1ab38228a80c95b",
+        "b3e2e340a117a499c6cf2398a19ee0d29cca2bb7404c73063382693bf66cb06c" );
+      ( 1023,
+        "10108970eeda3eb932baac1428c7a2163b0e924c9a9e25b35bba72b28f70bd11",
+        "c951ecdf03288d0fcc96ee3413563d8a6d3589547f2c2fb36d9786470f1b9d6e",
+        "74a16c1c3d44368a86e1ca6df64be6a2f64cce8f09220787450722d85725dea5" );
+      ( 1024,
+        "42214739f095a406f3fc83deb889744ac00df831c10daa55189b5d121c855af7",
+        "75c46f6f3d9eb4f55ecaaee480db732e6c2105546f1e675003687c31719c7ba4",
+        "7356cd7720d5b66b6d0697eb3177d9f8d73a4a5c5e968896eb6a689684302706" );
+      ( 1025,
+        "d00278ae47eb27b34faecf67b4fe263f82d5412916c1ffd97c8cb7fb814b8444",
+        "357dc55de0c7e382c900fd6e320acc04146be01db6a8ce7210b7189bd664ea69",
+        "effaa245f065fbf82ac186839a249707c3bddf6d3fdda22d1b95a3c970379bcb" );
+      ( 2048,
+        "e776b6028c7cd22a4d0ba182a8bf62205d2ef576467e838ed6f2529b85fba24a",
+        "879cf1fa2ea0e79126cb1063617a05b6ad9d0b696d0d757cf053439f60a99dd1",
+        "7b2945cb4fef70885cc5d78a87bf6f6207dd901ff239201351ffac04e1088a23" );
+      ( 2049,
+        "5f4d72f40d7a5f82b15ca2b2e44b1de3c2ef86c426c95c1af0b6879522563030",
+        "9f29700902f7c86e514ddc4df1e3049f258b2472b6dd5267f61bf13983b78dd5",
+        "2ea477c5515cc3dd606512ee72bb3e0e758cfae7232826f35fb98ca1bcbdf273" );
+      ( 4096,
+        "015094013f57a5277b59d8475c0501042c0b642e531b0a1c8f58d2163229e969",
+        "befc660aea2f1718884cd8deb9902811d332f4fc4a38cf7c7300d597a081bfc0",
+        "1e0d7f3db8c414c97c6307cbda6cd27ac3b030949da8e23be1a1a924ad2f25b9" );
+    ]
+
+  let hash = Alcotest.testable Digestif.BLAKE3.pp Digestif.BLAKE3.equal
+
+  let check_vector (len, expected, expected_keyed, expected_derive_key) =
+    let input = input len in
+    let expected = Digestif.BLAKE3.of_hex expected in
+    let expected_keyed = Digestif.BLAKE3.of_hex expected_keyed in
+    let expected_derive_key = Digestif.BLAKE3.of_hex expected_derive_key in
+    Alcotest.check hash "hash" expected (Digestif.BLAKE3.digest_string input) ;
+    Alcotest.check hash "keyed" expected_keyed
+      (Digestif.BLAKE3.Keyed.mac_string ~key input) ;
+    Alcotest.check hash "derive-key" expected_derive_key
+      (Digestif.BLAKE3.Derive_key.derive_key_string ~context input) ;
+    let rec feed ctx off =
+      if off = len
+      then ctx
+      else
+        let amount = min 17 (len - off) in
+        feed
+          (Digestif.BLAKE3.feed_string ctx ~off ~len:amount input)
+          (off + amount) in
+    Alcotest.check hash "streaming" expected
+      (Digestif.BLAKE3.get (feed Digestif.BLAKE3.empty 0)) ;
+    let biginput = to_bigstring (Bytes.of_string ("\xff" ^ input ^ "\xff")) in
+    let rec feed_bigstring ctx off =
+      if off = len
+      then ctx
+      else
+        let amount = min 17 (len - off) in
+        feed_bigstring
+          (Digestif.BLAKE3.feed_bigstring ctx ~off:(off + 1) ~len:amount
+             biginput)
+          (off + amount) in
+    List.iter
+      (fun (ctx, expected) ->
+        let before = Digestif.BLAKE3.get ctx in
+        Alcotest.check hash "bigstring with offset" expected
+          (Digestif.BLAKE3.get
+             (Digestif.BLAKE3.feed_bigstring ctx ~off:1 ~len biginput)) ;
+        Alcotest.check hash "streaming bigstring" expected
+          (Digestif.BLAKE3.get (feed_bigstring ctx 0)) ;
+        Alcotest.check hash "original context unchanged" before
+          (Digestif.BLAKE3.get ctx))
+      [
+        (Digestif.BLAKE3.empty, expected);
+        (Digestif.BLAKE3.init_keyed ~key, expected_keyed);
+        (Digestif.BLAKE3.init_derive_key ~context, expected_derive_key);
+      ]
+
+  let vector_tests =
+    List.map
+      (fun ((len, _, _, _) as vector) ->
+        Alcotest.test_case (Fmt.str "%d bytes" len) `Quick (fun () ->
+            check_vector vector))
+      vectors
+
+  let xof =
+    Alcotest.test_case "XOF and seek" `Quick @@ fun () ->
+    let vectors =
+      [
+        ( "hash",
+          Digestif.BLAKE3.empty,
+          "af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262e00f03e7b69af26b7faaf09fcd333050338ddfe085b8cc869ca98b206c08243a26f5487789e8f660afe6c99ef9e0c52b92e7393024a80459cf91f476f9ffdbda7001c22e159b402631f277ca96f2defdf1078282314e763699a31c5363165421cce14d"
+        );
+        ( "keyed",
+          Digestif.BLAKE3.init_keyed ~key,
+          "92b2b75604ed3c761f9d6f62392c8a9227ad0ea3f09573e783f1498a4ed60d26b18171a2f22a4b94822c701f107153dba24918c4bae4d2945c20ece13387627d3b73cbf97b797d5e59948c7ef788f54372df45e45e4293c7dc18c1d41144a9758be58960856be1eabbe22c2653190de560ca3b2ac4aa692a9210694254c371e851bc8f"
+        );
+        ( "derive-key",
+          Digestif.BLAKE3.init_derive_key ~context,
+          "2cc39783c223154fea8dfb7c1b1660f2ac2dcbd1c1de8277b0b0dd39b7e50d7d905630c8be290dfcf3e6842f13bddd573c098c3f17361f1f206b8cad9d088aa4a3f746752c6b0ce6a83b0da81d59649257cdf8eb3e9f7d4998e41021fac119deefb896224ac99f860011f73609e6e0e4540f93b273e56547dfd3aa1a035ba6689d89a0"
+        );
+      ] in
+    List.iter
+      (fun (mode, ctx, hex) ->
+        let expected = BLAKE2.of_hex 131 hex in
+        List.iter
+          (fun (seek, len) ->
+            let label = Fmt.str "%s seek %d, length %d" mode seek len in
+            let expected = String.sub expected seek len in
+            let seek = Int64.of_int seek in
+            Alcotest.(check string)
+              label expected
+              (Digestif.BLAKE3.get_xof ctx ~seek len) ;
+            let destination = Bytes.make (len + 14) '\xff' in
+            Digestif.BLAKE3.get_xof_into_bytes ctx ~seek ~off:7 ~len destination ;
+            Alcotest.(check string)
+              (label ^ " into bytes")
+              (String.make 7 '\xff' ^ expected ^ String.make 7 '\xff')
+              (Bytes.to_string destination))
+          [
+            (0, 0); (0, 64); (0, 131); (17, 80); (63, 68); (64, 67); (65, 66);
+            (128, 3); (131, 0);
+          ])
+      vectors
+
+  let invalid_key =
+    Alcotest.test_case "key length" `Quick @@ fun () ->
+    Alcotest.check_raises "short key"
+      (Invalid_argument "BLAKE3 keyed mode requires a 32-byte key") (fun () ->
+        ignore (Digestif.BLAKE3.init_keyed ~key:"short"))
+
+  let tests = vector_tests @ [ xof; invalid_key ]
+end
+
 module RMD160 = struct
   let inputs =
     [
@@ -733,7 +881,7 @@ let tests () =
         [ blake2s_spe 32; blake2s_spe 8; blake2s_spe 16 ] );
       ( "blake2b (specialization)",
         [ blake2b_spe 32; blake2b_spe 64; blake2b_spe 16 ] );
-      ("ripemd160", RMD160.tests);
+      ("blake3", BLAKE3.tests); ("ripemd160", RMD160.tests);
       ( "sha3 (vector tests)",
         [
           sha3_vector_tests "../sha3_224_fips_202.txt";
