@@ -129,6 +129,36 @@ CAMLextern void caml_leave_blocking_section (void);
     return Val_int (upper ## _CTX_SIZE);                                     \
   }
 
+struct blake3_ctx {
+  digestif_blake3_hasher hasher;
+};
+
+#define BLAKE3_CTX_SIZE (sizeof(struct blake3_ctx))
+
+static digestif_blake3_hasher *
+blake3_hasher_val(value ctx)
+{
+  return &((struct blake3_ctx *) String_val(ctx))->hasher;
+}
+
+static void
+digestif_blake3_init(struct blake3_ctx *ctx)
+{
+  digestif_blake3_hasher_init(&ctx->hasher);
+}
+
+static void
+digestif_blake3_update(struct blake3_ctx *ctx, uint8_t *data, uint32_t len)
+{
+  digestif_blake3_hasher_update(&ctx->hasher, data, len);
+}
+
+static void
+digestif_blake3_finalize(struct blake3_ctx *ctx, uint8_t *out)
+{
+  digestif_blake3_hasher_finalize(&ctx->hasher, out, BLAKE3_OUT_LEN);
+}
+
 __define_hash (md5, MD5)
 __define_hash (sha1, SHA1)
 __define_hash (sha224, SHA224)
@@ -138,27 +168,14 @@ __define_hash (sha512, SHA512)
 __define_hash (whirlpool, WHIRLPOOL)
 __define_hash (blake2b, BLAKE2B)
 __define_hash (blake2s, BLAKE2S)
+__define_hash (blake3, BLAKE3)
 __define_hash (rmd160, RMD160)
-
-CAMLprim value
-caml_digestif_blake3_ba_init(value ctx)
-{
-  digestif_blake3_hasher_init((digestif_blake3_hasher *) String_val(ctx));
-  return Val_unit;
-}
-
-CAMLprim value
-caml_digestif_blake3_st_init(value ctx)
-{
-  digestif_blake3_hasher_init((digestif_blake3_hasher *) String_val(ctx));
-  return Val_unit;
-}
 
 CAMLprim value
 caml_digestif_blake3_st_init_keyed(value ctx, value key, value off)
 {
   digestif_blake3_hasher_init_keyed(
-    (digestif_blake3_hasher *) String_val(ctx), _st_uint8_off(key, off));
+    blake3_hasher_val(ctx), _st_uint8_off(key, off));
   return Val_unit;
 }
 
@@ -167,57 +184,7 @@ caml_digestif_blake3_st_init_derive_key(value ctx, value context,
                                         value off, value len)
 {
   digestif_blake3_hasher_init_derive_key_raw(
-    (digestif_blake3_hasher *) String_val(ctx),
-    _st_uint8_off(context, off), Int_val(len));
-  return Val_unit;
-}
-
-CAMLprim value
-caml_digestif_blake3_ba_update(value ctx, value src, value off, value len)
-{
-#if defined(__ocaml_freestanding__) || defined(__ocaml_solo5__)
-  digestif_blake3_hasher_update(
-    (digestif_blake3_hasher *) String_val(ctx),
-    _ba_uint8_off(src, off), Int_val(len));
-  return Val_unit;
-#else
-  CAMLparam4(ctx, src, off, len);
-  uint8_t *off_ = _ba_uint8_off(src, off);
-  size_t len_ = Long_val(len);
-  digestif_blake3_hasher ctx_;
-  memcpy(&ctx_, Bytes_val(ctx), sizeof(ctx_));
-  caml_enter_blocking_section();
-  digestif_blake3_hasher_update(&ctx_, off_, len_);
-  caml_leave_blocking_section();
-  memcpy(Bytes_val(ctx), &ctx_, sizeof(ctx_));
-  CAMLreturn(Val_unit);
-#endif
-}
-
-CAMLprim value
-caml_digestif_blake3_st_update(value ctx, value src, value off, value len)
-{
-  digestif_blake3_hasher_update(
-    (digestif_blake3_hasher *) String_val(ctx),
-    _st_uint8_off(src, off), Int_val(len));
-  return Val_unit;
-}
-
-CAMLprim value
-caml_digestif_blake3_ba_finalize(value ctx, value dst, value off)
-{
-  digestif_blake3_hasher_finalize(
-    (digestif_blake3_hasher *) String_val(ctx),
-    _ba_uint8_off(dst, off), BLAKE3_OUT_LEN);
-  return Val_unit;
-}
-
-CAMLprim value
-caml_digestif_blake3_st_finalize(value ctx, value dst, value off)
-{
-  digestif_blake3_hasher_finalize(
-    (digestif_blake3_hasher *) String_val(ctx),
-    _st_uint8_off(dst, off), BLAKE3_OUT_LEN);
+    blake3_hasher_val(ctx), _st_uint8_off(context, off), Int_val(len));
   return Val_unit;
 }
 
@@ -226,15 +193,9 @@ caml_digestif_blake3_st_finalize_seek(value ctx, value seek, value dst,
                                       value off, value len)
 {
   digestif_blake3_hasher_finalize_seek(
-    (digestif_blake3_hasher *) String_val(ctx), Int64_val(seek),
+    blake3_hasher_val(ctx), Int64_val(seek),
     _st_uint8_off(dst, off), Int_val(len));
   return Val_unit;
-}
-
-CAMLprim value
-caml_digestif_blake3_ctx_size(__unit ())
-{
-  return Val_int(sizeof(digestif_blake3_hasher));
 }
 
 CAMLprim value
