@@ -48,6 +48,8 @@ let blit_from_bytes src src_off dst dst_off len =
 external swap32 : int32 -> int32 = "%bswap_int32"
 external swap64 : int64 -> int64 = "%bswap_int64"
 external swapnat : nativeint -> nativeint = "%bswap_native"
+external byte_to_cpu : t -> int -> int = "%caml_ba_unsafe_ref_1"
+external cpu_to_byte : t -> int -> int -> unit = "%caml_ba_unsafe_set_1"
 
 let cpu_to_be32 s i v =
   if Sys.big_endian then unsafe_set_32 s i v else unsafe_set_32 s i (swap32 v)

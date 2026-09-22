@@ -33,6 +33,8 @@ let rpad a size x =
 external swap32 : int32 -> int32 = "%bswap_int32"
 external swap64 : int64 -> int64 = "%bswap_int64"
 external swapnat : nativeint -> nativeint = "%bswap_native"
+external cpu_to_byte : t -> int -> int -> unit = "%bytes_unsafe_set"
+external byte_to_cpu : t -> int -> int = "%bytes_unsafe_get"
 
 let cpu_to_be32 s i v =
   if Sys.big_endian then unsafe_set_32 s i v else unsafe_set_32 s i (swap32 v)
