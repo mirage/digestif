@@ -26,7 +26,7 @@
 #include "sha1.h"
 #include "bitfn.h"
 
-void digestif_sha1_init(struct sha1_ctx *ctx)
+void digestif_sha1_init(sha1_ctx *ctx)
 {
 	memset(ctx, 0, sizeof(*ctx));
 
@@ -53,7 +53,7 @@ void digestif_sha1_init(struct sha1_ctx *ctx)
 #define M(i)  (w[i & 0x0f] = rol32(w[i & 0x0f] ^ w[(i - 14) & 0x0f] \
               ^ w[(i - 8) & 0x0f] ^ w[(i - 3) & 0x0f], 1))
 
-static inline void sha1_do_chunk(struct sha1_ctx *ctx, uint32_t *buf)
+static inline void sha1_do_chunk(sha1_ctx *ctx, uint32_t *buf)
 {
 	uint32_t a, b, c, d, e;
 	uint32_t w[16];
@@ -155,7 +155,7 @@ static inline void sha1_do_chunk(struct sha1_ctx *ctx, uint32_t *buf)
 	ctx->h[4] += e;
 }
 
-void digestif_sha1_update(struct sha1_ctx *ctx, uint8_t *data, uint32_t len)
+void digestif_sha1_update(sha1_ctx *ctx, uint8_t *data, uint32_t len)
 {
 	uint32_t index, to_fill;
 
@@ -182,7 +182,7 @@ void digestif_sha1_update(struct sha1_ctx *ctx, uint8_t *data, uint32_t len)
 		memcpy(ctx->buf + index, data, len);
 }
 
-void digestif_sha1_finalize(struct sha1_ctx *ctx, uint8_t *out)
+void digestif_sha1_finalize(sha1_ctx *ctx, uint8_t *out)
 {
 	static uint8_t padding[64] = { 0x80, };
 	uint64_t bits;

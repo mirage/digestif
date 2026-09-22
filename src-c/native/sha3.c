@@ -104,7 +104,7 @@ static void sha3_keccakf(uint64_t st[25])
 
 // Initialize the context for SHA3
 
-void digestif_sha3_init(struct sha3_ctx *ctx, int mdlen)
+void digestif_sha3_init(sha3_ctx *ctx, int mdlen)
 {
     int i;
     for (i = 0; i < 25; i++)
@@ -118,7 +118,7 @@ void digestif_sha3_init(struct sha3_ctx *ctx, int mdlen)
 
 // update state with more data
 
-void digestif_sha3_update(struct sha3_ctx *ctx, uint8_t *data, uint32_t len)
+void digestif_sha3_update(sha3_ctx *ctx, uint8_t *data, uint32_t len)
 {
     uint32_t i;
     int j;
@@ -138,7 +138,7 @@ void digestif_sha3_update(struct sha3_ctx *ctx, uint8_t *data, uint32_t len)
 
 // finalize and output a hash
 
-void digestif_sha3_finalize(struct sha3_ctx *ctx, uint8_t *md, uint8_t padding)
+void digestif_sha3_finalize(sha3_ctx *ctx, uint8_t *md, uint8_t padding)
 {
     int i;
 

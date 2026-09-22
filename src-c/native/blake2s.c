@@ -37,18 +37,18 @@ static const struct blake2s_param P[] =
     , { 0 } /* salt */
     , { 0 } /* personal */ } };
 
-static void blake2s_increment_counter( struct blake2s_ctx *ctx, const uint32_t inc )
+static void blake2s_increment_counter(blake2s_ctx *ctx, const uint32_t inc)
 {
   ctx->t[0] += inc;
   ctx->t[1] += ( ctx->t[0] < inc );
 }
 
-static void blake2s_set_lastnode( struct blake2s_ctx *ctx )
+static void blake2s_set_lastnode(blake2s_ctx *ctx)
 {
   ctx->f[1] = (uint32_t)-1;
 }
 
-static void blake2s_set_lastblock( struct blake2s_ctx *ctx )
+static void blake2s_set_lastblock(blake2s_ctx *ctx)
 {
   if( ctx->last_node ) blake2s_set_lastnode( ctx );
 
@@ -79,7 +79,7 @@ static void blake2s_set_lastblock( struct blake2s_ctx *ctx )
     G(r,7,v[ 3],v[ 4],v[ 9],v[14]); \
   } while(0)
 
-static void blake2s_compress(struct blake2s_ctx *ctx, const uint8_t block[BLAKE2S_BLOCKBYTES])
+static void blake2s_compress(blake2s_ctx *ctx, const uint8_t block[BLAKE2S_BLOCKBYTES])
 {
   uint32_t m[16];
   uint32_t v[16];
@@ -120,7 +120,7 @@ static void blake2s_compress(struct blake2s_ctx *ctx, const uint8_t block[BLAKE2
 #undef G
 #undef ROUND
 
-void digestif_blake2s_update( struct blake2s_ctx *ctx, uint8_t *data, uint32_t inlen )
+void digestif_blake2s_update(blake2s_ctx *ctx, uint8_t *data, uint32_t inlen)
 {
   const unsigned char * in = (const unsigned char *) data;
 
@@ -152,13 +152,13 @@ void digestif_blake2s_update( struct blake2s_ctx *ctx, uint8_t *data, uint32_t i
   }
 }
 
-void digestif_blake2s_init_with_outlen_and_key(struct blake2s_ctx *ctx, size_t outlen, const void *key, size_t keylen)
+void digestif_blake2s_init_with_outlen_and_key(blake2s_ctx *ctx, size_t outlen, const void *key, size_t keylen)
 {
   struct blake2s_param P[1];
   const unsigned char * p = ( const uint8_t * )( P );
   size_t i;
 
-  memset( ctx, 0, sizeof( struct blake2s_ctx ) );
+  memset( ctx, 0, sizeof(blake2s_ctx));
 
   P->digest_length = (uint8_t) outlen;
   P->key_length    = (uint8_t) keylen;
@@ -188,12 +188,12 @@ void digestif_blake2s_init_with_outlen_and_key(struct blake2s_ctx *ctx, size_t o
     }
 }
 
-void digestif_blake2s_init(struct blake2s_ctx *ctx)
+void digestif_blake2s_init(blake2s_ctx *ctx)
 {
   digestif_blake2s_init_with_outlen_and_key(ctx, BLAKE2S_OUTBYTES, NULL, 0);
 }
 
-void digestif_blake2s_finalize( struct blake2s_ctx *ctx, uint8_t *out )
+void digestif_blake2s_finalize(blake2s_ctx *ctx, uint8_t *out)
 {
   uint8_t buffer[BLAKE2S_OUTBYTES] = { 0 };
   size_t i;

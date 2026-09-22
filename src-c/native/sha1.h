@@ -27,18 +27,18 @@
 
 #include <stdint.h>
 
-struct sha1_ctx
+typedef struct
 {
   uint64_t sz;
   uint8_t  buf[64];
   uint32_t h[5];
-};
+} sha1_ctx;
 
 #define SHA1_DIGEST_SIZE  20
-#define SHA1_CTX_SIZE     (sizeof(struct sha1_ctx))
+#define SHA1_CTX_SIZE     (sizeof(sha1_ctx))
 
-void digestif_sha1_init(struct sha1_ctx *ctx);
-void digestif_sha1_update(struct sha1_ctx *ctx, uint8_t *data, uint32_t len);
-void digestif_sha1_finalize(struct sha1_ctx *ctx, uint8_t *out);
+void digestif_sha1_init(sha1_ctx *ctx);
+void digestif_sha1_update(sha1_ctx *ctx, uint8_t *data, uint32_t len);
+void digestif_sha1_finalize(sha1_ctx *ctx, uint8_t *out);
 
 #endif

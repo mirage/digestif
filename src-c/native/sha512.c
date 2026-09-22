@@ -26,7 +26,7 @@
 #include "bitfn.h"
 #include "sha512.h"
 
-void digestif_sha384_init(struct sha512_ctx *ctx)
+void digestif_sha384_init(sha512_ctx *ctx)
 {
 	memset(ctx, 0, sizeof(*ctx));
 
@@ -40,7 +40,7 @@ void digestif_sha384_init(struct sha512_ctx *ctx)
 	ctx->h[7] = 0x47b5481dbefa4fa4ULL;
 }
 
-void digestif_sha512_init(struct sha512_ctx *ctx)
+void digestif_sha512_init(sha512_ctx *ctx)
 {
 	memset(ctx, 0, sizeof(*ctx));
 
@@ -90,7 +90,7 @@ static const uint64_t k[] = {
 #define s0(x)       (ror64(x, 1) ^ ror64(x, 8) ^ (x >> 7))
 #define s1(x)       (ror64(x, 19) ^ ror64(x, 61) ^ (x >> 6))
 
-static void sha512_do_chunk(struct sha512_ctx *ctx, uint64_t *buf)
+static void sha512_do_chunk(sha512_ctx *ctx, uint64_t *buf)
 {
 	uint64_t a, b, c, d, e, f, g, h, t1, t2;
 	int i;
@@ -127,12 +127,12 @@ static void sha512_do_chunk(struct sha512_ctx *ctx, uint64_t *buf)
 	ctx->h[4] += e; ctx->h[5] += f; ctx->h[6] += g; ctx->h[7] += h;
 }
 
-void digestif_sha384_update(struct sha384_ctx *ctx, uint8_t *data, uint32_t len)
+void digestif_sha384_update(sha384_ctx *ctx, uint8_t *data, uint32_t len)
 {
 	digestif_sha512_update(ctx, data, len);
 }
 
-void digestif_sha512_update(struct sha512_ctx *ctx, uint8_t *data, uint32_t len)
+void digestif_sha512_update(sha512_ctx *ctx, uint8_t *data, uint32_t len)
 {
 	unsigned int index, to_fill;
 
@@ -162,7 +162,7 @@ void digestif_sha512_update(struct sha512_ctx *ctx, uint8_t *data, uint32_t len)
 		memcpy(ctx->buf + index, data, len);
 }
 
-void digestif_sha384_finalize(struct sha384_ctx *ctx, uint8_t *out)
+void digestif_sha384_finalize(sha384_ctx *ctx, uint8_t *out)
 {
 	uint8_t intermediate[SHA512_DIGEST_SIZE];
 
@@ -170,7 +170,7 @@ void digestif_sha384_finalize(struct sha384_ctx *ctx, uint8_t *out)
 	memcpy(out, intermediate, SHA384_DIGEST_SIZE);
 }
 
-void digestif_sha512_finalize(struct sha512_ctx *ctx, uint8_t *out)
+void digestif_sha512_finalize(sha512_ctx *ctx, uint8_t *out)
 {
 	static uint8_t padding[128] = { 0x80, };
 	uint32_t i, index, padlen;

@@ -561,7 +561,7 @@ uint64_t digestif_whirlpool_sbox[8][256] = {
  *
  * @param ctx context to initialize
  */
-void digestif_whirlpool_init(struct whirlpool_ctx* ctx)
+void digestif_whirlpool_init(whirlpool_ctx* ctx)
 {
 	memset(ctx, 0, sizeof(*ctx));
 }
@@ -662,7 +662,7 @@ static void whirlpool_do_chunk(uint64_t *hash, uint64_t* p_block)
  * @param msg message chunk
  * @param size length of the message chunk
  */
-void digestif_whirlpool_update(struct whirlpool_ctx* ctx, uint8_t *data, uint32_t len)
+void digestif_whirlpool_update(whirlpool_ctx* ctx, uint8_t *data, uint32_t len)
 {
 	unsigned int index, to_fill;
 
@@ -696,7 +696,7 @@ void digestif_whirlpool_update(struct whirlpool_ctx* ctx, uint8_t *data, uint32_
  * @param ctx the algorithm context containing current hashing state
  * @param result calculated hash in binary form
  */
-void digestif_whirlpool_finalize(struct whirlpool_ctx* ctx, uint8_t *out)
+void digestif_whirlpool_finalize(whirlpool_ctx* ctx, uint8_t *out)
 {
   uint32_t i, index;
 	uint64_t* msg64 = (uint64_t*)ctx->buf;
