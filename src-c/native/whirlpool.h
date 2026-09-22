@@ -24,18 +24,18 @@
 
 #include <stdint.h>
 
-struct whirlpool_ctx
+typedef struct
 {
 	uint64_t sz;
 	uint8_t buf[64];
 	uint64_t h[8];
-};
+} whirlpool_ctx;
 
 #define WHIRLPOOL_DIGEST_SIZE	64
-#define WHIRLPOOL_CTX_SIZE		sizeof(struct whirlpool_ctx)
+#define WHIRLPOOL_CTX_SIZE		sizeof(whirlpool_ctx)
 
-void digestif_whirlpool_init(struct whirlpool_ctx* ctx);
-void digestif_whirlpool_update(struct whirlpool_ctx* ctx, uint8_t *data, uint32_t len);
-void digestif_whirlpool_finalize(struct whirlpool_ctx* ctx, uint8_t *out);
+void digestif_whirlpool_init(whirlpool_ctx* ctx);
+void digestif_whirlpool_update(whirlpool_ctx* ctx, uint8_t *data, uint32_t len);
+void digestif_whirlpool_finalize(whirlpool_ctx* ctx, uint8_t *out);
 
 #endif

@@ -146,7 +146,7 @@ static const uint32_t KR[5] = {
     0x00000000u     /* Round 5: 0 */
 };
 
-void digestif_rmd160_init(struct rmd160_ctx *ctx)
+void digestif_rmd160_init(rmd160_ctx *ctx)
 {
   memset(ctx, 0, sizeof(*ctx));
 
@@ -163,7 +163,7 @@ void digestif_rmd160_init(struct rmd160_ctx *ctx)
 }
 
 /* The RIPEMD160 compression function. */
-static inline void rmd160_compress(struct rmd160_ctx *ctx, uint32_t *buf)
+static inline void rmd160_compress(rmd160_ctx *ctx, uint32_t *buf)
 {
     uint8_t w, round;
     uint32_t T;
@@ -245,7 +245,7 @@ static inline void rmd160_compress(struct rmd160_ctx *ctx, uint32_t *buf)
     ctx->h[0] = T;
 }
 
-void digestif_rmd160_update(struct rmd160_ctx *ctx, uint8_t *data, uint32_t len)
+void digestif_rmd160_update(rmd160_ctx *ctx, uint8_t *data, uint32_t len)
 {
   uint32_t t;
 
@@ -290,7 +290,7 @@ void digestif_rmd160_update(struct rmd160_ctx *ctx, uint8_t *data, uint32_t len)
   ctx->n = len;
 }
 
-void digestif_rmd160_finalize(struct rmd160_ctx *ctx, uint8_t *out)
+void digestif_rmd160_finalize(rmd160_ctx *ctx, uint8_t *out)
 {
   int i = ctx->n;
 

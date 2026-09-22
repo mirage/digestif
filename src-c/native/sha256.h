@@ -27,27 +27,27 @@
 
 #include <stdint.h>
 
-struct sha256_ctx
+typedef struct
 {
 	uint64_t sz;
 	uint8_t  buf[128];
 	uint32_t h[8];
-};
+} sha256_ctx;
 
 #define sha224_ctx 		sha256_ctx
 
 #define SHA224_DIGEST_SIZE	28
-#define SHA224_CTX_SIZE		sizeof(struct sha224_ctx)
+#define SHA224_CTX_SIZE		sizeof(sha224_ctx)
 
 #define SHA256_DIGEST_SIZE	32
-#define SHA256_CTX_SIZE		sizeof(struct sha256_ctx)
+#define SHA256_CTX_SIZE		sizeof(sha256_ctx)
 
-void digestif_sha224_init(struct sha224_ctx *ctx);
-void digestif_sha224_update(struct sha224_ctx *ctx, uint8_t *data, uint32_t len);
-void digestif_sha224_finalize(struct sha224_ctx *ctx, uint8_t *out);
+void digestif_sha224_init(sha224_ctx *ctx);
+void digestif_sha224_update(sha224_ctx *ctx, uint8_t *data, uint32_t len);
+void digestif_sha224_finalize(sha224_ctx *ctx, uint8_t *out);
 
-void digestif_sha256_init(struct sha256_ctx *ctx);
-void digestif_sha256_update(struct sha256_ctx *ctx, uint8_t *data, uint32_t len);
-void digestif_sha256_finalize(struct sha256_ctx *ctx, uint8_t *out);
+void digestif_sha256_init(sha256_ctx *ctx);
+void digestif_sha256_update(sha256_ctx *ctx, uint8_t *data, uint32_t len);
+void digestif_sha256_finalize(sha256_ctx *ctx, uint8_t *out);
 
 #endif

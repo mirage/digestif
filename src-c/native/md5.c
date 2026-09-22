@@ -27,7 +27,7 @@
 #include "bitfn.h"
 #include "md5.h"
 
-void digestif_md5_init(struct md5_ctx *ctx)
+void digestif_md5_init(md5_ctx *ctx)
 {
 	memset(ctx, 0, sizeof(*ctx));
 
@@ -44,7 +44,7 @@ void digestif_md5_init(struct md5_ctx *ctx)
 #define f4(x, y, z)	(y ^ (x | ~z))
 #define R(f, a, b, c, d, i, k, s) a += f(b, c, d) + w[i] + k; a = rol32(a, s); a += b
 
-static void md5_do_chunk(struct md5_ctx *ctx, uint32_t *buf)
+static void md5_do_chunk(md5_ctx *ctx, uint32_t *buf)
 {
 	uint32_t a, b, c, d;
 #ifdef ARCH_IS_BIG_ENDIAN
@@ -126,7 +126,7 @@ static void md5_do_chunk(struct md5_ctx *ctx, uint32_t *buf)
 	ctx->h[0] += a; ctx->h[1] += b; ctx->h[2] += c; ctx->h[3] += d;
 }
 
-void digestif_md5_update(struct md5_ctx *ctx, uint8_t *data, uint32_t len)
+void digestif_md5_update(md5_ctx *ctx, uint8_t *data, uint32_t len)
 {
 	uint32_t index, to_fill;
 
@@ -152,7 +152,7 @@ void digestif_md5_update(struct md5_ctx *ctx, uint8_t *data, uint32_t len)
 		memcpy(ctx->buf + index, data, len);
 }
 
-void digestif_md5_finalize(struct md5_ctx *ctx, uint8_t *out)
+void digestif_md5_finalize(md5_ctx *ctx, uint8_t *out)
 {
 	static uint8_t padding[64] = { 0x80, };
 	uint64_t bits;

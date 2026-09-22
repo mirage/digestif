@@ -26,7 +26,7 @@
 #include "sha256.h"
 #include "bitfn.h"
 
-void digestif_sha224_init(struct sha224_ctx *ctx)
+void digestif_sha224_init(sha224_ctx *ctx)
 {
 	memset(ctx, 0, sizeof(*ctx));
 
@@ -40,7 +40,7 @@ void digestif_sha224_init(struct sha224_ctx *ctx)
 	ctx->h[7] = 0xbefa4fa4;
 }
 
-void digestif_sha256_init(struct sha256_ctx *ctx)
+void digestif_sha256_init(sha256_ctx *ctx)
 {
 	memset(ctx, 0, sizeof(*ctx));
 
@@ -74,7 +74,7 @@ static const uint32_t k[] = {
 #define s0(x)       (ror32(x, 7) ^ ror32(x,18) ^ (x >> 3))
 #define s1(x)       (ror32(x,17) ^ ror32(x,19) ^ (x >> 10))
 
-static void sha256_do_chunk(struct sha256_ctx *ctx, uint32_t buf[])
+static void sha256_do_chunk(sha256_ctx *ctx, uint32_t buf[])
 {
 	uint32_t a, b, c, d, e, f, g, h, t1, t2;
 	int i;
@@ -110,12 +110,12 @@ static void sha256_do_chunk(struct sha256_ctx *ctx, uint32_t buf[])
 	ctx->h[4] += e; ctx->h[5] += f; ctx->h[6] += g; ctx->h[7] += h;
 }
 
-void digestif_sha224_update(struct sha224_ctx *ctx, uint8_t *data, uint32_t len)
+void digestif_sha224_update(sha224_ctx *ctx, uint8_t *data, uint32_t len)
 {
 	digestif_sha256_update(ctx, data, len);
 }
 
-void digestif_sha256_update(struct sha256_ctx *ctx, uint8_t *data, uint32_t len)
+void digestif_sha256_update(sha256_ctx *ctx, uint8_t *data, uint32_t len)
 {
 	uint32_t index, to_fill;
 
@@ -143,7 +143,7 @@ void digestif_sha256_update(struct sha256_ctx *ctx, uint8_t *data, uint32_t len)
 		memcpy(ctx->buf + index, data, len);
 }
 
-void digestif_sha224_finalize(struct sha224_ctx *ctx, uint8_t *out)
+void digestif_sha224_finalize(sha224_ctx *ctx, uint8_t *out)
 {
 	uint8_t intermediate[SHA256_DIGEST_SIZE];
 
@@ -151,7 +151,7 @@ void digestif_sha224_finalize(struct sha224_ctx *ctx, uint8_t *out)
 	memcpy(out, intermediate, SHA224_DIGEST_SIZE);
 }
 
-void digestif_sha256_finalize(struct sha256_ctx *ctx, uint8_t *out)
+void digestif_sha256_finalize(sha256_ctx *ctx, uint8_t *out)
 {
 	static uint8_t padding[64] = { 0x80, };
 	uint64_t bits;

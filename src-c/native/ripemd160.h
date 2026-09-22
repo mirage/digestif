@@ -28,19 +28,19 @@
 
 #include <stdint.h>
 
-struct rmd160_ctx
+typedef struct
 {
   uint32_t h[5];
   uint32_t sz[2];
   int      n;
   uint8_t  buf[64];
-};
+} rmd160_ctx;
 
 #define RMD160_DIGEST_SIZE 20
-#define RMD160_CTX_SIZE (sizeof(struct rmd160_ctx))
+#define RMD160_CTX_SIZE (sizeof(rmd160_ctx))
 
-void digestif_rmd160_init(struct rmd160_ctx *ctx);
-void digestif_rmd160_update(struct rmd160_ctx *ctx, uint8_t *data, uint32_t len);
-void digestif_rmd160_finalize(struct rmd160_ctx *ctx, uint8_t *out);
+void digestif_rmd160_init(rmd160_ctx *ctx);
+void digestif_rmd160_update(rmd160_ctx *ctx, uint8_t *data, uint32_t len);
+void digestif_rmd160_finalize(rmd160_ctx *ctx, uint8_t *out);
 
 #endif

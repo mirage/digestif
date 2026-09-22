@@ -18,7 +18,7 @@ enum blake2s_constant
   BLAKE2S_PERSONALBYTES = 8
 };
 
-struct blake2s_ctx
+typedef struct
 {
   uint32_t h[8];
   uint32_t t[2];
@@ -27,7 +27,7 @@ struct blake2s_ctx
   size_t   buflen;
   size_t   outlen;
   uint8_t  last_node;
-};
+} blake2s_ctx;
 
 PACKED(struct blake2s_param
 {
@@ -45,11 +45,11 @@ PACKED(struct blake2s_param
 });
 
 #define BLAKE2S_DIGEST_SIZE BLAKE2S_BLOCKBYTES
-#define BLAKE2S_CTX_SIZE    (sizeof(struct blake2s_ctx))
+#define BLAKE2S_CTX_SIZE    (sizeof(blake2s_ctx))
 
-void digestif_blake2s_init(struct blake2s_ctx *ctx);
-void digestif_blake2s_init_with_outlen_and_key(struct blake2s_ctx *ctx, size_t outlen, const void *key, size_t keylen);
-void digestif_blake2s_update(struct blake2s_ctx *ctx, uint8_t *data, uint32_t len);
-void digestif_blake2s_finalize(struct blake2s_ctx *ctx, uint8_t *out);
+void digestif_blake2s_init(blake2s_ctx *ctx);
+void digestif_blake2s_init_with_outlen_and_key(blake2s_ctx *ctx, size_t outlen, const void *key, size_t keylen);
+void digestif_blake2s_update(blake2s_ctx *ctx, uint8_t *data, uint32_t len);
+void digestif_blake2s_finalize(blake2s_ctx *ctx, uint8_t *out);
 
 #endif

@@ -26,27 +26,27 @@
 
 #include <stdint.h>
 
-struct sha512_ctx
+typedef struct
 {
 	uint64_t sz[2];
 	uint8_t  buf[128];
 	uint64_t h[8];
-};
+} sha512_ctx;
 
 #define sha384_ctx sha512_ctx
 
 #define SHA384_DIGEST_SIZE	48
-#define SHA384_CTX_SIZE		sizeof(struct sha384_ctx)
+#define SHA384_CTX_SIZE		sizeof(sha384_ctx)
 
 #define SHA512_DIGEST_SIZE	64
-#define SHA512_CTX_SIZE		sizeof(struct sha512_ctx)
+#define SHA512_CTX_SIZE		sizeof(sha512_ctx)
 
-void digestif_sha384_init(struct sha384_ctx *ctx);
-void digestif_sha384_update(struct sha384_ctx *ctx, uint8_t *data, uint32_t len);
-void digestif_sha384_finalize(struct sha384_ctx *ctx, uint8_t *out);
+void digestif_sha384_init(sha384_ctx *ctx);
+void digestif_sha384_update(sha384_ctx *ctx, uint8_t *data, uint32_t len);
+void digestif_sha384_finalize(sha384_ctx *ctx, uint8_t *out);
 
-void digestif_sha512_init(struct sha512_ctx *ctx);
-void digestif_sha512_update(struct sha512_ctx *ctx, uint8_t *data, uint32_t len);
-void digestif_sha512_finalize(struct sha512_ctx *ctx, uint8_t *out);
+void digestif_sha512_init(sha512_ctx *ctx);
+void digestif_sha512_update(sha512_ctx *ctx, uint8_t *data, uint32_t len);
+void digestif_sha512_finalize(sha512_ctx *ctx, uint8_t *out);
 
 #endif

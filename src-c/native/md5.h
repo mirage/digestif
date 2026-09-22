@@ -27,18 +27,18 @@
 
 #include <stdint.h>
 
-struct md5_ctx
+typedef struct
 {
   uint64_t sz;
   uint8_t  buf[64];
   uint32_t h[4];
-};
+} md5_ctx;
 
 #define MD5_DIGEST_SIZE 16
-#define MD5_CTX_SIZE    sizeof(struct md5_ctx)
+#define MD5_CTX_SIZE    sizeof(md5_ctx)
 
-void digestif_md5_init(struct md5_ctx *ctx);
-void digestif_md5_update(struct md5_ctx *ctx, uint8_t *data, uint32_t len);
-void digestif_md5_finalize(struct md5_ctx *ctx, uint8_t *out);
+void digestif_md5_init(md5_ctx *ctx);
+void digestif_md5_update(md5_ctx *ctx, uint8_t *data, uint32_t len);
+void digestif_md5_finalize(md5_ctx *ctx, uint8_t *out);
 
 #endif
