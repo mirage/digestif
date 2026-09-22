@@ -503,7 +503,7 @@ module XOR = struct
     [@@noalloc]
 
     let xor_into a b n =
-      if n > imin (Bi.length a) (Bi.length b)
+      if n < 0 || n > imin (Bi.length a) (Bi.length b)
       then
         raise (Invalid_argument "Native.Bigstring.xor_into: buffers to small")
       else xor_into a 0 b 0 n
@@ -521,7 +521,7 @@ module XOR = struct
     [@@noalloc]
 
     let xor_into a b n =
-      if n > imin (By.length a) (By.length b)
+      if n < 0 || n > imin (By.length a) (By.length b)
       then
         raise (Invalid_argument "Native.Bigstring.xor_into: buffers to small")
       else xor_into a 0 b 0 n
