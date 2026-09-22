@@ -319,7 +319,8 @@ module Unsafe : S = struct
     let off = ref off in
     let len = ref len in
     ctx.s.(0) <- Int32.add !t (Int32.of_int (!len lsl 3)) ;
-    if ctx.s.(0) < !t then ctx.s.(1) <- Int32.(ctx.s.(1) + 1l) ;
+    if Int32.unsigned_compare ctx.s.(0) !t < 0
+    then ctx.s.(1) <- Int32.(ctx.s.(1) + 1l) ;
     ctx.s.(1) <- Int32.add ctx.s.(1) (Int32.of_int (!len lsr 29)) ;
     try
       if ctx.n <> 0
