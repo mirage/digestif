@@ -139,7 +139,8 @@ module Unsafe : S = struct
   let increment_counter ctx inc =
     let open Int32 in
     ctx.t.(0) <- ctx.t.(0) + inc ;
-    ctx.t.(1) <- (ctx.t.(1) + if ctx.t.(0) < inc then 1l else 0l)
+    ctx.t.(1) <-
+      (ctx.t.(1) + if Int32.unsigned_compare ctx.t.(0) inc < 0 then 1l else 0l)
 
   let set_lastnode ctx = ctx.f.(1) <- Int32.minus_one
 
