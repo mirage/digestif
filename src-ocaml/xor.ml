@@ -42,7 +42,7 @@ module Make (B : BUFFER) = struct
     done
 
   let xor_into a b n =
-    if n > imin (B.length a) (B.length b)
+    if n < 0 || n > imin (B.length a) (B.length b)
     then raise (Invalid_argument "Baijiu.Xor.xor_inrot: buffers to small")
     else xor_into a 0 b 0 n
 
