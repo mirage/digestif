@@ -10,14 +10,14 @@
 #define blake3_chunk_state digestif_blake3_chunk_state
 #define blake3_hasher digestif_blake3_hasher
 #define blake3_version digestif_blake3_version
-#define blake3_hasher_init digestif_blake3_hasher_init
-#define blake3_hasher_init_keyed digestif_blake3_hasher_init_keyed
-#define blake3_hasher_init_derive_key digestif_blake3_hasher_init_derive_key
-#define blake3_hasher_init_derive_key_raw digestif_blake3_hasher_init_derive_key_raw
-#define blake3_hasher_update digestif_blake3_hasher_update
-#define blake3_hasher_finalize digestif_blake3_hasher_finalize
-#define blake3_hasher_finalize_seek digestif_blake3_hasher_finalize_seek
-#define blake3_hasher_reset digestif_blake3_hasher_reset
+#define blake3_hasher_init digestif_blake3_init
+#define blake3_hasher_init_keyed digestif_blake3_init_keyed
+#define blake3_hasher_init_derive_key digestif_blake3_init_derive_key
+#define blake3_hasher_init_derive_key_raw digestif_blake3_init_derive_key_raw
+#define blake3_hasher_update digestif_blake3_update
+#define blake3_hasher_finalize digestif_blake3_finalize_with_out_len
+#define blake3_hasher_finalize_seek digestif_blake3_finalize_seek
+#define blake3_hasher_reset digestif_blake3_reset
 /* END Digestif: API symbol mapping */
 
 /* BEGIN upstream: c/blake3.h */

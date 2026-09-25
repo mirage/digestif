@@ -129,34 +129,15 @@ CAMLextern void caml_leave_blocking_section (void);
     return Val_int (upper ## _CTX_SIZE);                                     \
   }
 
-struct blake3_ctx {
-  digestif_blake3_hasher hasher;
-};
+/* BLAKE3 */
 
-#define BLAKE3_CTX_SIZE (sizeof(struct blake3_ctx))
+#define BLAKE3_CTX_SIZE (sizeof(blake3_ctx))
+typedef blake3_hasher blake3_ctx;
 
-static digestif_blake3_hasher *
-blake3_hasher_val(value ctx)
+void
+digestif_blake3_finalize(const blake3_ctx *ctx, uint8_t *out)
 {
-  return &((struct blake3_ctx *) String_val(ctx))->hasher;
-}
-
-static void
-digestif_blake3_init(struct blake3_ctx *ctx)
-{
-  digestif_blake3_hasher_init(&ctx->hasher);
-}
-
-static void
-digestif_blake3_update(struct blake3_ctx *ctx, uint8_t *data, uint32_t len)
-{
-  digestif_blake3_hasher_update(&ctx->hasher, data, len);
-}
-
-static void
-digestif_blake3_finalize(struct blake3_ctx *ctx, uint8_t *out)
-{
-  digestif_blake3_hasher_finalize(&ctx->hasher, out, BLAKE3_OUT_LEN);
+  digestif_blake3_finalize_with_out_len(ctx, out, BLAKE3_OUT_LEN);
 }
 
 __define_hash (md5, MD5)
@@ -171,11 +152,13 @@ __define_hash (blake2s, BLAKE2S)
 __define_hash (blake3, BLAKE3)
 __define_hash (rmd160, RMD160)
 
+/* BLAKE3 */
+
 CAMLprim value
 caml_digestif_blake3_st_init_keyed(value ctx, value key, value off)
 {
-  digestif_blake3_hasher_init_keyed(
-    blake3_hasher_val(ctx), _st_uint8_off(key, off));
+  digestif_blake3_init_keyed(
+    (blake3_ctx *) String_val(ctx), _st_uint8_off(key, off));
   return Val_unit;
 }
 
@@ -183,8 +166,8 @@ CAMLprim value
 caml_digestif_blake3_st_init_derive_key(value ctx, value context,
                                         value off, value len)
 {
-  digestif_blake3_hasher_init_derive_key_raw(
-    blake3_hasher_val(ctx), _st_uint8_off(context, off), Int_val(len));
+  digestif_blake3_init_derive_key_raw(
+    (blake3_ctx *) String_val(ctx), _st_uint8_off(context, off), Int_val(len));
   return Val_unit;
 }
 
@@ -192,11 +175,13 @@ CAMLprim value
 caml_digestif_blake3_st_finalize_seek(value ctx, value seek, value dst,
                                       value off, value len)
 {
-  digestif_blake3_hasher_finalize_seek(
-    blake3_hasher_val(ctx), Int64_val(seek),
+  digestif_blake3_finalize_seek(
+    (blake3_ctx *) String_val(ctx), Int64_val(seek),
     _st_uint8_off(dst, off), Int_val(len));
   return Val_unit;
 }
+
+/* BLAKE2 */
 
 CAMLprim value
 caml_digestif_blake2b_ba_init_with_outlen_and_key(value ctx, value outlen, value key, value off, value len)
@@ -268,6 +253,8 @@ caml_digestif_blake2s_digest_size(value ctx) {
   return Val_int(((blake2s_ctx *) String_val (ctx))->outlen);
 }
 
+/* SHA3 */
+
 CAMLprim value
 caml_digestif_keccak_256_ba_finalize
 (value ctx, value dst, value off) {
@@ -285,7 +272,6 @@ caml_digestif_keccak_256_st_finalize
     _st_uint8_off (dst, off), 0x01);
   return Val_unit;
 }
-
 
 #define __define_hash_sha3(mdlen)                                            \
                                                                              \
