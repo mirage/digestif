@@ -6,30 +6,32 @@ let failwith fmt = Format.kasprintf failwith fmt
 module Int32 = struct
   include Int32
 
-  let ( lsl ) = Int32.shift_left
-  let ( lsr ) = Int32.shift_right_logical
-  let ( asr ) = Int32.shift_right
-  let ( lor ) = Int32.logor
-  let ( lxor ) = Int32.logxor
-  let ( land ) = Int32.logand
+  external ( lsl ) : int32 -> int -> int32 = "%int32_lsl"
+  external ( lsr ) : int32 -> int -> int32 = "%int32_lsr"
+  external ( asr ) : int32 -> int -> int32 = "%int32_asr"
+  external ( lor ) : int32 -> int32 -> int32 = "%int32_or"
+  external ( lxor ) : int32 -> int32 -> int32 = "%int32_xor"
+  external ( land ) : int32 -> int32 -> int32 = "%int32_and"
   let lnot = Int32.lognot
-  let ( + ) = Int32.add
-  let rol32 a n = (a lsl n) lor (a lsr (32 - n))
-  let ror32 a n = (a lsr n) lor (a lsl (32 - n))
+  external ( + ) : int32 -> int32 -> int32 = "%int32_add"
+
+  let[@inline] rol32 a n = (a lsl n) lor (a lsr (32 - n))
+  let[@inline] ror32 a n = (a lsr n) lor (a lsl (32 - n))
 end
 
 module Int64 = struct
   include Int64
 
-  let ( land ) = Int64.logand
-  let ( lsl ) = Int64.shift_left
-  let ( lsr ) = Int64.shift_right_logical
-  let ( lor ) = Int64.logor
-  let ( asr ) = Int64.shift_right
-  let ( lxor ) = Int64.logxor
-  let ( + ) = Int64.add
-  let rol64 a n = (a lsl n) lor (a lsr (64 - n))
-  let ror64 a n = (a lsr n) lor (a lsl (64 - n))
+  external ( land ) : int64 -> int64 -> int64 = "%int64_and"
+  external ( lsl ) : int64 -> int -> int64 = "%int64_lsl"
+  external ( lsr ) : int64 -> int -> int64 = "%int64_lsr"
+  external ( lor ) : int64 -> int64 -> int64 = "%int64_or"
+  external ( asr ) : int64 -> int -> int64 = "%int64_asr"
+  external ( lxor ) : int64 -> int64 -> int64 = "%int64_xor"
+  external ( + ) : int64 -> int64 -> int64 = "%int64_add"
+
+  let[@inline] rol64 a n = (a lsl n) lor (a lsr (64 - n))
+  let[@inline] ror64 a n = (a lsr n) lor (a lsl (64 - n))
 end
 
 module type S = sig
@@ -69,7 +71,7 @@ module Unsafe : S = struct
     outlen : int;
     mutable last_node : int;
     buf : Bytes.t;
-    h : int64 array;
+    h : Bytes.t;
     t : int64 array;
     f : int64 array;
   }
@@ -80,7 +82,7 @@ module Unsafe : S = struct
       outlen = ctx.outlen;
       last_node = ctx.last_node;
       buf = By.copy ctx.buf;
-      h = Array.copy ctx.h;
+      h = By.copy ctx.h;
       t = Array.copy ctx.t;
       f = Array.copy ctx.f;
     }
@@ -150,12 +152,18 @@ module Unsafe : S = struct
       personal = [| 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0 |];
     }
 
+  let of_array a =
+    let b = By.create (8 * Array.length a) in
+    Array.iteri (fun i x -> By.unsafe_set_64 b (i * 8) x) a ;
+    b
+
   let iv =
-    [|
-      0x6a09e667f3bcc908L; 0xbb67ae8584caa73bL; 0x3c6ef372fe94f82bL;
-      0xa54ff53a5f1d36f1L; 0x510e527fade682d1L; 0x9b05688c2b3e6c1fL;
-      0x1f83d9abfb41bd6bL; 0x5be0cd19137e2179L;
-    |]
+    of_array
+      [|
+        0x6a09e667f3bcc908L; 0xbb67ae8584caa73bL; 0x3c6ef372fe94f82bL;
+        0xa54ff53a5f1d36f1L; 0x510e527fade682d1L; 0x9b05688c2b3e6c1fL;
+        0x1f83d9abfb41bd6bL; 0x5be0cd19137e2179L;
+      |]
 
   let increment_counter ctx inc =
     let open Int64 in
@@ -177,13 +185,15 @@ module Unsafe : S = struct
         outlen = default_param.digest_length;
         last_node = 0;
         buf;
-        h = Array.make 8 0L;
+        h = By.make (8 * 8) '\x00';
         t = Array.make 2 0L;
         f = Array.make 2 0L;
       } in
     let param_bytes = param_to_bytes default_param in
     for i = 0 to 7 do
-      ctx.h.(i) <- Int64.(iv.(i) lxor By.le64_to_cpu param_bytes (i * 8))
+      By.unsafe_set_64 ctx.h (i * 8)
+        Int64.(
+          By.unsafe_get_64 iv (i * 8) lxor By.le64_to_cpu param_bytes (i * 8))
     done ;
     ctx
 
@@ -203,60 +213,58 @@ module Unsafe : S = struct
       [| 14; 10; 4; 8; 9; 15; 13; 6; 1; 12; 0; 2; 11; 7; 5; 3 |];
     |]
 
+  let[@inline] g v m r i a b c d =
+    let a = a * 8 and b = b * 8 and c = c * 8 and d = d * 8 in
+    let m0 = By.unsafe_get_64 m (sigma.(r).(2 * i) * 8) in
+    let m1 = By.unsafe_get_64 m (sigma.(r).((2 * i) + 1) * 8) in
+    let open Int64 in
+    let va = By.unsafe_get_64 v a + By.unsafe_get_64 v b + m0 in
+    let vd = ror64 (By.unsafe_get_64 v d lxor va) 32 in
+    let vc = By.unsafe_get_64 v c + vd in
+    let vb = ror64 (By.unsafe_get_64 v b lxor vc) 24 in
+    let va = va + vb + m1 in
+    let vd = ror64 (vd lxor va) 16 in
+    let vc = vc + vd in
+    let vb = ror64 (vb lxor vc) 63 in
+    By.unsafe_set_64 v a va ;
+    By.unsafe_set_64 v b vb ;
+    By.unsafe_set_64 v c vc ;
+    By.unsafe_set_64 v d vd
+
   let compress : type a.
       le64_to_cpu:(a -> int -> int64) -> ctx -> a -> int -> unit =
    fun ~le64_to_cpu ctx block off ->
-    let v = Array.make 16 0L in
-    let m = Array.make 16 0L in
-    let g r i a_idx b_idx c_idx d_idx =
-      let ( ++ ) = ( + ) in
-      let open Int64 in
-      v.(a_idx) <- v.(a_idx) + v.(b_idx) + m.(sigma.(r).((2 * i) ++ 0)) ;
-      v.(d_idx) <- ror64 (v.(d_idx) lxor v.(a_idx)) 32 ;
-      v.(c_idx) <- v.(c_idx) + v.(d_idx) ;
-      v.(b_idx) <- ror64 (v.(b_idx) lxor v.(c_idx)) 24 ;
-      v.(a_idx) <- v.(a_idx) + v.(b_idx) + m.(sigma.(r).((2 * i) ++ 1)) ;
-      v.(d_idx) <- ror64 (v.(d_idx) lxor v.(a_idx)) 16 ;
-      v.(c_idx) <- v.(c_idx) + v.(d_idx) ;
-      v.(b_idx) <- ror64 (v.(b_idx) lxor v.(c_idx)) 63 in
-    let r r =
-      g r 0 0 4 8 12 ;
-      g r 1 1 5 9 13 ;
-      g r 2 2 6 10 14 ;
-      g r 3 3 7 11 15 ;
-      g r 4 0 5 10 15 ;
-      g r 5 1 6 11 12 ;
-      g r 6 2 7 8 13 ;
-      g r 7 3 4 9 14 in
+    let v = By.create (16 * 8) in
+    let m = By.create (16 * 8) in
     for i = 0 to 15 do
-      m.(i) <- le64_to_cpu block (off + (i * 8))
+      By.unsafe_set_64 m (i * 8) (le64_to_cpu block (off + (i * 8)))
     done ;
     for i = 0 to 7 do
-      v.(i) <- ctx.h.(i)
+      By.unsafe_set_64 v (i * 8) (By.unsafe_get_64 ctx.h (i * 8))
     done ;
-    v.(8) <- iv.(0) ;
-    v.(9) <- iv.(1) ;
-    v.(10) <- iv.(2) ;
-    v.(11) <- iv.(3) ;
-    v.(12) <- Int64.(iv.(4) lxor ctx.t.(0)) ;
-    v.(13) <- Int64.(iv.(5) lxor ctx.t.(1)) ;
-    v.(14) <- Int64.(iv.(6) lxor ctx.f.(0)) ;
-    v.(15) <- Int64.(iv.(7) lxor ctx.f.(1)) ;
-    r 0 ;
-    r 1 ;
-    r 2 ;
-    r 3 ;
-    r 4 ;
-    r 5 ;
-    r 6 ;
-    r 7 ;
-    r 8 ;
-    r 9 ;
-    r 10 ;
-    r 11 ;
-    let ( ++ ) = ( + ) in
+    By.unsafe_set_64 v 64 (By.unsafe_get_64 iv 0) ;
+    By.unsafe_set_64 v 72 (By.unsafe_get_64 iv 8) ;
+    By.unsafe_set_64 v 80 (By.unsafe_get_64 iv 16) ;
+    By.unsafe_set_64 v 88 (By.unsafe_get_64 iv 24) ;
+    By.unsafe_set_64 v 96 Int64.(By.unsafe_get_64 iv 32 lxor ctx.t.(0)) ;
+    By.unsafe_set_64 v 104 Int64.(By.unsafe_get_64 iv 40 lxor ctx.t.(1)) ;
+    By.unsafe_set_64 v 112 Int64.(By.unsafe_get_64 iv 48 lxor ctx.f.(0)) ;
+    By.unsafe_set_64 v 120 Int64.(By.unsafe_get_64 iv 56 lxor ctx.f.(1)) ;
+    for r = 0 to 11 do
+      g v m r 0 0 4 8 12 ;
+      g v m r 1 1 5 9 13 ;
+      g v m r 2 2 6 10 14 ;
+      g v m r 3 3 7 11 15 ;
+      g v m r 4 0 5 10 15 ;
+      g v m r 5 1 6 11 12 ;
+      g v m r 6 2 7 8 13 ;
+      g v m r 7 3 4 9 14
+    done ;
     for i = 0 to 7 do
-      ctx.h.(i) <- Int64.(ctx.h.(i) lxor v.(i) lxor v.(i ++ 8))
+      let x = By.unsafe_get_64 v (i * 8) in
+      let y = By.unsafe_get_64 v ((i + 8) * 8) in
+      By.unsafe_set_64 ctx.h (i * 8)
+        Int64.(By.unsafe_get_64 ctx.h (i * 8) lxor x lxor y)
     done ;
     ()
 
@@ -310,7 +318,7 @@ module Unsafe : S = struct
         outlen;
         last_node = 0;
         buf;
-        h = Array.make 8 0L;
+        h = By.make (8 * 8) '\x00';
         t = Array.make 2 0L;
         f = Array.make 2 0L;
       } in
@@ -318,7 +326,9 @@ module Unsafe : S = struct
       param_to_bytes
         { default_param with digest_length = outlen; key_length = len } in
     for i = 0 to 7 do
-      ctx.h.(i) <- Int64.(iv.(i) lxor By.le64_to_cpu param_bytes (i * 8))
+      By.unsafe_set_64 ctx.h (i * 8)
+        Int64.(
+          By.unsafe_get_64 iv (i * 8) lxor By.le64_to_cpu param_bytes (i * 8))
     done ;
     if len > 0
     then (
@@ -340,7 +350,7 @@ module Unsafe : S = struct
     By.fill ctx.buf ctx.buflen (128 - ctx.buflen) '\x00' ;
     compress ~le64_to_cpu:By.le64_to_cpu ctx ctx.buf 0 ;
     for i = 0 to 7 do
-      By.cpu_to_le64 res (i * 8) ctx.h.(i)
+      By.cpu_to_le64 res (i * 8) (By.unsafe_get_64 ctx.h (i * 8))
     done ;
     if ctx.outlen < default_param.digest_length
     then By.sub res 0 ctx.outlen

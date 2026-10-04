@@ -4,28 +4,30 @@ module Bi = Digestif_bi
 module Int32 = struct
   include Int32
 
-  let ( lsl ) = Int32.shift_left
-  let ( lsr ) = Int32.shift_right_logical
-  let ( asr ) = Int32.shift_right
-  let ( lor ) = Int32.logor
-  let ( lxor ) = Int32.logxor
-  let ( land ) = Int32.logand
-  let ( + ) = Int32.add
-  let rol32 a n = (a lsl n) lor (a lsr (32 - n))
-  let ror32 a n = (a lsr n) lor (a lsl (32 - n))
+  external ( lsl ) : int32 -> int -> int32 = "%int32_lsl"
+  external ( lsr ) : int32 -> int -> int32 = "%int32_lsr"
+  external ( asr ) : int32 -> int -> int32 = "%int32_asr"
+  external ( lor ) : int32 -> int32 -> int32 = "%int32_or"
+  external ( lxor ) : int32 -> int32 -> int32 = "%int32_xor"
+  external ( land ) : int32 -> int32 -> int32 = "%int32_and"
+  external ( + ) : int32 -> int32 -> int32 = "%int32_add"
+
+  let[@inline] rol32 a n = (a lsl n) lor (a lsr (32 - n))
+  let[@inline] ror32 a n = (a lsr n) lor (a lsl (32 - n))
 end
 
 module Int64 = struct
   include Int64
 
-  let ( land ) = Int64.logand
-  let ( lsl ) = Int64.shift_left
+  external ( land ) : int64 -> int64 -> int64 = "%int64_and"
+  external ( lsl ) : int64 -> int -> int64 = "%int64_lsl"
 end
 
 module type S = sig
   type kind = [ `SHA256 ]
-  type ctx = { mutable size : int64; b : Bytes.t; h : int32 array }
+  type ctx = { mutable size : int64; b : Bytes.t; h : Bytes.t }
 
+  val of_array : int32 array -> Bytes.t
   val init : unit -> ctx
   val unsafe_feed_bytes : ctx -> By.t -> int -> int -> unit
   val unsafe_feed_bigstring : ctx -> Bi.t -> int -> int -> unit
@@ -35,9 +37,14 @@ end
 
 module Unsafe : S = struct
   type kind = [ `SHA256 ]
-  type ctx = { mutable size : int64; b : Bytes.t; h : int32 array }
+  type ctx = { mutable size : int64; b : Bytes.t; h : Bytes.t }
 
-  let dup ctx = { size = ctx.size; b = By.copy ctx.b; h = Array.copy ctx.h }
+  let of_array a =
+    let b = By.create (4 * Array.length a) in
+    Array.iteri (fun i x -> By.unsafe_set_32 b (i * 4) x) a ;
+    b
+
+  let dup ctx = { size = ctx.size; b = By.copy ctx.b; h = By.copy ctx.h }
 
   let init () =
     let b = By.make 128 '\x00' in
@@ -45,81 +52,86 @@ module Unsafe : S = struct
       size = 0L;
       b;
       h =
-        [|
-          0x6a09e667l; 0xbb67ae85l; 0x3c6ef372l; 0xa54ff53al; 0x510e527fl;
-          0x9b05688cl; 0x1f83d9abl; 0x5be0cd19l;
-        |];
+        of_array
+          [|
+            0x6a09e667l; 0xbb67ae85l; 0x3c6ef372l; 0xa54ff53al; 0x510e527fl;
+            0x9b05688cl; 0x1f83d9abl; 0x5be0cd19l;
+          |];
     }
 
   let k =
-    [|
-      0x428a2f98l; 0x71374491l; 0xb5c0fbcfl; 0xe9b5dba5l; 0x3956c25bl;
-      0x59f111f1l; 0x923f82a4l; 0xab1c5ed5l; 0xd807aa98l; 0x12835b01l;
-      0x243185bel; 0x550c7dc3l; 0x72be5d74l; 0x80deb1fel; 0x9bdc06a7l;
-      0xc19bf174l; 0xe49b69c1l; 0xefbe4786l; 0x0fc19dc6l; 0x240ca1ccl;
-      0x2de92c6fl; 0x4a7484aal; 0x5cb0a9dcl; 0x76f988dal; 0x983e5152l;
-      0xa831c66dl; 0xb00327c8l; 0xbf597fc7l; 0xc6e00bf3l; 0xd5a79147l;
-      0x06ca6351l; 0x14292967l; 0x27b70a85l; 0x2e1b2138l; 0x4d2c6dfcl;
-      0x53380d13l; 0x650a7354l; 0x766a0abbl; 0x81c2c92el; 0x92722c85l;
-      0xa2bfe8a1l; 0xa81a664bl; 0xc24b8b70l; 0xc76c51a3l; 0xd192e819l;
-      0xd6990624l; 0xf40e3585l; 0x106aa070l; 0x19a4c116l; 0x1e376c08l;
-      0x2748774cl; 0x34b0bcb5l; 0x391c0cb3l; 0x4ed8aa4al; 0x5b9cca4fl;
-      0x682e6ff3l; 0x748f82eel; 0x78a5636fl; 0x84c87814l; 0x8cc70208l;
-      0x90befffal; 0xa4506cebl; 0xbef9a3f7l; 0xc67178f2l;
-    |]
+    of_array
+      [|
+        0x428a2f98l; 0x71374491l; 0xb5c0fbcfl; 0xe9b5dba5l; 0x3956c25bl;
+        0x59f111f1l; 0x923f82a4l; 0xab1c5ed5l; 0xd807aa98l; 0x12835b01l;
+        0x243185bel; 0x550c7dc3l; 0x72be5d74l; 0x80deb1fel; 0x9bdc06a7l;
+        0xc19bf174l; 0xe49b69c1l; 0xefbe4786l; 0x0fc19dc6l; 0x240ca1ccl;
+        0x2de92c6fl; 0x4a7484aal; 0x5cb0a9dcl; 0x76f988dal; 0x983e5152l;
+        0xa831c66dl; 0xb00327c8l; 0xbf597fc7l; 0xc6e00bf3l; 0xd5a79147l;
+        0x06ca6351l; 0x14292967l; 0x27b70a85l; 0x2e1b2138l; 0x4d2c6dfcl;
+        0x53380d13l; 0x650a7354l; 0x766a0abbl; 0x81c2c92el; 0x92722c85l;
+        0xa2bfe8a1l; 0xa81a664bl; 0xc24b8b70l; 0xc76c51a3l; 0xd192e819l;
+        0xd6990624l; 0xf40e3585l; 0x106aa070l; 0x19a4c116l; 0x1e376c08l;
+        0x2748774cl; 0x34b0bcb5l; 0x391c0cb3l; 0x4ed8aa4al; 0x5b9cca4fl;
+        0x682e6ff3l; 0x748f82eel; 0x78a5636fl; 0x84c87814l; 0x8cc70208l;
+        0x90befffal; 0xa4506cebl; 0xbef9a3f7l; 0xc67178f2l;
+      |]
 
-  let e0 x = Int32.(ror32 x 2 lxor ror32 x 13 lxor ror32 x 22)
-  let e1 x = Int32.(ror32 x 6 lxor ror32 x 11 lxor ror32 x 25)
-  let s0 x = Int32.(ror32 x 7 lxor ror32 x 18 lxor (x lsr 3))
-  let s1 x = Int32.(ror32 x 17 lxor ror32 x 19 lxor (x lsr 10))
+  let[@inline] e0 x = Int32.(ror32 x 2 lxor ror32 x 13 lxor ror32 x 22)
+  let[@inline] e1 x = Int32.(ror32 x 6 lxor ror32 x 11 lxor ror32 x 25)
+  let[@inline] s0 x = Int32.(ror32 x 7 lxor ror32 x 18 lxor (x lsr 3))
+  let[@inline] s1 x = Int32.(ror32 x 17 lxor ror32 x 19 lxor (x lsr 10))
 
   let sha256_do_chunk : type a.
       be32_to_cpu:(a -> int -> int32) -> ctx -> a -> int -> unit =
    fun ~be32_to_cpu ctx buf off ->
-    let a, b, c, d, e, f, g, h, t1, t2 =
-      ( ref ctx.h.(0),
-        ref ctx.h.(1),
-        ref ctx.h.(2),
-        ref ctx.h.(3),
-        ref ctx.h.(4),
-        ref ctx.h.(5),
-        ref ctx.h.(6),
-        ref ctx.h.(7),
-        ref 0l,
-        ref 0l ) in
-    let w = Array.make 64 0l in
+    let a = ref (By.unsafe_get_32 ctx.h 0) in
+    let b = ref (By.unsafe_get_32 ctx.h 4) in
+    let c = ref (By.unsafe_get_32 ctx.h 8) in
+    let d = ref (By.unsafe_get_32 ctx.h 12) in
+    let e = ref (By.unsafe_get_32 ctx.h 16) in
+    let f = ref (By.unsafe_get_32 ctx.h 20) in
+    let g = ref (By.unsafe_get_32 ctx.h 24) in
+    let h = ref (By.unsafe_get_32 ctx.h 28) in
+    let w = By.create (64 * 4) in
     for i = 0 to 15 do
-      w.(i) <- be32_to_cpu buf (off + (i * 4))
+      By.unsafe_set_32 w (i * 4) (be32_to_cpu buf (off + (i * 4)))
     done ;
-    let ( -- ) a b = a - b in
     for i = 16 to 63 do
-      w.(i) <- Int32.(s1 w.(i -- 2) + w.(i -- 7) + s0 w.(i -- 15) + w.(i -- 16))
+      By.unsafe_set_32 w (i * 4)
+        Int32.(
+          s1 (By.unsafe_get_32 w ((i - 2) * 4))
+          + By.unsafe_get_32 w ((i - 7) * 4)
+          + s0 (By.unsafe_get_32 w ((i - 15) * 4))
+          + By.unsafe_get_32 w ((i - 16) * 4))
     done ;
-    let round a b c d e f g h k w =
+    for i = 0 to 63 do
       let open Int32 in
-      t1 := !h + e1 !e + (!g lxor (!e land (!f lxor !g))) + k + w ;
-      t2 := e0 !a + (!a land !b lor (!c land (!a lor !b))) ;
-      d := !d + !t1 ;
-      h := !t1 + !t2 in
-    for i = 0 to 7 do
-      round a b c d e f g h k.((i * 8) + 0) w.((i * 8) + 0) ;
-      round h a b c d e f g k.((i * 8) + 1) w.((i * 8) + 1) ;
-      round g h a b c d e f k.((i * 8) + 2) w.((i * 8) + 2) ;
-      round f g h a b c d e k.((i * 8) + 3) w.((i * 8) + 3) ;
-      round e f g h a b c d k.((i * 8) + 4) w.((i * 8) + 4) ;
-      round d e f g h a b c k.((i * 8) + 5) w.((i * 8) + 5) ;
-      round c d e f g h a b k.((i * 8) + 6) w.((i * 8) + 6) ;
-      round b c d e f g h a k.((i * 8) + 7) w.((i * 8) + 7)
+      let t1 =
+        !h
+        + e1 !e
+        + (!g lxor (!e land (!f lxor !g)))
+        + By.unsafe_get_32 k (i * 4)
+        + By.unsafe_get_32 w (i * 4) in
+      let t2 = e0 !a + (!a land !b lor (!c land (!a lor !b))) in
+      h := !g ;
+      g := !f ;
+      f := !e ;
+      e := !d + t1 ;
+      d := !c ;
+      c := !b ;
+      b := !a ;
+      a := t1 + t2
     done ;
     let open Int32 in
-    ctx.h.(0) <- ctx.h.(0) + !a ;
-    ctx.h.(1) <- ctx.h.(1) + !b ;
-    ctx.h.(2) <- ctx.h.(2) + !c ;
-    ctx.h.(3) <- ctx.h.(3) + !d ;
-    ctx.h.(4) <- ctx.h.(4) + !e ;
-    ctx.h.(5) <- ctx.h.(5) + !f ;
-    ctx.h.(6) <- ctx.h.(6) + !g ;
-    ctx.h.(7) <- ctx.h.(7) + !h ;
+    By.unsafe_set_32 ctx.h 0 (By.unsafe_get_32 ctx.h 0 + !a) ;
+    By.unsafe_set_32 ctx.h 4 (By.unsafe_get_32 ctx.h 4 + !b) ;
+    By.unsafe_set_32 ctx.h 8 (By.unsafe_get_32 ctx.h 8 + !c) ;
+    By.unsafe_set_32 ctx.h 12 (By.unsafe_get_32 ctx.h 12 + !d) ;
+    By.unsafe_set_32 ctx.h 16 (By.unsafe_get_32 ctx.h 16 + !e) ;
+    By.unsafe_set_32 ctx.h 20 (By.unsafe_get_32 ctx.h 20 + !f) ;
+    By.unsafe_set_32 ctx.h 24 (By.unsafe_get_32 ctx.h 24 + !g) ;
+    By.unsafe_set_32 ctx.h 28 (By.unsafe_get_32 ctx.h 28 + !h) ;
     ()
 
   let feed : type a.
@@ -166,7 +178,7 @@ module Unsafe : S = struct
     unsafe_feed_bytes ctx bits 0 8 ;
     let res = By.create (8 * 4) in
     for i = 0 to 7 do
-      By.cpu_to_be32 res (i * 4) ctx.h.(i)
+      By.cpu_to_be32 res (i * 4) (By.unsafe_get_32 ctx.h (i * 4))
     done ;
     res
 end

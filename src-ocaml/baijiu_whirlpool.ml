@@ -4,20 +4,21 @@ module Bi = Digestif_bi
 module Int64 = struct
   include Int64
 
-  let ( lsl ) = Int64.shift_left
-  let ( lsr ) = Int64.shift_right_logical
-  let ( asr ) = Int64.shift_right
-  let ( lor ) = Int64.logor
-  let ( land ) = Int64.logand
-  let ( lxor ) = Int64.logxor
-  let ( + ) = Int64.add
-  let ror64 a n = (a lsr n) lor (a lsl (64 - n))
-  let rol64 a n = (a lsl n) lor (a lsr (64 - n))
+  external ( lsl ) : int64 -> int -> int64 = "%int64_lsl"
+  external ( lsr ) : int64 -> int -> int64 = "%int64_lsr"
+  external ( asr ) : int64 -> int -> int64 = "%int64_asr"
+  external ( lor ) : int64 -> int64 -> int64 = "%int64_or"
+  external ( land ) : int64 -> int64 -> int64 = "%int64_and"
+  external ( lxor ) : int64 -> int64 -> int64 = "%int64_xor"
+  external ( + ) : int64 -> int64 -> int64 = "%int64_add"
+
+  let[@inline] ror64 a n = (a lsr n) lor (a lsl (64 - n))
+  let[@inline] rol64 a n = (a lsl n) lor (a lsr (64 - n))
 end
 
 module type S = sig
   type kind = [ `WHIRLPOOL ]
-  type ctx = { mutable size : int64; b : Bytes.t; h : int64 array }
+  type ctx = { mutable size : int64; b : Bytes.t; h : Bytes.t }
 
   val init : unit -> ctx
   val unsafe_feed_bytes : ctx -> By.t -> int -> int -> unit
@@ -28,13 +29,13 @@ end
 
 module Unsafe : S = struct
   type kind = [ `WHIRLPOOL ]
-  type ctx = { mutable size : int64; b : Bytes.t; h : int64 array }
+  type ctx = { mutable size : int64; b : Bytes.t; h : Bytes.t }
 
-  let dup ctx = { size = ctx.size; b = By.copy ctx.b; h = Array.copy ctx.h }
+  let dup ctx = { size = ctx.size; b = By.copy ctx.b; h = By.copy ctx.h }
 
   let init () =
     let b = By.make 64 '\x00' in
-    { size = 0L; b; h = Array.make 8 Int64.zero }
+    { size = 0L; b; h = By.make (8 * 8) '\x00' }
 
   let k =
     [|
@@ -744,11 +745,29 @@ module Unsafe : S = struct
       |];
     |]
 
+  let k =
+    let b = By.create (8 * 256 * 8) in
+    Array.iteri
+      (fun i ->
+        Array.iteri (fun j x -> By.unsafe_set_64 b (((i * 256) + j) * 8) x))
+      k ;
+    b
+
+  let[@inline] wp_op src off shift =
+    let r = ref Int64.zero in
+    for i = 0 to 7 do
+      let v = By.unsafe_get_64 src (off + (((shift + 8 - i) land 7) * 8)) in
+      let j = Int64.(to_int ((v asr (56 - (8 * i))) land 0xffL)) in
+      let x = By.unsafe_get_64 k (((i * 256) + j) * 8) in
+      r := Int64.(!r lxor x)
+    done ;
+    !r
+
   let whirlpool_do_chunk : type a.
       be64_to_cpu:(a -> int -> int64) -> ctx -> a -> int -> unit =
    fun ~be64_to_cpu ctx buf off ->
-    let key = Array.init 2 (fun _ -> Array.make 8 Int64.zero) in
-    let state = Array.init 2 (fun _ -> Array.make 8 Int64.zero) in
+    let key = By.create (2 * 8 * 8) in
+    let state = By.create (2 * 8 * 8) in
     let m = ref 0 in
     let rc =
       [|
@@ -758,35 +777,28 @@ module Unsafe : S = struct
         0xca2dbf07ad5a8333L;
       |] in
     for i = 0 to 7 do
-      key.(0).(i) <- ctx.h.(i) ;
+      let h = By.unsafe_get_64 ctx.h (i * 8) in
+      By.unsafe_set_64 key (i * 8) h ;
       let off = off + (i * 8) in
-      state.(0).(i) <- Int64.(be64_to_cpu buf off lxor ctx.h.(i)) ;
-      ctx.h.(i) <- state.(0).(i)
+      By.unsafe_set_64 state (i * 8) Int64.(be64_to_cpu buf off lxor h) ;
+      By.unsafe_set_64 ctx.h (i * 8) (By.unsafe_get_64 state (i * 8))
     done ;
-    let wp_op src shift =
-      let mask v = Int64.(to_int (v land 0xffL)) in
-      let get_k i =
-        k.(i).(mask
-                 (Int64.shift_right src.((shift + 8 - i) land 7) (56 - (8 * i))))
-      in
-      Array.fold_left Int64.logxor Int64.zero (Array.init 8 get_k) in
     for i = 0 to 9 do
-      let m0, m1 = (!m, !m lxor 1) in
-      let upd_key i = key.(m1).(i) <- wp_op key.(m0) i in
-      let upd_state i =
-        state.(m1).(i) <- Int64.(wp_op state.(m0) i lxor key.(m1).(i)) in
+      let m0, m1 = (!m * 64, (!m lxor 1) * 64) in
       for i = 0 to 7 do
-        upd_key i
+        By.unsafe_set_64 key (m1 + (i * 8)) (wp_op key m0 i)
       done ;
-      key.(m1).(0) <- Int64.(key.(m1).(0) lxor rc.(i)) ;
+      By.unsafe_set_64 key m1 Int64.(By.unsafe_get_64 key m1 lxor rc.(i)) ;
       for i = 0 to 7 do
-        upd_state i
+        let x = By.unsafe_get_64 key (m1 + (i * 8)) in
+        By.unsafe_set_64 state (m1 + (i * 8)) Int64.(wp_op state m0 i lxor x)
       done ;
       m := !m lxor 1
     done ;
-    let upd_hash i = Int64.(ctx.h.(i) <- ctx.h.(i) lxor state.(0).(i)) in
     for i = 0 to 7 do
-      upd_hash i
+      let x = By.unsafe_get_64 state (i * 8) in
+      By.unsafe_set_64 ctx.h (i * 8)
+        Int64.(By.unsafe_get_64 ctx.h (i * 8) lxor x)
     done ;
     ()
 
@@ -837,7 +849,7 @@ module Unsafe : S = struct
     whirlpool_do_chunk ~be64_to_cpu:By.be64_to_cpu ctx ctx.b 0 ;
     let res = By.create (8 * 8) in
     for i = 0 to 7 do
-      By.cpu_to_be64 res (i * 8) ctx.h.(i)
+      By.cpu_to_be64 res (i * 8) (By.unsafe_get_64 ctx.h (i * 8))
     done ;
     res
 end

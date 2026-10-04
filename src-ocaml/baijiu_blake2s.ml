@@ -6,30 +6,32 @@ let failwith fmt = Format.kasprintf failwith fmt
 module Int32 = struct
   include Int32
 
-  let ( lsl ) = Int32.shift_left
-  let ( lsr ) = Int32.shift_right_logical
-  let ( asr ) = Int32.shift_right
-  let ( lor ) = Int32.logor
-  let ( lxor ) = Int32.logxor
-  let ( land ) = Int32.logand
+  external ( lsl ) : int32 -> int -> int32 = "%int32_lsl"
+  external ( lsr ) : int32 -> int -> int32 = "%int32_lsr"
+  external ( asr ) : int32 -> int -> int32 = "%int32_asr"
+  external ( lor ) : int32 -> int32 -> int32 = "%int32_or"
+  external ( lxor ) : int32 -> int32 -> int32 = "%int32_xor"
+  external ( land ) : int32 -> int32 -> int32 = "%int32_and"
   let lnot = Int32.lognot
-  let ( + ) = Int32.add
-  let rol32 a n = (a lsl n) lor (a lsr (32 - n))
-  let ror32 a n = (a lsr n) lor (a lsl (32 - n))
+  external ( + ) : int32 -> int32 -> int32 = "%int32_add"
+
+  let[@inline] rol32 a n = (a lsl n) lor (a lsr (32 - n))
+  let[@inline] ror32 a n = (a lsr n) lor (a lsl (32 - n))
 end
 
 module Int64 = struct
   include Int64
 
-  let ( land ) = Int64.logand
-  let ( lsl ) = Int64.shift_left
-  let ( lsr ) = Int64.shift_right_logical
-  let ( lor ) = Int64.logor
-  let ( asr ) = Int64.shift_right
-  let ( lxor ) = Int64.logxor
-  let ( + ) = Int64.add
-  let rol64 a n = (a lsl n) lor (a lsr (64 - n))
-  let ror64 a n = (a lsr n) lor (a lsl (64 - n))
+  external ( land ) : int64 -> int64 -> int64 = "%int64_and"
+  external ( lsl ) : int64 -> int -> int64 = "%int64_lsl"
+  external ( lsr ) : int64 -> int -> int64 = "%int64_lsr"
+  external ( lor ) : int64 -> int64 -> int64 = "%int64_or"
+  external ( asr ) : int64 -> int -> int64 = "%int64_asr"
+  external ( lxor ) : int64 -> int64 -> int64 = "%int64_xor"
+  external ( + ) : int64 -> int64 -> int64 = "%int64_add"
+
+  let[@inline] rol64 a n = (a lsl n) lor (a lsr (64 - n))
+  let[@inline] ror64 a n = (a lsr n) lor (a lsl (64 - n))
 end
 
 module type S = sig
@@ -68,7 +70,7 @@ module Unsafe : S = struct
     outlen : int;
     mutable last_node : int;
     buf : Bytes.t;
-    h : int32 array;
+    h : Bytes.t;
     t : int32 array;
     f : int32 array;
   }
@@ -79,7 +81,7 @@ module Unsafe : S = struct
       outlen = ctx.outlen;
       last_node = ctx.last_node;
       buf = By.copy ctx.buf;
-      h = Array.copy ctx.h;
+      h = By.copy ctx.h;
       t = Array.copy ctx.t;
       f = Array.copy ctx.f;
     }
@@ -130,11 +132,17 @@ module Unsafe : S = struct
       personal = [| 0; 0; 0; 0; 0; 0; 0; 0 |];
     }
 
+  let of_array a =
+    let b = By.create (4 * Array.length a) in
+    Array.iteri (fun i x -> By.unsafe_set_32 b (i * 4) x) a ;
+    b
+
   let iv =
-    [|
-      0x6A09E667l; 0xBB67AE85l; 0x3C6EF372l; 0xA54FF53Al; 0x510E527Fl;
-      0x9B05688Cl; 0x1F83D9ABl; 0x5BE0CD19l;
-    |]
+    of_array
+      [|
+        0x6A09E667l; 0xBB67AE85l; 0x3C6EF372l; 0xA54FF53Al; 0x510E527Fl;
+        0x9B05688Cl; 0x1F83D9ABl; 0x5BE0CD19l;
+      |]
 
   let increment_counter ctx inc =
     let open Int32 in
@@ -156,13 +164,15 @@ module Unsafe : S = struct
         outlen = default_param.digest_length;
         last_node = 0;
         buf;
-        h = Array.make 8 0l;
+        h = By.make (8 * 4) '\x00';
         t = Array.make 2 0l;
         f = Array.make 2 0l;
       } in
     let param_bytes = param_to_bytes default_param in
     for i = 0 to 7 do
-      ctx.h.(i) <- Int32.(iv.(i) lxor By.le32_to_cpu param_bytes (i * 4))
+      By.unsafe_set_32 ctx.h (i * 4)
+        Int32.(
+          By.unsafe_get_32 iv (i * 4) lxor By.le32_to_cpu param_bytes (i * 4))
     done ;
     ctx
 
@@ -180,58 +190,58 @@ module Unsafe : S = struct
       [| 10; 2; 8; 4; 7; 6; 1; 5; 15; 11; 9; 14; 3; 12; 13; 0 |];
     |]
 
+  let[@inline] g v m r i a b c d =
+    let a = a * 4 and b = b * 4 and c = c * 4 and d = d * 4 in
+    let m0 = By.unsafe_get_32 m (sigma.(r).(2 * i) * 4) in
+    let m1 = By.unsafe_get_32 m (sigma.(r).((2 * i) + 1) * 4) in
+    let open Int32 in
+    let va = By.unsafe_get_32 v a + By.unsafe_get_32 v b + m0 in
+    let vd = ror32 (By.unsafe_get_32 v d lxor va) 16 in
+    let vc = By.unsafe_get_32 v c + vd in
+    let vb = ror32 (By.unsafe_get_32 v b lxor vc) 12 in
+    let va = va + vb + m1 in
+    let vd = ror32 (vd lxor va) 8 in
+    let vc = vc + vd in
+    let vb = ror32 (vb lxor vc) 7 in
+    By.unsafe_set_32 v a va ;
+    By.unsafe_set_32 v b vb ;
+    By.unsafe_set_32 v c vc ;
+    By.unsafe_set_32 v d vd
+
   let compress : type a.
       le32_to_cpu:(a -> int -> int32) -> ctx -> a -> int -> unit =
    fun ~le32_to_cpu ctx block off ->
-    let v = Array.make 16 0l in
-    let m = Array.make 16 0l in
-    let g r i a_idx b_idx c_idx d_idx =
-      let ( ++ ) = ( + ) in
-      let open Int32 in
-      v.(a_idx) <- v.(a_idx) + v.(b_idx) + m.(sigma.(r).((2 * i) ++ 0)) ;
-      v.(d_idx) <- ror32 (v.(d_idx) lxor v.(a_idx)) 16 ;
-      v.(c_idx) <- v.(c_idx) + v.(d_idx) ;
-      v.(b_idx) <- ror32 (v.(b_idx) lxor v.(c_idx)) 12 ;
-      v.(a_idx) <- v.(a_idx) + v.(b_idx) + m.(sigma.(r).((2 * i) ++ 1)) ;
-      v.(d_idx) <- ror32 (v.(d_idx) lxor v.(a_idx)) 8 ;
-      v.(c_idx) <- v.(c_idx) + v.(d_idx) ;
-      v.(b_idx) <- ror32 (v.(b_idx) lxor v.(c_idx)) 7 in
-    let r r =
-      g r 0 0 4 8 12 ;
-      g r 1 1 5 9 13 ;
-      g r 2 2 6 10 14 ;
-      g r 3 3 7 11 15 ;
-      g r 4 0 5 10 15 ;
-      g r 5 1 6 11 12 ;
-      g r 6 2 7 8 13 ;
-      g r 7 3 4 9 14 in
+    let v = By.create (16 * 4) in
+    let m = By.create (16 * 4) in
     for i = 0 to 15 do
-      m.(i) <- le32_to_cpu block (off + (i * 4))
+      By.unsafe_set_32 m (i * 4) (le32_to_cpu block (off + (i * 4)))
     done ;
     for i = 0 to 7 do
-      v.(i) <- ctx.h.(i)
+      By.unsafe_set_32 v (i * 4) (By.unsafe_get_32 ctx.h (i * 4))
     done ;
-    v.(8) <- iv.(0) ;
-    v.(9) <- iv.(1) ;
-    v.(10) <- iv.(2) ;
-    v.(11) <- iv.(3) ;
-    v.(12) <- Int32.(iv.(4) lxor ctx.t.(0)) ;
-    v.(13) <- Int32.(iv.(5) lxor ctx.t.(1)) ;
-    v.(14) <- Int32.(iv.(6) lxor ctx.f.(0)) ;
-    v.(15) <- Int32.(iv.(7) lxor ctx.f.(1)) ;
-    r 0 ;
-    r 1 ;
-    r 2 ;
-    r 3 ;
-    r 4 ;
-    r 5 ;
-    r 6 ;
-    r 7 ;
-    r 8 ;
-    r 9 ;
-    let ( ++ ) = ( + ) in
+    By.unsafe_set_32 v 32 (By.unsafe_get_32 iv 0) ;
+    By.unsafe_set_32 v 36 (By.unsafe_get_32 iv 4) ;
+    By.unsafe_set_32 v 40 (By.unsafe_get_32 iv 8) ;
+    By.unsafe_set_32 v 44 (By.unsafe_get_32 iv 12) ;
+    By.unsafe_set_32 v 48 Int32.(By.unsafe_get_32 iv 16 lxor ctx.t.(0)) ;
+    By.unsafe_set_32 v 52 Int32.(By.unsafe_get_32 iv 20 lxor ctx.t.(1)) ;
+    By.unsafe_set_32 v 56 Int32.(By.unsafe_get_32 iv 24 lxor ctx.f.(0)) ;
+    By.unsafe_set_32 v 60 Int32.(By.unsafe_get_32 iv 28 lxor ctx.f.(1)) ;
+    for r = 0 to 9 do
+      g v m r 0 0 4 8 12 ;
+      g v m r 1 1 5 9 13 ;
+      g v m r 2 2 6 10 14 ;
+      g v m r 3 3 7 11 15 ;
+      g v m r 4 0 5 10 15 ;
+      g v m r 5 1 6 11 12 ;
+      g v m r 6 2 7 8 13 ;
+      g v m r 7 3 4 9 14
+    done ;
     for i = 0 to 7 do
-      ctx.h.(i) <- Int32.(ctx.h.(i) lxor v.(i) lxor v.(i ++ 8))
+      let x = By.unsafe_get_32 v (i * 4) in
+      let y = By.unsafe_get_32 v ((i + 8) * 4) in
+      By.unsafe_set_32 ctx.h (i * 4)
+        Int32.(By.unsafe_get_32 ctx.h (i * 4) lxor x lxor y)
     done ;
     ()
 
@@ -285,7 +295,7 @@ module Unsafe : S = struct
         outlen;
         last_node = 0;
         buf;
-        h = Array.make 8 0l;
+        h = By.make (8 * 4) '\x00';
         t = Array.make 2 0l;
         f = Array.make 2 0l;
       } in
@@ -293,7 +303,9 @@ module Unsafe : S = struct
       param_to_bytes
         { default_param with key_length = len; digest_length = outlen } in
     for i = 0 to 7 do
-      ctx.h.(i) <- Int32.(iv.(i) lxor By.le32_to_cpu param_bytes (i * 4))
+      By.unsafe_set_32 ctx.h (i * 4)
+        Int32.(
+          By.unsafe_get_32 iv (i * 4) lxor By.le32_to_cpu param_bytes (i * 4))
     done ;
     if len > 0
     then (
@@ -315,7 +327,7 @@ module Unsafe : S = struct
     By.fill ctx.buf ctx.buflen (64 - ctx.buflen) '\x00' ;
     compress ~le32_to_cpu:By.le32_to_cpu ctx ctx.buf 0 ;
     for i = 0 to 7 do
-      By.cpu_to_le32 res (i * 4) ctx.h.(i)
+      By.cpu_to_le32 res (i * 4) (By.unsafe_get_32 ctx.h (i * 4))
     done ;
     if ctx.outlen < default_param.digest_length
     then By.sub res 0 ctx.outlen
