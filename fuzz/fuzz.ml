@@ -6,7 +6,7 @@ let hash =
   choose
     [
       const (Pack Digestif.sha1); const (Pack Digestif.sha256);
-      const (Pack Digestif.sha512);
+      const (Pack Digestif.sha512); const (Pack Digestif.blake3);
     ]
 
 let with_get_into_bytes off len (type ctx)

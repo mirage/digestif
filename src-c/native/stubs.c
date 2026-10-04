@@ -8,6 +8,7 @@
 #include "whirlpool.h"
 #include "blake2b.h"
 #include "blake2s.h"
+#include "blake3.h"
 #include "ripemd160.h"
 #include <caml/memory.h>
 #include <string.h>
@@ -128,6 +129,17 @@ CAMLextern void caml_leave_blocking_section (void);
     return Val_int (upper ## _CTX_SIZE);                                     \
   }
 
+/* BLAKE3 */
+
+#define BLAKE3_CTX_SIZE (sizeof(blake3_ctx))
+typedef blake3_hasher blake3_ctx;
+
+void
+digestif_blake3_finalize(const blake3_ctx *ctx, uint8_t *out)
+{
+  digestif_blake3_finalize_with_out_len(ctx, out, BLAKE3_OUT_LEN);
+}
+
 __define_hash (md5, MD5)
 __define_hash (sha1, SHA1)
 __define_hash (sha224, SHA224)
@@ -137,7 +149,39 @@ __define_hash (sha512, SHA512)
 __define_hash (whirlpool, WHIRLPOOL)
 __define_hash (blake2b, BLAKE2B)
 __define_hash (blake2s, BLAKE2S)
+__define_hash (blake3, BLAKE3)
 __define_hash (rmd160, RMD160)
+
+/* BLAKE3 */
+
+CAMLprim value
+caml_digestif_blake3_st_init_keyed(value ctx, value key, value off)
+{
+  digestif_blake3_init_keyed(
+    (blake3_ctx *) String_val(ctx), _st_uint8_off(key, off));
+  return Val_unit;
+}
+
+CAMLprim value
+caml_digestif_blake3_st_init_derive_key(value ctx, value context,
+                                        value off, value len)
+{
+  digestif_blake3_init_derive_key_raw(
+    (blake3_ctx *) String_val(ctx), _st_uint8_off(context, off), Int_val(len));
+  return Val_unit;
+}
+
+CAMLprim value
+caml_digestif_blake3_st_finalize_seek(value ctx, value seek, value dst,
+                                      value off, value len)
+{
+  digestif_blake3_finalize_seek(
+    (blake3_ctx *) String_val(ctx), Int64_val(seek),
+    _st_uint8_off(dst, off), Int_val(len));
+  return Val_unit;
+}
+
+/* BLAKE2 */
 
 CAMLprim value
 caml_digestif_blake2b_ba_init_with_outlen_and_key(value ctx, value outlen, value key, value off, value len)
@@ -209,6 +253,8 @@ caml_digestif_blake2s_digest_size(value ctx) {
   return Val_int(((blake2s_ctx *) String_val (ctx))->outlen);
 }
 
+/* SHA3 */
+
 CAMLprim value
 caml_digestif_keccak_256_ba_finalize
 (value ctx, value dst, value off) {
@@ -226,7 +272,6 @@ caml_digestif_keccak_256_st_finalize
     _st_uint8_off (dst, off), 0x01);
   return Val_unit;
 }
-
 
 #define __define_hash_sha3(mdlen)                                            \
                                                                              \

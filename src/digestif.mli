@@ -271,6 +271,53 @@ module BLAKE2S : sig
   module Keyed : MAC with type t = t
 end
 
+(** The BLAKE3 hash, keyed hash, key derivation, and extensible-output
+    algorithm. *)
+module BLAKE3 : sig
+  include S
+
+  val key_size : int
+  (** The size of keys accepted by keyed mode, in bytes. *)
+
+  val init_keyed : key:string -> ctx
+  (** Create a BLAKE3 keyed-mode state. [key] must be exactly [key_size] bytes.
+  *)
+
+  val init_derive_key : context:string -> ctx
+  (** Create a BLAKE3 derive-key state for the application-specific [context].
+  *)
+
+  val get_xof_into_bytes :
+    ctx -> ?seek:int64 -> ?off:int -> ?len:int -> bytes -> unit
+  (** Write [len] bytes of extensible output into the destination. [seek]
+      selects the first output byte and defaults to zero. *)
+
+  val get_xof : ctx -> ?seek:int64 -> int -> string
+  (** [get_xof ctx ?seek len] returns [len] bytes of extensible output. *)
+
+  module Keyed : MAC with type t = t
+
+  module Derive_key : sig
+    type nonrec t = t
+
+    val derive_key_bytes :
+      context:string -> ?off:int -> ?len:int -> Bytes.t -> t
+
+    val derive_key_string :
+      context:string -> ?off:int -> ?len:int -> String.t -> t
+
+    val derive_key_bigstring :
+      context:string -> ?off:int -> ?len:int -> bigstring -> t
+
+    val derive_keyi_bytes : context:string -> Bytes.t iter -> t
+    val derive_keyi_string : context:string -> String.t iter -> t
+    val derive_keyi_bigstring : context:string -> bigstring iter -> t
+    val derive_keyv_bytes : context:string -> Bytes.t list -> t
+    val derive_keyv_string : context:string -> String.t list -> t
+    val derive_keyv_bigstring : context:string -> bigstring list -> t
+  end
+end
+
 module RMD160 : S
 (** RMD160 hash algorithm.
 
@@ -300,6 +347,7 @@ type 'k hash =
   | WHIRLPOOL : WHIRLPOOL.t hash
   | BLAKE2B : BLAKE2B.t hash
   | BLAKE2S : BLAKE2S.t hash
+  | BLAKE3 : BLAKE3.t hash
 
 type hash' =
   [ `MD5
@@ -316,7 +364,8 @@ type hash' =
   | `SHA3_512
   | `WHIRLPOOL
   | `BLAKE2B
-  | `BLAKE2S ]
+  | `BLAKE2S
+  | `BLAKE3 ]
 
 val module_of_hash' : hash' -> (module S)
 val hash_to_hash' : _ hash -> hash'
@@ -335,6 +384,7 @@ val sha3_512 : SHA3_512.t hash
 val whirlpool : WHIRLPOOL.t hash
 val blake2b : BLAKE2B.t hash
 val blake2s : BLAKE2S.t hash
+val blake3 : BLAKE3.t hash
 
 type 'kind t
 
@@ -391,3 +441,4 @@ val of_whirlpool : WHIRLPOOL.t -> WHIRLPOOL.t t
 
 val of_blake2b : BLAKE2B.t -> BLAKE2B.t t
 val of_blake2s : BLAKE2S.t -> BLAKE2S.t t
+val of_blake3 : BLAKE3.t -> BLAKE3.t t
