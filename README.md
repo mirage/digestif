@@ -10,6 +10,7 @@ Digestif is a toolbox which implements hashes:
  * WHIRLPOOL
  * BLAKE2B
  * BLAKE2S
+ * BLAKE3
  * RIPEMD160
 
 Digestif uses a trick about linking and let the end-user to choose which

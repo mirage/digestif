@@ -9,7 +9,7 @@ bug-reports:  "https://github.com/mirage/digestif/issues"
 dev-repo:     "git+https://github.com/mirage/digestif.git"
 doc:          "https://mirage.github.io/digestif/"
 license:      "MIT"
-synopsis:     "Hashes implementations (SHA*, RIPEMD160, BLAKE2* and MD5)"
+synopsis:     "Hashes implementations (SHA*, RIPEMD160, BLAKE2*, BLAKE3 and MD5)"
 description: """
 Digestif is a toolbox to provide hashes implementations in C and OCaml.
 
@@ -27,6 +27,7 @@ We provides implementation of:
  * WHIRLPOOL
  * BLAKE2B
  * BLAKE2S
+ * BLAKE3
  * RIPEMD160
 """
 
