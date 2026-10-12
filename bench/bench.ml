@@ -1,5 +1,3 @@
-(* Throughput of the pure OCaml cores, best of three over a calibrated count. *)
-
 let floor_seconds = 0.5
 let size = 1 lsl 20
 let buf = String.init size (fun i -> Char.chr (i land 0xff))
@@ -39,6 +37,7 @@ let () =
       Digestif.SHA3_512.(to_raw_string (digest_string s)));
   bench "blake2b" (fun s -> Digestif.BLAKE2B.(to_raw_string (digest_string s)));
   bench "blake2s" (fun s -> Digestif.BLAKE2S.(to_raw_string (digest_string s)));
+  bench "blake3" (fun s -> Digestif.BLAKE3.(to_raw_string (digest_string s)));
   bench "rmd160" (fun s -> Digestif.RMD160.(to_raw_string (digest_string s)));
   bench "whirlpool" (fun s ->
       Digestif.WHIRLPOOL.(to_raw_string (digest_string s)));

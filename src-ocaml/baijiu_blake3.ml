@@ -7,12 +7,13 @@ module Bi = Digestif_bi
 module Int32 = struct
   include Int32
 
-  let ( lsl ) = shift_left
-  let ( lsr ) = shift_right_logical
-  let ( lor ) = logor
-  let ( lxor ) = logxor
-  let ( + ) = add
-  let ror x n = (x lsr n) lor (x lsl (32 - n))
+  external ( lsl ) : int32 -> int -> int32 = "%int32_lsl"
+  external ( lsr ) : int32 -> int -> int32 = "%int32_lsr"
+  external ( lor ) : int32 -> int32 -> int32 = "%int32_or"
+  external ( lxor ) : int32 -> int32 -> int32 = "%int32_xor"
+  external ( + ) : int32 -> int32 -> int32 = "%int32_add"
+
+  let[@inline] ror x n = (x lsr n) lor (x lsl (32 - n))
 end
 
 let block_len = 64
@@ -27,11 +28,17 @@ let keyed_hash = 16
 let derive_key_context = 32
 let derive_key_material = 64
 
+let of_array a =
+  let b = By.create (4 * Array.length a) in
+  Array.iteri (fun i x -> By.unsafe_set_32 b (i * 4) x) a ;
+  b
+
 let iv =
-  [|
-    0x6a09e667l; 0xbb67ae85l; 0x3c6ef372l; 0xa54ff53al; 0x510e527fl;
-    0x9b05688cl; 0x1f83d9abl; 0x5be0cd19l;
-  |]
+  of_array
+    [|
+      0x6a09e667l; 0xbb67ae85l; 0x3c6ef372l; 0xa54ff53al; 0x510e527fl;
+      0x9b05688cl; 0x1f83d9abl; 0x5be0cd19l;
+    |]
 
 let schedule =
   [|
@@ -45,7 +52,7 @@ let schedule =
   |]
 
 type output = {
-  input_cv : int32 array;
+  input_cv : By.t;
   block : By.t;
   block_len : int;
   counter : int64;
@@ -53,7 +60,7 @@ type output = {
 }
 
 type chunk_state = {
-  cv : int32 array;
+  cv : By.t;
   chunk_counter : int64;
   buf : By.t;
   mutable buf_len : int;
@@ -62,66 +69,80 @@ type chunk_state = {
 }
 
 type ctx = {
-  key : int32 array;
+  key : By.t;
   mutable chunk : chunk_state;
-  mutable cv_stack : int32 array list;
+  mutable cv_stack : By.t list;
   flags : int;
 }
 
-let words_of_bytes bytes = Array.init 8 (fun i -> By.le32_to_cpu bytes (i * 4))
+let words_of_bytes bytes =
+  let words = By.create out_len in
+  for i = 0 to 7 do
+    By.unsafe_set_32 words (i * 4) (By.le32_to_cpu bytes (i * 4))
+  done ;
+  words
 
 let bytes_of_words words =
   let bytes = By.create out_len in
   for i = 0 to 7 do
-    By.cpu_to_le32 bytes (i * 4) words.(i)
+    By.cpu_to_le32 bytes (i * 4) (By.unsafe_get_32 words (i * 4))
   done ;
   bytes
 
-let g state a b c d x y =
+let[@inline] g v m s i a b c d =
+  let a = a * 4 and b = b * 4 and c = c * 4 and d = d * 4 in
+  let m0 = By.unsafe_get_32 m (s.(2 * i) * 4) in
+  let m1 = By.unsafe_get_32 m (s.((2 * i) + 1) * 4) in
   let open Int32 in
-  state.(a) <- state.(a) + state.(b) + x ;
-  state.(d) <- ror (state.(d) lxor state.(a)) 16 ;
-  state.(c) <- state.(c) + state.(d) ;
-  state.(b) <- ror (state.(b) lxor state.(c)) 12 ;
-  state.(a) <- state.(a) + state.(b) + y ;
-  state.(d) <- ror (state.(d) lxor state.(a)) 8 ;
-  state.(c) <- state.(c) + state.(d) ;
-  state.(b) <- ror (state.(b) lxor state.(c)) 7
-
-let round state msg round =
-  let s = schedule.(round) in
-  g state 0 4 8 12 msg.(s.(0)) msg.(s.(1)) ;
-  g state 1 5 9 13 msg.(s.(2)) msg.(s.(3)) ;
-  g state 2 6 10 14 msg.(s.(4)) msg.(s.(5)) ;
-  g state 3 7 11 15 msg.(s.(6)) msg.(s.(7)) ;
-  g state 0 5 10 15 msg.(s.(8)) msg.(s.(9)) ;
-  g state 1 6 11 12 msg.(s.(10)) msg.(s.(11)) ;
-  g state 2 7 8 13 msg.(s.(12)) msg.(s.(13)) ;
-  g state 3 4 9 14 msg.(s.(14)) msg.(s.(15))
+  let va = By.unsafe_get_32 v a + By.unsafe_get_32 v b + m0 in
+  let vd = ror (By.unsafe_get_32 v d lxor va) 16 in
+  let vc = By.unsafe_get_32 v c + vd in
+  let vb = ror (By.unsafe_get_32 v b lxor vc) 12 in
+  let va = va + vb + m1 in
+  let vd = ror (vd lxor va) 8 in
+  let vc = vc + vd in
+  let vb = ror (vb lxor vc) 7 in
+  By.unsafe_set_32 v a va ;
+  By.unsafe_set_32 v b vb ;
+  By.unsafe_set_32 v c vc ;
+  By.unsafe_set_32 v d vd
 
 let compress cv block block_len counter flags =
-  let msg = Array.init 16 (fun i -> By.le32_to_cpu block (i * 4)) in
-  let state = Array.make 16 0l in
-  Array.blit cv 0 state 0 8 ;
-  Array.blit iv 0 state 8 4 ;
-  state.(12) <- Int64.to_int32 counter ;
-  state.(13) <- Int64.(to_int32 (shift_right_logical counter 32)) ;
-  state.(14) <- Int32.of_int block_len ;
-  state.(15) <- Int32.of_int flags ;
+  let m = By.create 64 in
+  for i = 0 to 15 do
+    By.unsafe_set_32 m (i * 4) (By.le32_to_cpu block (i * 4))
+  done ;
+  let v = By.create 64 in
+  By.blit cv 0 v 0 32 ;
+  By.blit iv 0 v 32 16 ;
+  By.unsafe_set_32 v 48 (Int64.to_int32 counter) ;
+  By.unsafe_set_32 v 52 Int64.(to_int32 (shift_right_logical counter 32)) ;
+  By.unsafe_set_32 v 56 (Int32.of_int block_len) ;
+  By.unsafe_set_32 v 60 (Int32.of_int flags) ;
   for r = 0 to 6 do
-    round state msg r
+    let s = schedule.(r) in
+    g v m s 0 0 4 8 12 ;
+    g v m s 1 1 5 9 13 ;
+    g v m s 2 2 6 10 14 ;
+    g v m s 3 3 7 11 15 ;
+    g v m s 4 0 5 10 15 ;
+    g v m s 5 1 6 11 12 ;
+    g v m s 6 2 7 8 13 ;
+    g v m s 7 3 4 9 14
   done ;
   for i = 0 to 7 do
-    state.(i) <- Int32.(state.(i) lxor state.(Stdlib.(i + 8))) ;
-    state.(Stdlib.(i + 8)) <- Int32.(state.(Stdlib.(i + 8)) lxor cv.(i))
+    let x = By.unsafe_get_32 v (i * 4) in
+    let y = By.unsafe_get_32 v ((i + 8) * 4) in
+    By.unsafe_set_32 v (i * 4) Int32.(x lxor y) ;
+    By.unsafe_set_32 v ((i + 8) * 4) Int32.(y lxor By.unsafe_get_32 cv (i * 4))
   done ;
-  state
+  v
 
 let output_chaining_value output =
-  Array.sub
+  By.sub
     (compress output.input_cv output.block output.block_len output.counter
        output.flags)
-    0 8
+    0 out_len
 
 let output_root_bytes output ~seek dst off len =
   let output_block = ref Int64.(div seek 64L) in
@@ -134,7 +155,7 @@ let output_root_bytes output ~seek dst off len =
       compress output.input_cv output.block output.block_len !output_block
         (output.flags lor root) in
     for i = 0 to 15 do
-      By.cpu_to_le32 wide (i * 4) words.(i)
+      By.cpu_to_le32 wide (i * 4) (By.unsafe_get_32 words (i * 4))
     done ;
     let available = 64 - !within in
     let take = min !remaining available in
@@ -147,7 +168,7 @@ let output_root_bytes output ~seek dst off len =
 
 let make_chunk_state key chunk_counter flags =
   {
-    cv = Array.copy key;
+    cv = By.copy key;
     chunk_counter;
     buf = By.make block_len '\x00';
     buf_len = 0;
@@ -170,7 +191,7 @@ let chunk_state_update ~blit state input off len =
       let words =
         compress state.cv state.buf block_len state.chunk_counter
           (state.flags lor chunk_start_flag state) in
-      Array.blit words 0 state.cv 0 8 ;
+      By.blit words 0 state.cv 0 out_len ;
       state.blocks_compressed <- state.blocks_compressed + 1 ;
       state.buf_len <- 0 ;
       By.fill state.buf 0 block_len '\x00') ;
@@ -183,7 +204,7 @@ let chunk_state_update ~blit state input off len =
 
 let chunk_state_output state =
   {
-    input_cv = Array.copy state.cv;
+    input_cv = By.copy state.cv;
     block = By.copy state.buf;
     block_len = state.buf_len;
     counter = state.chunk_counter;
@@ -196,7 +217,7 @@ let parent_output key flags left right =
   By.blit left 0 block 0 out_len ;
   By.blit right 0 block out_len out_len ;
   {
-    input_cv = Array.copy key;
+    input_cv = By.copy key;
     block;
     block_len;
     counter = 0L;
@@ -208,7 +229,7 @@ let parent_cv key flags left right =
 
 let init_base key flags =
   {
-    key = Array.copy key;
+    key = By.copy key;
     chunk = make_chunk_state key 0L flags;
     cv_stack = [];
     flags;
@@ -266,7 +287,7 @@ let unsafe_get ctx =
 
 let dup_chunk state =
   {
-    cv = Array.copy state.cv;
+    cv = By.copy state.cv;
     chunk_counter = state.chunk_counter;
     buf = By.copy state.buf;
     buf_len = state.buf_len;
@@ -276,9 +297,9 @@ let dup_chunk state =
 
 let dup ctx =
   {
-    key = Array.copy ctx.key;
+    key = By.copy ctx.key;
     chunk = dup_chunk ctx.chunk;
-    cv_stack = List.map Array.copy ctx.cv_stack;
+    cv_stack = List.map By.copy ctx.cv_stack;
     flags = ctx.flags;
   }
 
