@@ -25,10 +25,11 @@ module Unsafe : S = struct
       size = 0L;
       b;
       h =
-        [|
-          0xc1059ed8l; 0x367cd507l; 0x3070dd17l; 0xf70e5939l; 0xffc00b31l;
-          0x68581511l; 0x64f98fa7l; 0xbefa4fa4l;
-        |];
+        of_array
+          [|
+            0xc1059ed8l; 0x367cd507l; 0x3070dd17l; 0xf70e5939l; 0xffc00b31l;
+            0x68581511l; 0x64f98fa7l; 0xbefa4fa4l;
+          |];
     }
 
   let unsafe_get ctx =
