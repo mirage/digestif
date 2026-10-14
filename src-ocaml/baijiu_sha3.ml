@@ -25,7 +25,7 @@ module Unsafe (P : sig
 end) =
 struct
   type ctx = {
-    q : Bytes.t;
+    q : bytes;
     rsize : int;
     (* block size *)
     mdlen : int;
@@ -47,7 +47,7 @@ struct
 
   let keccakf_rounds = 24
 
-  let keccaft_rndc : Bytes.t =
+  let keccaft_rndc : bytes =
     of_array
       [|
         0x0000000000000001L; 0x0000000000008082L; 0x800000000000808aL;
@@ -72,7 +72,7 @@ struct
       22; 9; 6; 1;
     |]
 
-  let sha3_keccakf (q : Bytes.t) =
+  let sha3_keccakf (q : bytes) =
     let bc = By.create (5 * 8) in
     for r = 0 to keccakf_rounds - 1 do
       let ( lxor ) = Int64.( lxor ) in

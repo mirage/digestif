@@ -25,9 +25,9 @@ end
 
 module type S = sig
   type kind = [ `SHA256 ]
-  type ctx = { mutable size : int64; b : Bytes.t; h : Bytes.t }
+  type ctx = { mutable size : int64; b : bytes; h : bytes }
 
-  val of_array : int32 array -> Bytes.t
+  val of_array : int32 array -> bytes
   val init : unit -> ctx
   val unsafe_feed_bytes : ctx -> By.t -> int -> int -> unit
   val unsafe_feed_bigstring : ctx -> Bi.t -> int -> int -> unit
@@ -37,7 +37,7 @@ end
 
 module Unsafe : S = struct
   type kind = [ `SHA256 ]
-  type ctx = { mutable size : int64; b : Bytes.t; h : Bytes.t }
+  type ctx = { mutable size : int64; b : bytes; h : bytes }
 
   let of_array a =
     let b = By.create (4 * Array.length a) in

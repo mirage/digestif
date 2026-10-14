@@ -26,7 +26,7 @@ end
 
 module type S = sig
   type kind = [ `MD5 ]
-  type ctx = { mutable size : int64; b : Bytes.t; h : Bytes.t }
+  type ctx = { mutable size : int64; b : bytes; h : bytes }
 
   val init : unit -> ctx
   val unsafe_feed_bytes : ctx -> By.t -> int -> int -> unit
@@ -37,7 +37,7 @@ end
 
 module Unsafe : S = struct
   type kind = [ `MD5 ]
-  type ctx = { mutable size : int64; b : Bytes.t; h : Bytes.t }
+  type ctx = { mutable size : int64; b : bytes; h : bytes }
 
   let dup ctx = { size = ctx.size; b = By.copy ctx.b; h = By.copy ctx.h }
 

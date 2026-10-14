@@ -70,8 +70,8 @@ module Unsafe : S = struct
     mutable buflen : int;
     outlen : int;
     mutable last_node : int;
-    buf : Bytes.t;
-    h : Bytes.t;
+    buf : bytes;
+    h : bytes;
     t : int64 array;
     f : int64 array;
   }

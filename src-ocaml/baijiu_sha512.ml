@@ -18,9 +18,9 @@ end
 
 module type S = sig
   type kind = [ `SHA512 ]
-  type ctx = { mutable size : int64 array; b : Bytes.t; h : Bytes.t }
+  type ctx = { mutable size : int64 array; b : bytes; h : bytes }
 
-  val of_array : int64 array -> Bytes.t
+  val of_array : int64 array -> bytes
   val init : unit -> ctx
   val unsafe_feed_bytes : ctx -> By.t -> int -> int -> unit
   val unsafe_feed_bigstring : ctx -> Bi.t -> int -> int -> unit
@@ -30,7 +30,7 @@ end
 
 module Unsafe : S = struct
   type kind = [ `SHA512 ]
-  type ctx = { mutable size : int64 array; b : Bytes.t; h : Bytes.t }
+  type ctx = { mutable size : int64 array; b : bytes; h : bytes }
 
   let of_array a =
     let b = By.create (8 * Array.length a) in

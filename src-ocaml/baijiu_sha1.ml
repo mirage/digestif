@@ -35,7 +35,7 @@ end
 
 module Unsafe : S = struct
   type kind = [ `SHA1 ]
-  type ctx = { mutable size : int64; b : Bytes.t; h : Bytes.t }
+  type ctx = { mutable size : int64; b : bytes; h : bytes }
 
   let dup ctx = { size = ctx.size; b = By.copy ctx.b; h = By.copy ctx.h }
 

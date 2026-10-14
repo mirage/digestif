@@ -37,7 +37,7 @@ end
 
 module Unsafe : S = struct
   type kind = [ `RMD160 ]
-  type ctx = { s : int32 array; mutable n : int; h : Bytes.t; b : Bytes.t }
+  type ctx = { s : int32 array; mutable n : int; h : bytes; b : bytes }
 
   let dup ctx =
     { s = Array.copy ctx.s; n = ctx.n; h = By.copy ctx.h; b = By.copy ctx.b }
