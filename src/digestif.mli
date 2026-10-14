@@ -325,11 +325,17 @@ module RMD160 : S
 
 module Make_BLAKE2B (D : sig
   val digest_size : int
-end) : S
+end) : sig
+  include S
+  module Keyed : MAC with type t = t
+end
 
 module Make_BLAKE2S (D : sig
   val digest_size : int
-end) : S
+end) : sig
+  include S
+  module Keyed : MAC with type t = t
+end
 
 type 'k hash =
   | MD5 : MD5.t hash
