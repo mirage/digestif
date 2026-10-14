@@ -15,7 +15,7 @@ module Int64 = struct
   external ( lxor ) : int64 -> int64 -> int64 = "%int64_xor"
   external ( + ) : int64 -> int64 -> int64 = "%int64_add"
 
-  let[@inline] lnot a = a lxor (-1L)
+  let[@inline] lnot a = a lxor -1L
   let[@inline] ror64 a n = (a lsr n) lor (a lsl (64 - n))
   let[@inline] rol64 a n = (a lsl n) lor (a lsr (64 - n))
 end
@@ -93,7 +93,8 @@ struct
           lxor Int64.rol64 (By.unsafe_get_64 bc ((i + 1) mod 5 * 8)) 1 in
         for k = 0 to 4 do
           let j = k * 5 in
-          By.unsafe_set_64 q ((j + i) * 8)
+          By.unsafe_set_64 q
+            ((j + i) * 8)
             (By.unsafe_get_64 q ((j + i) * 8) lxor t)
         done
       done ;
@@ -114,7 +115,8 @@ struct
           By.unsafe_set_64 bc (i * 8) (By.unsafe_get_64 q ((j + i) * 8))
         done ;
         for i = 0 to 4 do
-          By.unsafe_set_64 q ((j + i) * 8)
+          By.unsafe_set_64 q
+            ((j + i) * 8)
             (By.unsafe_get_64 q ((j + i) * 8)
             lxor (lnot (By.unsafe_get_64 bc ((i + 1) mod 5 * 8))
                  land By.unsafe_get_64 bc ((i + 2) mod 5 * 8)))

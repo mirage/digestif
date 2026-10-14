@@ -23,7 +23,7 @@ module Int32 = struct
   external ( land ) : int32 -> int32 -> int32 = "%int32_and"
   external ( + ) : int32 -> int32 -> int32 = "%int32_add"
 
-  let[@inline] lnot x = x lxor (-1l)
+  let[@inline] lnot x = x lxor -1l
   let[@inline] rol32 a n = (a lsl n) lor (a lsr (32 - n))
   let[@inline] ror32 a n = (a lsr n) lor (a lsl (32 - n))
 end

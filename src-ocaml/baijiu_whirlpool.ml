@@ -756,7 +756,7 @@ module Unsafe : S = struct
   let[@inline] wp_op src off shift =
     let r = ref Int64.zero in
     for i = 0 to 7 do
-      let v = By.unsafe_get_64 src (off + (((shift + 8 - i) land 7) * 8)) in
+      let v = By.unsafe_get_64 src (off + ((shift + 8 - i) land 7 * 8)) in
       let j = Int64.(to_int ((v asr (56 - (8 * i))) land 0xffL)) in
       let x = By.unsafe_get_64 k (((i * 256) + j) * 8) in
       r := Int64.(!r lxor x)
@@ -784,7 +784,7 @@ module Unsafe : S = struct
       By.unsafe_set_64 ctx.h (i * 8) (By.unsafe_get_64 state (i * 8))
     done ;
     for i = 0 to 9 do
-      let m0, m1 = (!m * 64, (!m lxor 1) * 64) in
+      let m0, m1 = (!m * 64, !m lxor 1 * 64) in
       for i = 0 to 7 do
         By.unsafe_set_64 key (m1 + (i * 8)) (wp_op key m0 i)
       done ;

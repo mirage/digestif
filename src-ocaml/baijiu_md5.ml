@@ -12,7 +12,7 @@ module Int32 = struct
   external ( land ) : int32 -> int32 -> int32 = "%int32_and"
   external ( + ) : int32 -> int32 -> int32 = "%int32_add"
 
-  let[@inline] lnot x = x lxor (-1l)
+  let[@inline] lnot x = x lxor -1l
   let[@inline] rol32 a n = (a lsl n) lor (a lsr (32 - n))
   let[@inline] ror32 a n = (a lsr n) lor (a lsl (32 - n))
 end
@@ -105,13 +105,13 @@ module Unsafe : S = struct
       b := rol32 (!b + f1 !c !d !a + w3 + k3) 22 + !c
     done ;
     for i = 0 to 3 do
-      let w0 = By.unsafe_get_32 w ((((i * 4) + 1) land 15) * 4) in
+      let w0 = By.unsafe_get_32 w (((i * 4) + 1) land 15 * 4) in
       let k0 = By.unsafe_get_32 k (((i * 4) + 16) * 4) in
-      let w1 = By.unsafe_get_32 w ((((i * 4) + 6) land 15) * 4) in
+      let w1 = By.unsafe_get_32 w (((i * 4) + 6) land 15 * 4) in
       let k1 = By.unsafe_get_32 k (((i * 4) + 17) * 4) in
-      let w2 = By.unsafe_get_32 w ((((i * 4) + 11) land 15) * 4) in
+      let w2 = By.unsafe_get_32 w (((i * 4) + 11) land 15 * 4) in
       let k2 = By.unsafe_get_32 k (((i * 4) + 18) * 4) in
-      let w3 = By.unsafe_get_32 w ((((i * 4) + 16) land 15) * 4) in
+      let w3 = By.unsafe_get_32 w (((i * 4) + 16) land 15 * 4) in
       let k3 = By.unsafe_get_32 k (((i * 4) + 19) * 4) in
       let open Int32 in
       a := rol32 (!a + f2 !b !c !d + w0 + k0) 5 + !b ;
@@ -120,13 +120,13 @@ module Unsafe : S = struct
       b := rol32 (!b + f2 !c !d !a + w3 + k3) 20 + !c
     done ;
     for i = 0 to 3 do
-      let w0 = By.unsafe_get_32 w ((((i * 12) + 5) land 15) * 4) in
+      let w0 = By.unsafe_get_32 w (((i * 12) + 5) land 15 * 4) in
       let k0 = By.unsafe_get_32 k (((i * 4) + 32) * 4) in
-      let w1 = By.unsafe_get_32 w ((((i * 12) + 8) land 15) * 4) in
+      let w1 = By.unsafe_get_32 w (((i * 12) + 8) land 15 * 4) in
       let k1 = By.unsafe_get_32 k (((i * 4) + 33) * 4) in
-      let w2 = By.unsafe_get_32 w ((((i * 12) + 11) land 15) * 4) in
+      let w2 = By.unsafe_get_32 w (((i * 12) + 11) land 15 * 4) in
       let k2 = By.unsafe_get_32 k (((i * 4) + 34) * 4) in
-      let w3 = By.unsafe_get_32 w ((((i * 12) + 14) land 15) * 4) in
+      let w3 = By.unsafe_get_32 w (((i * 12) + 14) land 15 * 4) in
       let k3 = By.unsafe_get_32 k (((i * 4) + 35) * 4) in
       let open Int32 in
       a := rol32 (!a + f3 !b !c !d + w0 + k0) 4 + !b ;
@@ -135,13 +135,13 @@ module Unsafe : S = struct
       b := rol32 (!b + f3 !c !d !a + w3 + k3) 23 + !c
     done ;
     for i = 0 to 3 do
-      let w0 = By.unsafe_get_32 w (((i * 12) land 15) * 4) in
+      let w0 = By.unsafe_get_32 w (i * 12 land 15 * 4) in
       let k0 = By.unsafe_get_32 k (((i * 4) + 48) * 4) in
-      let w1 = By.unsafe_get_32 w ((((i * 12) + 7) land 15) * 4) in
+      let w1 = By.unsafe_get_32 w (((i * 12) + 7) land 15 * 4) in
       let k1 = By.unsafe_get_32 k (((i * 4) + 49) * 4) in
-      let w2 = By.unsafe_get_32 w ((((i * 12) + 14) land 15) * 4) in
+      let w2 = By.unsafe_get_32 w (((i * 12) + 14) land 15 * 4) in
       let k2 = By.unsafe_get_32 k (((i * 4) + 50) * 4) in
-      let w3 = By.unsafe_get_32 w ((((i * 12) + 21) land 15) * 4) in
+      let w3 = By.unsafe_get_32 w (((i * 12) + 21) land 15 * 4) in
       let k3 = By.unsafe_get_32 k (((i * 4) + 51) * 4) in
       let open Int32 in
       a := rol32 (!a + f4 !b !c !d + w0 + k0) 6 + !b ;

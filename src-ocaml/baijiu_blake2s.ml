@@ -12,7 +12,9 @@ module Int32 = struct
   external ( lor ) : int32 -> int32 -> int32 = "%int32_or"
   external ( lxor ) : int32 -> int32 -> int32 = "%int32_xor"
   external ( land ) : int32 -> int32 -> int32 = "%int32_and"
+
   let lnot = Int32.lognot
+
   external ( + ) : int32 -> int32 -> int32 = "%int32_add"
 
   let[@inline] rol32 a n = (a lsl n) lor (a lsr (32 - n))

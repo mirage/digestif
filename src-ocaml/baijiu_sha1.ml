@@ -82,8 +82,8 @@ module Unsafe : S = struct
     done ;
     for i = 0 to 19 do
       let t =
-        Int32.(
-          !e + rol32 !a 5 + f1 !b !c !d + k1 + By.unsafe_get_32 w (i * 4)) in
+        Int32.(!e + rol32 !a 5 + f1 !b !c !d + k1 + By.unsafe_get_32 w (i * 4))
+      in
       e := !d ;
       d := !c ;
       c := Int32.rol32 !b 30 ;
@@ -92,8 +92,8 @@ module Unsafe : S = struct
     done ;
     for i = 20 to 39 do
       let t =
-        Int32.(
-          !e + rol32 !a 5 + f2 !b !c !d + k2 + By.unsafe_get_32 w (i * 4)) in
+        Int32.(!e + rol32 !a 5 + f2 !b !c !d + k2 + By.unsafe_get_32 w (i * 4))
+      in
       e := !d ;
       d := !c ;
       c := Int32.rol32 !b 30 ;
@@ -102,8 +102,8 @@ module Unsafe : S = struct
     done ;
     for i = 40 to 59 do
       let t =
-        Int32.(
-          !e + rol32 !a 5 + f3 !b !c !d + k3 + By.unsafe_get_32 w (i * 4)) in
+        Int32.(!e + rol32 !a 5 + f3 !b !c !d + k3 + By.unsafe_get_32 w (i * 4))
+      in
       e := !d ;
       d := !c ;
       c := Int32.rol32 !b 30 ;
@@ -112,8 +112,8 @@ module Unsafe : S = struct
     done ;
     for i = 60 to 79 do
       let t =
-        Int32.(
-          !e + rol32 !a 5 + f4 !b !c !d + k4 + By.unsafe_get_32 w (i * 4)) in
+        Int32.(!e + rol32 !a 5 + f4 !b !c !d + k4 + By.unsafe_get_32 w (i * 4))
+      in
       e := !d ;
       d := !c ;
       c := Int32.rol32 !b 30 ;
