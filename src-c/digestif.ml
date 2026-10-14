@@ -651,7 +651,8 @@ module RMD160 : S =
 
 module Make_BLAKE2B (D : sig
   val digest_size : int
-end) : S = struct
+end) =
+struct
   include
     Make_BLAKE2
       (Native.BLAKE2B)
@@ -662,7 +663,8 @@ end
 
 module Make_BLAKE2S (D : sig
   val digest_size : int
-end) : S = struct
+end) =
+struct
   include
     Make_BLAKE2
       (Native.BLAKE2S)
