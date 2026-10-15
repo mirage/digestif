@@ -1,3 +1,13 @@
+### v1.4.0 2026-10-15 Nantes (France)
+
+- Prefer to use `typedef` internally when it's about C structs (@dinosaure, #174)
+- Use `Int32.unsigned_compare` instead of `Int32.compare` (@dinosaure, #175, #176)
+- Fix overflow on our `xor` OCaml implementation (@dinosaure, #177)
+- Do bounds checking on our `xor` C/OCaml implementation (@dinosaure, #178, #179)
+- Provide BLAKE2 implementation (@dinosaure, @thevilledev, #180)
+- Optimize OCaml implementations of hash algorithms and unbox when we manipulate int32 values (@Zaneham, @dinosaure, #181)
+- Expose Keyed version of `Make_BLAKE2{S,B}` (spotted by @copy, @dinosaure, #173, #182)
+
 ### v1.3.1 2026-07-14 Paris (France)
 
 - Remove DKML CI (@jonahbeckford, @dinosaure, #159, #160, #161)
