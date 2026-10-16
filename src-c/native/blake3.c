@@ -154,7 +154,8 @@ static unsigned int highest_one(uint64_t x) {
 
 // Count the number of 1 bits.
 INLINE unsigned int popcnt(uint64_t x) {
-#if defined(__GNUC__) || defined(__clang__)
+// NOTE(dinosaure): [_builtin_popcountll] is not available on ocaml-solo5
+#if (defined(__GNUC__) || defined(__clang__)) && !defined(__ocaml_solo5__)
   return (unsigned int)__builtin_popcountll(x);
 #else
   unsigned int count = 0;
