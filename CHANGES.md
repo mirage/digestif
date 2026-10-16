@@ -1,3 +1,7 @@
+### v1.4.1 2026-10-16 Nantes (France)
+
+- Fix the support of `ocaml-solo5`/Solo5 and Unikraft (@edwintorok, @dinosaure, @hannesm, #184, #185)
+
 ### v1.4.0 2026-10-15 Nantes (France)
 
 - Prefer to use `typedef` internally when it's about C structs (@dinosaure, #174)
