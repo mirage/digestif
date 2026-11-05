@@ -24,7 +24,7 @@
       (value ctx, value src, value off, value len) {                         \
     digestif_ ## name ## _update (                                           \
       (name ## _ctx *) String_val (ctx),                                     \
-      _ba_uint8_off (src, off), Int_val (len));                              \
+      _ba_uint8_off (src, off), Long_val (len));                             \
     return Val_unit;                                                         \
   }
 
@@ -104,7 +104,7 @@ CAMLextern void caml_leave_blocking_section (void);
       (value ctx, value src, value off, value len) {                         \
     digestif_ ## name ## _update (                                           \
       (name ## _ctx *) String_val (ctx),                                     \
-      _st_uint8_off (src, off), Int_val (len));                              \
+      _st_uint8_off (src, off), Long_val (len));                             \
     return Val_unit;                                                         \
   }                                                                          \
                                                                              \
@@ -167,7 +167,7 @@ caml_digestif_blake3_st_init_derive_key(value ctx, value context,
                                         value off, value len)
 {
   digestif_blake3_init_derive_key_raw(
-    (blake3_ctx *) String_val(ctx), _st_uint8_off(context, off), Int_val(len));
+    (blake3_ctx *) String_val(ctx), _st_uint8_off(context, off), Long_val(len));
   return Val_unit;
 }
 
@@ -177,7 +177,7 @@ caml_digestif_blake3_st_finalize_seek(value ctx, value seek, value dst,
 {
   digestif_blake3_finalize_seek(
     (blake3_ctx *) String_val(ctx), Int64_val(seek),
-    _st_uint8_off(dst, off), Int_val(len));
+    _st_uint8_off(dst, off), Long_val(len));
   return Val_unit;
 }
 
