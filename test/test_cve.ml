@@ -57,7 +57,17 @@ let sha3_cve_2022_37454_1 =
   Alcotest.(check (testable Digestif.SHA3_224.pp Digestif.SHA3_224.equal))
     "result" hash
     (Digestif.SHA3_224.of_hex
-       "bdd5167212d2dc69665f5a8875ab87f23d5ce7849132f56371a19096")
+       "ec66be1ebccf055f839fccf2d12e641dcbbda4f5c71a3bdee6509495")
+
+let bytes_larger_than_4gib =
+  Alcotest.test_case "bytes larger than 4 GiB" `Slow @@ fun () ->
+  Gc.full_major () ;
+  let b = Bytes.make 4294967297 '\x00' in
+  let hash = Digestif.SHA256.digest_bytes b in
+  Alcotest.(check (testable Digestif.SHA256.pp Digestif.SHA256.equal))
+    "result" hash
+    (Digestif.SHA256.of_hex
+       "fbb82f7b353676bb562eb82157fcf0ea42c36492ca13ee56dbf82c08b6802c5c")
 
 let blake3_bytes_of_2gib =
   Alcotest.test_case "bytes of 2 GiB" `Slow @@ fun () ->
@@ -91,4 +101,5 @@ let () =
     [
       ("sha3 (CVE-2022-37454)", [ sha3_cve_2022_37454_0; sha3_cve_2022_37454_1 ]);
       ("blake3 lengths", [ blake3_bytes_of_2gib; blake3_xof_of_2gib ]);
+      ("large inputs", [ bytes_larger_than_4gib ]);
     ]
