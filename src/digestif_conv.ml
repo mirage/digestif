@@ -69,7 +69,7 @@ struct
     let is_wsp = function ' ' | '\t' | '\r' | '\n' -> true | _ -> false in
     while
       D.digest_size + !offset < String.length str
-      && is_wsp str.[!offset + (D.digest_size * 2)]
+      && is_wsp str.[!offset + D.digest_size]
     do
       incr offset
     done ;
@@ -77,8 +77,7 @@ struct
     then res
     else
       invalid_arg "Too much enough bytes (reach: %d, expect: %d)"
-        (!offset + (D.digest_size * 2))
-        (String.length str)
+        (!offset + D.digest_size) (String.length str)
 
   let consistent_of_hex_opt hex =
     match consistent_of_hex hex with
