@@ -59,8 +59,36 @@ let sha3_cve_2022_37454_1 =
     (Digestif.SHA3_224.of_hex
        "bdd5167212d2dc69665f5a8875ab87f23d5ce7849132f56371a19096")
 
+let blake3_bytes_of_2gib =
+  Alcotest.test_case "bytes of 2 GiB" `Slow @@ fun () ->
+  Gc.full_major () ;
+  let half = 1073741824 in
+  let b = Bytes.make (2 * half) '\x00' in
+  let ctx = Digestif.BLAKE3.feed_bytes Digestif.BLAKE3.empty ~len:half b in
+  let ctx = Digestif.BLAKE3.feed_bytes ctx ~off:half b in
+  Alcotest.(check (testable Digestif.BLAKE3.pp Digestif.BLAKE3.equal))
+    "result"
+    (Digestif.BLAKE3.digest_bytes b)
+    (Digestif.BLAKE3.get ctx)
+
+let blake3_xof_of_2gib =
+  Alcotest.test_case "XOF output of 2 GiB" `Slow @@ fun () ->
+  Gc.full_major () ;
+  let len = 2147483648 in
+  let ctx = Digestif.BLAKE3.empty in
+  let out = Digestif.BLAKE3.get_xof ctx len in
+  Alcotest.(check string)
+    "prefix"
+    (Digestif.BLAKE3.to_raw_string (Digestif.BLAKE3.get ctx))
+    (String.sub out 0 32) ;
+  Alcotest.(check string)
+    "suffix"
+    (Digestif.BLAKE3.get_xof ctx ~seek:(Int64.of_int (len - 32)) 32)
+    (String.sub out (len - 32) 32)
+
 let () =
   Alcotest.run "digestif (CVE)"
     [
       ("sha3 (CVE-2022-37454)", [ sha3_cve_2022_37454_0; sha3_cve_2022_37454_1 ]);
+      ("blake3 lengths", [ blake3_bytes_of_2gib; blake3_xof_of_2gib ]);
     ]
