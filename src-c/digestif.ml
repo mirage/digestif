@@ -122,6 +122,15 @@ module Unsafe (F : Foreign) (D : Desc) = struct
     F.Bytes.init buf ;
     buf
 
+  (* The C stubs pass lengths as 32-bit integers, so feed them in chunks.
+     [1 lsl 29] also fits in an OCaml [int] on 32-bit platforms. *)
+  let max_update_len = 1 lsl 29
+
+  let rec chunked_update update t buf off len =
+    let n = min len max_update_len in
+    update t buf off n ;
+    if len > n then chunked_update update t buf (off + n) (len - n)
+
   let unsafe_feed_bytes t ?off ?len buf =
     let off, len =
       match (off, len) with
@@ -131,7 +140,7 @@ module Unsafe (F : Foreign) (D : Desc) = struct
       | None, None -> (0, By.length buf) in
     if off < 0 || len < 0 || off > By.length buf - len
     then invalid_arg "offset out of bounds"
-    else F.Bytes.update t buf off len
+    else chunked_update F.Bytes.update t buf off len
 
   let unsafe_feed_string t ?off ?len buf =
     unsafe_feed_bytes t ?off ?len (Bytes.unsafe_of_string buf)
@@ -145,7 +154,7 @@ module Unsafe (F : Foreign) (D : Desc) = struct
       | None, None -> (0, Bi.length buf) in
     if off < 0 || len < 0 || off > Bi.length buf - len
     then invalid_arg "offset out of bounds"
-    else F.Bigstring.update t buf off len
+    else chunked_update F.Bigstring.update t buf off len
 
   let unsafe_get t =
     let res = By.create digest_size in
