@@ -90,6 +90,22 @@ let test_consistent_hex_iso i random_input =
     (Digestif.SHA1.consistent_of_hex hex)
     hash
 
+let test_consistent_hex_newline =
+  Alcotest.test_case "trailing newline" `Quick @@ fun () ->
+  let hash = List.hd hashes in
+  Alcotest.(check sha1)
+    "consistent_of_hex" hash
+    (Digestif.SHA1.consistent_of_hex (Digestif.SHA1.to_hex hash ^ "\n"))
+
+let test_consistent_hex_trailing_wsp i hash =
+  Alcotest.test_case (strf "trailing whitespace:%d" i) `Quick @@ fun () ->
+  let hex =
+    spaces_expand (Digestif.SHA1.to_hex hash) ^ random_wsp (1 + Random.int 10)
+  in
+  Alcotest.(check sha1)
+    "consistent_of_hex" hash
+    (Digestif.SHA1.consistent_of_hex hex)
+
 let tests () =
   Alcotest.run "digestif"
     [
@@ -98,6 +114,9 @@ let tests () =
         List.mapi test_consistent_hex_success consistent_hex );
       ("of_hex 1", List.mapi test_hex_success spaces_hex);
       ("consistent_of_hex 1", List.mapi test_consistent_hex_success spaces_hex);
+      ( "consistent_of_hex trailing whitespace",
+        test_consistent_hex_newline
+        :: List.mapi test_consistent_hex_trailing_wsp hashes );
       ("of_hex 2", List.mapi test_hex_success inconsistent_hex);
       ( "consistent_of_hex 2",
         List.mapi test_consistent_hex_fail inconsistent_hex );
