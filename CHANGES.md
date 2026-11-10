@@ -1,3 +1,9 @@
+### v1.4.2 2026-11-09 Paris (France)
+
+- Fix BLAKE3 C stubs and int cast (@torinnd, @dinosaure, #188)
+- Fix when we digest large chunks (@torinnd, @dinosaure, #187)
+- Fix `consistent_of_hex` function and whitespaces (@torinnd, @dinosaure, #189)
+
 ### v1.4.1 2026-10-16 Nantes (France)
 
 - Fix the support of `ocaml-solo5`/Solo5 and Unikraft (@edwintorok, @dinosaure, @hannesm, #184, #185)
